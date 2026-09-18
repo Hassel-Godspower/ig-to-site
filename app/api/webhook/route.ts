@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { getJob, updateJob } from "@/lib/jobStore";
-import { readAllSiteFiles } from "@/lib/siteStore";
-import { deployToVercel } from "@/lib/deployToVercel";
+import { getAllSiteFiles } from "@/lib/siteStore";
+import { createRepoWithFiles } from "@/lib/githubRepo";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
@@ -35,31 +35,34 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Missing jobId/username in session metadata" }, { status: 400 });
   }
 
-  const job = getJob(jobId);
+  const job = await getJob(jobId);
   if (!job) {
     return NextResponse.json({ error: `Job ${jobId} not found` }, { status: 404 });
   }
 
   try {
-    updateJob(jobId, { status: "deploying" });
-
-    const files = readAllSiteFiles(jobId);
+    // This is the only place a GitHub repo gets created -- only once payment
+    // has actually cleared. No Vercel call happens here at all: deploying is
+    // a manual step you do from the Vercel dashboard whenever you get to it.
+    // This just gets a real repo, with the real files, ready for that.
+    const files = await getAllSiteFiles(jobId);
     if (Object.keys(files).length === 0) {
-      throw new Error("No generated files found for this job — nothing to deploy.");
+      throw new Error("No generated files found for this job -- nothing to push.");
     }
 
-    // Passing `username` as the Vercel project name gets it the default
-    // `<name>.vercel.app` domain on production deploys, PROVIDED that name
-    // isn't already taken by another project in the same team/account. If
-    // it collides, Vercel will create the project under a modified name
-    // and the resulting URL won't be an exact match — worth adding an
-    // availability check + "this name's taken, try another" step before
-    // charging the customer in a real version of this.
-    const { url } = await deployToVercel(files, username);
+    const repo = await createRepoWithFiles(files, username);
 
-    updateJob(jobId, { status: "done", siteUrl: url });
+    await updateJob(jobId, {
+      status: "deploying",
+      username: repo.repoName, // reflects the final name, in case of a collision suffix
+      repoOwner: repo.owner,
+      repoName: repo.repoName,
+      repoUrl: repo.repoUrl,
+      defaultBranch: repo.defaultBranch,
+      siteUrl: `https://${repo.repoName}.vercel.app`,
+    });
   } catch (err: any) {
-    updateJob(jobId, { status: "failed", error: String(err?.message ?? err) });
+    await updateJob(jobId, { status: "failed", error: String(err?.message ?? err) });
   }
 
   return NextResponse.json({ received: true });
