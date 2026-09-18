@@ -125,7 +125,7 @@ export default function PreviewPage() {
         <div style={s.overlay}>
           <div style={s.modal}>
             <h2 style={s.modalHeading}>Ready to go live?</h2>
-            <p style={s.modalSub}>Your site will publish at:</p>
+            <p style={s.modalSub}>Support the platform with $9 to publish your site at:</p>
             <div style={s.usernameRow}>
               <input
                 value={username}
@@ -141,7 +141,7 @@ export default function PreviewPage() {
                 Cancel
               </button>
               <button onClick={confirmPayment} style={s.primaryButton}>
-                Pay and go live
+                Pay $9 and go live
               </button>
             </div>
           </div>
@@ -151,8 +151,8 @@ export default function PreviewPage() {
       {phase === "polling" && (
         <div style={s.overlay}>
           <div style={s.modal}>
-            <h2 style={s.modalHeading}>Publishing your site</h2>
-            <p style={s.modalSub}>Payment confirmed — deploying to Vercel now.</p>
+            <h2 style={s.modalHeading}>Creating live website…</h2>
+            <p style={s.modalSub}>Payment confirmed — your site will be live shortly.</p>
           </div>
         </div>
       )}
