@@ -1,24 +1,39 @@
-import Anthropic from "@anthropic-ai/sdk";
 import type { InstagramProfile } from "./parseInstagramExport";
-
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 /**
  * Turns parsed Instagram data into three plain static files: index.html,
  * styles.css, script.js. These are exactly the files that get previewed,
  * edited, and later deployed as-is — no build step, no framework.
+ *
+ * Uses Groq's free API (OpenAI-compatible endpoint) instead of a paid
+ * model provider. Free tier is rate-limited (~30 requests/min, daily
+ * token caps as of writing) — fine for a low-volume site generator, but
+ * worth checking console.groq.com/settings/limits if generation starts
+ * throwing 429s under real usage.
  */
 export async function generateSite(
   profile: InstagramProfile
 ): Promise<Record<string, string>> {
-  const response = await anthropic.messages.create({
-    model: "claude-sonnet-4-6",
-    max_tokens: 8000,
-    messages: [{ role: "user", content: buildPrompt(profile) }],
+  const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: "llama-3.3-70b-versatile",
+      max_tokens: 8000,
+      messages: [{ role: "user", content: buildPrompt(profile) }],
+    }),
   });
 
-  const textBlock = response.content.find((b) => b.type === "text");
-  const raw = textBlock && "text" in textBlock ? textBlock.text : "";
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(`Groq request failed (${res.status}): ${errText}`);
+  }
+
+  const data = await res.json();
+  const raw: string = data.choices?.[0]?.message?.content ?? "";
   return parseSections(raw);
 }
 
@@ -60,7 +75,7 @@ function parseSections(raw: string): Record<string, string> {
 
   if (!htmlMatch || !cssMatch || !jsMatch) {
     throw new Error(
-      "Claude's response didn't match the expected ===HTML===/===CSS===/===JS=== format. " +
+      "Groq's response didn't match the expected ===HTML===/===CSS===/===JS=== format. " +
         "Consider retrying, or logging `raw` to inspect what came back."
     );
   }
