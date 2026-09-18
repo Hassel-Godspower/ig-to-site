@@ -3,12 +3,13 @@ import { nanoid } from "nanoid";
 import { createJob } from "@/lib/jobStore";
 import { parseInstagramExport } from "@/lib/parseInstagramExport";
 import { generateSite } from "@/lib/generateSite";
-import { writeSiteFiles } from "@/lib/siteStore";
+import { saveSiteFiles } from "@/lib/siteStore";
 
-// Runs synchronously and returns once the site is generated — there's no
-// payment gate here, so there's nothing to defer to a webhook. This is a
-// reasonable tradeoff while generation takes single-digit seconds; if it
-// grows slower, move it behind a queue and poll /api/status instead.
+// Runs synchronously and returns once the site is generated. Nothing gets
+// created in GitHub here -- files are stored in Supabase Storage only, so
+// browsing/generating/editing is free and leaves no trace in your GitHub
+// account. A repo only gets created once someone actually pays (see
+// app/api/webhook/route.ts).
 export async function POST(req: NextRequest) {
   const formData = await req.formData();
   const file = formData.get("file") as File | null;
@@ -23,8 +24,9 @@ export async function POST(req: NextRequest) {
     const files = await generateSite(profile);
 
     const jobId = nanoid(12);
-    writeSiteFiles(jobId, files);
-    createJob({
+    await saveSiteFiles(jobId, files);
+
+    await createJob({
       id: jobId,
       status: "draft",
       parsedUsername: profile.username || undefined,
