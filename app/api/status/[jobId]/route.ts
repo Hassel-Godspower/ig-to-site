@@ -8,8 +8,9 @@ import { getJob, updateJob } from "@/lib/jobStore";
 // there's no manual step needed to tell the app "it's live now" — just
 // import the repo in Vercel whenever you get to it, and this catches up on
 // its own within a few seconds.
-export async function GET(_req: NextRequest, { params }: { params: { jobId: string } }) {
-  const job = await getJob(params.jobId);
+export async function GET(_req: NextRequest, { params }: { params: Promise<{ jobId: string }> }) {
+  const { jobId } = await params;
+  const job = await getJob(jobId);
   if (!job) {
     return NextResponse.json({ error: "Job not found" }, { status: 404 });
   }
