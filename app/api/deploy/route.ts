@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getJob, updateJob } from "@/lib/jobStore";
-import { getAllSiteFiles } from "@/lib/siteStore";
-import { createRepoWithFiles } from "@/lib/githubRepo";
+import { getJob } from "@/lib/jobStore";
+import { completePaidJob } from "@/lib/completePaidJob";
 
 // Retries repo creation for a job that paid but failed (e.g. a transient
 // GitHub API error) -- does not re-run generation or re-charge the
@@ -21,25 +20,9 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  try {
-    const files = await getAllSiteFiles(jobId);
-    if (Object.keys(files).length === 0) {
-      throw new Error("No generated files found for this job -- nothing to push.");
-    }
-
-    const repo = await createRepoWithFiles(files, job.username);
-    await updateJob(jobId, {
-      status: "deploying",
-      username: repo.repoName,
-      repoOwner: repo.owner,
-      repoName: repo.repoName,
-      repoUrl: repo.repoUrl,
-      defaultBranch: repo.defaultBranch,
-      siteUrl: `https://${repo.repoName}.vercel.app`,
-      error: undefined,
-    });
-    return NextResponse.json({ status: "deploying" });
-  } catch (err: any) {
-    return NextResponse.json({ error: String(err?.message ?? err) }, { status: 500 });
+  const updated = await completePaidJob(jobId, job.username);
+  if (updated.status === "failed") {
+    return NextResponse.json({ error: updated.error }, { status: 500 });
   }
+  return NextResponse.json({ status: updated.status, siteUrl: updated.siteUrl });
 }
