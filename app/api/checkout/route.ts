@@ -1,14 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import Stripe from "stripe";
 import { getJob, updateJob } from "@/lib/jobStore";
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+import { initializeTransaction } from "@/lib/paystack";
 
 export async function POST(req: NextRequest) {
-  const { jobId, username } = await req.json();
+  const { jobId, username, email } = await req.json();
 
-  if (!jobId || !username) {
-    return NextResponse.json({ error: "jobId and username are required" }, { status: 400 });
+  if (!jobId || !username || !email) {
+    return NextResponse.json({ error: "jobId, username and email are required" }, { status: 400 });
   }
 
   const job = await getJob(jobId);
@@ -20,15 +18,16 @@ export async function POST(req: NextRequest) {
   await updateJob(jobId, { status: "pending_payment", username: cleanUsername });
 
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
-  const session = await stripe.checkout.sessions.create({
-    mode: "payment",
-    line_items: [{ price: process.env.STRIPE_PRICE_ID!, quantity: 1 }],
-    success_url: `${baseUrl}/preview/${jobId}?paid=1`,
-    cancel_url: `${baseUrl}/preview/${jobId}?canceled=1`,
+  const amount = Number(process.env.PAYSTACK_AMOUNT);
+
+  const { authorizationUrl } = await initializeTransaction({
+    email,
+    amount,
+    callbackUrl: `${baseUrl}/preview/${jobId}?paid=1`,
     metadata: { jobId, username: cleanUsername },
   });
 
-  return NextResponse.json({ checkoutUrl: session.url });
+  return NextResponse.json({ checkoutUrl: authorizationUrl });
 }
 
 function sanitizeUsername(name: string): string {
