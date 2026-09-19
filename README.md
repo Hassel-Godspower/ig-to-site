@@ -17,7 +17,7 @@ whenever you get to it.
 | Pre-payment site files | **Supabase Storage** (private bucket) | Where a generated site's files live while someone's still previewing/editing it for free |
 | Site files after payment | **GitHub** (a private repo per paid site) | Created once, at payment time — becomes the source of truth going forward |
 | Job records | **Supabase** (Postgres) | Tracks status/repo/username per job throughout |
-| Payments | **Stripe** | No monthly fee — only takes a cut of successful payments |
+| Payments | **Paystack** | No monthly fee — only takes a cut of successful payments; strong in NGN/Africa-focused markets |
 | Publishing | **You, manually, via the Vercel dashboard** | Vercel never sees whether anyone paid — it just imports whatever repo you point it at, whenever you get to it |
 
 **Where does the app itself run?** Not on Vercel's free Hobby plan — its
@@ -45,20 +45,31 @@ project of your own.)
    served from `/api/site/[jobId]/index.html`, which reads the file out of
    Supabase Storage. "Edit content" turns on `document.designMode`; "Save
    changes" PUTs the edited HTML back, overwriting it in the bucket.
-3. "Go live" opens a modal asking for the desired subdomain, then redirects
-   to a Stripe Checkout session for $9.
-4. On successful payment, `POST /api/webhook` reads all three files back
-   out of Supabase Storage and **creates a brand-new private GitHub repo**
-   named after the chosen subdomain (falling back to a suffixed name on
-   collision), pushing the files as its initial commit. It records
-   `https://<repo-name>.vercel.app` as the job's predicted `siteUrl`. No
-   Vercel API call happens anywhere in this app.
-5. The preview page polls `GET /api/status/[jobId]`, which — while a job
-   is "deploying" — actively fetches the predicted URL and flips the job
-   to "done" the moment it responds successfully. So once you've imported
-   the repo into Vercel and it's built, the customer's screen updates on
-   its own within a couple seconds, with no manual step from you beyond
-   the Vercel import itself.
+3. "Go live" opens a modal asking for the desired subdomain and an email
+   address (Paystack requires an email to start a transaction), then
+   redirects to a Paystack-hosted payment page for $9.
+4. Paystack redirects back to `/preview/[jobId]?paid=1&reference=...`. The
+   page immediately calls `POST /api/verify-payment`, which asks Paystack
+   directly whether that reference actually succeeded — this is what tells
+   a genuine payment apart from a cancelled or failed one, since Paystack's
+   `callback_url` fires either way. On success, this route (or the
+   `POST /api/webhook`, whichever gets there first — both call the same
+   shared `completePaidJob` helper, so only one repo ever gets created)
+   reads all three files back out of Supabase Storage and **creates a
+   brand-new private GitHub repo** named after the chosen subdomain
+   (falling back to a suffixed name on collision), pushing the files as
+   its initial commit. It records `https://<repo-name>.vercel.app` as the
+   job's predicted `siteUrl`. No Vercel API call happens anywhere in this
+   app. On failure, the customer sees "Payment wasn't completed" with a
+   button to try again.
+5. The preview page then polls `GET /api/status/[jobId]`, which — while a
+   job is "deploying" — actively fetches the predicted URL and flips the
+   job to "done" the moment it responds successfully. So once you've
+   imported the repo into Vercel and it's built, the customer's screen
+   updates on its own within a couple seconds, with no manual step from
+   you beyond the Vercel import itself. If repo creation itself failed
+   (e.g. a transient GitHub error), the customer sees a "Retry" button
+   that calls `POST /api/deploy` to try again without re-charging them.
 
 ## Your one manual step
 
@@ -77,7 +88,7 @@ cp .env.example .env.local   # fill in real keys
 npm run dev
 ```
 
-Required env vars: see `.env.example` (Groq, Stripe, Supabase, GitHub).
+Required env vars: see `.env.example` (Groq, Paystack, Supabase, GitHub).
 
 **Supabase setup** — run once in the Supabase SQL editor for job records:
 
@@ -106,14 +117,18 @@ service role key, never directly from the browser.
 you want customer site repos created in. That's the only permission
 needed — this app never touches Vercel.
 
-**Stripe setup** — create a one-time $9 Price in the dashboard (Products →
-Add product) and set its ID as `STRIPE_PRICE_ID`.
+**Paystack setup** — dashboard.paystack.com → **Settings → API Keys &
+Webhooks** → copy the secret key (`PAYSTACK_SECRET_KEY`; use the test key
+while developing). On the same page, set your **Webhook URL** to
+`<your-deployed-url>/api/webhook` — Paystack has no local-forwarding CLI
+like Stripe's, so for local testing you'll need a tunnel (e.g. `ngrok http
+3000`) and a webhook URL pointed at the tunnel's public address while you
+test.
 
-For local Stripe webhook testing:
-
-```bash
-stripe listen --forward-to localhost:3000/api/webhook
-```
+Decide `PAYSTACK_AMOUNT` and `PAYSTACK_CURRENCY` based on what your
+Paystack account supports — new accounts are typically NGN-only until you
+request other currencies, so confirm in the dashboard before assuming
+`PAYSTACK_CURRENCY=USD` will work.
 
 ## Not production-ready — deliberate cut corners
 
@@ -135,6 +150,11 @@ stripe listen --forward-to localhost:3000/api/webhook
 - **No queue** — generation, storage writes, and repo creation all run
   inline in the request. Fine at low volume, worth revisiting as usage
   grows.
+- **`verify-payment` only runs once, on the redirect back.** If the
+  customer closes the tab mid-payment and never lands back on
+  `?paid=1&reference=...`, nothing checks that reference again — the job
+  just sits at `pending_payment`. The webhook is the real safety net for
+  that case, as long as it's configured and reachable.
 - **No cleanup job for abandoned drafts** — a visitor who generates a site
   and never pays leaves their files sitting in the `sites` bucket
   indefinitely (harmless, since nothing's created in GitHub, but worth a
