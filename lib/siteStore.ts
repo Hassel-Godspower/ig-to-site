@@ -1,4 +1,4 @@
-import { supabase } from "./supabase";
+import { getSupabase } from "./supabase";
 
 const BUCKET = "sites";
 
@@ -14,7 +14,8 @@ export async function saveSiteFiles(jobId: string, files: Record<string, string>
 }
 
 export async function saveSiteFile(jobId: string, filename: string, content: string): Promise<void> {
-  const { error } = await supabase.storage
+  const { error } = await getSupabase()
+    .storage
     .from(BUCKET)
     .upload(`${jobId}/${filename}`, new Blob([content]), {
       contentType: CONTENT_TYPES[extOf(filename)] ?? "text/plain; charset=utf-8",
@@ -24,7 +25,7 @@ export async function saveSiteFile(jobId: string, filename: string, content: str
 }
 
 export async function getSiteFile(jobId: string, filename: string): Promise<string | null> {
-  const { data, error } = await supabase.storage.from(BUCKET).download(`${jobId}/${filename}`);
+  const { data, error } = await getSupabase().storage.from(BUCKET).download(`${jobId}/${filename}`);
   if (error) return null;
   return await data.text();
 }

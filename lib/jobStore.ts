@@ -1,4 +1,4 @@
-import { supabase } from "./supabase";
+import { getSupabase } from "./supabase";
 
 export interface Job {
   id: string;
@@ -30,7 +30,7 @@ export interface Job {
 // );
 
 export async function createJob(job: Job): Promise<void> {
-  const { error } = await supabase.from("jobs").insert({
+  const { error } = await getSupabase().from("jobs").insert({
     id: job.id,
     status: job.status,
     username: job.username ?? null,
@@ -46,7 +46,7 @@ export async function createJob(job: Job): Promise<void> {
 }
 
 export async function getJob(id: string): Promise<Job | null> {
-  const { data, error } = await supabase.from("jobs").select("*").eq("id", id).maybeSingle();
+  const { data, error } = await getSupabase().from("jobs").select("*").eq("id", id).maybeSingle();
   if (error) throw new Error(`Supabase read failed: ${error.message}`);
   if (!data) return null;
   return {
@@ -75,7 +75,7 @@ export async function updateJob(id: string, patch: Partial<Job>): Promise<Job> {
   if (patch.repoUrl !== undefined) row.repo_url = patch.repoUrl;
   if (patch.defaultBranch !== undefined) row.default_branch = patch.defaultBranch;
 
-  const { error } = await supabase.from("jobs").update(row).eq("id", id);
+  const { error } = await getSupabase().from("jobs").update(row).eq("id", id);
   if (error) throw new Error(`Supabase update failed: ${error.message}`);
 
   const updated = await getJob(id);
