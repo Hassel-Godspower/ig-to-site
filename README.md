@@ -98,6 +98,7 @@ create table jobs (
   status text not null,
   username text,
   parsed_username text,
+  email text,
   site_url text,
   error text,
   repo_owner text,
@@ -106,6 +107,13 @@ create table jobs (
   default_branch text,
   created_at timestamptz default now()
 );
+```
+
+If you created this table before the admin dashboard existed, just add the
+new column instead of recreating the table:
+
+```sql
+alter table jobs add column email text;
 ```
 
 Also create a **Storage bucket named `sites`** (Supabase dashboard →
@@ -129,6 +137,23 @@ Decide `PAYSTACK_AMOUNT` and `PAYSTACK_CURRENCY` based on what your
 Paystack account supports — new accounts are typically NGN-only until you
 request other currencies, so confirm in the dashboard before assuming
 `PAYSTACK_CURRENCY=USD` will work.
+
+## Admin dashboard
+
+`/admin` lists every job — status, username, email, links to the live
+site and GitHub repo once they exist, and any error — with a **Retry**
+button on failed jobs (calls the same `/api/deploy` retry route, without
+re-charging the customer). It's the fastest way to see who paid, whose
+repo is sitting there waiting for you to import into Vercel, and what
+needs attention.
+
+Set `ADMIN_PASSWORD` in your env vars (a long random value, not something
+guessable) and visit `/admin` — you'll be redirected to `/admin/login`
+first. There's no per-admin accounts here, just one shared password
+gating the whole `/admin` area and its API routes (enforced in
+`middleware.ts`), stored as an httpOnly cookie so it's never readable
+from browser JS. Fine for a single operator; if more than one person
+needs access, this is the first thing to upgrade to real accounts.
 
 ## Not production-ready — deliberate cut corners
 
