@@ -5,12 +5,14 @@ export interface Job {
   status: "draft" | "pending_payment" | "deploying" | "done" | "failed";
   username?: string;
   parsedUsername?: string;
+  email?: string;
   siteUrl?: string;
   error?: string;
   repoOwner?: string;
   repoName?: string;
   repoUrl?: string;
   defaultBranch?: string;
+  createdAt?: string;
 }
 
 // Expects a `jobs` table in Supabase. Run this once in the Supabase SQL editor:
@@ -20,6 +22,7 @@ export interface Job {
 //   status text not null,
 //   username text,
 //   parsed_username text,
+//   email text,
 //   site_url text,
 //   error text,
 //   repo_owner text,
@@ -28,6 +31,26 @@ export interface Job {
 //   default_branch text,
 //   created_at timestamptz default now()
 // );
+//
+// If you already created this table before the admin dashboard was added,
+// just run:  alter table jobs add column email text;
+
+function mapRow(data: any): Job {
+  return {
+    id: data.id,
+    status: data.status,
+    username: data.username ?? undefined,
+    parsedUsername: data.parsed_username ?? undefined,
+    email: data.email ?? undefined,
+    siteUrl: data.site_url ?? undefined,
+    error: data.error ?? undefined,
+    repoOwner: data.repo_owner ?? undefined,
+    repoName: data.repo_name ?? undefined,
+    repoUrl: data.repo_url ?? undefined,
+    defaultBranch: data.default_branch ?? undefined,
+    createdAt: data.created_at ?? undefined,
+  };
+}
 
 export async function createJob(job: Job): Promise<void> {
   const { error } = await getSupabase().from("jobs").insert({
@@ -35,6 +58,7 @@ export async function createJob(job: Job): Promise<void> {
     status: job.status,
     username: job.username ?? null,
     parsed_username: job.parsedUsername ?? null,
+    email: job.email ?? null,
     site_url: job.siteUrl ?? null,
     error: job.error ?? null,
     repo_owner: job.repoOwner ?? null,
@@ -49,18 +73,18 @@ export async function getJob(id: string): Promise<Job | null> {
   const { data, error } = await getSupabase().from("jobs").select("*").eq("id", id).maybeSingle();
   if (error) throw new Error(`Supabase read failed: ${error.message}`);
   if (!data) return null;
-  return {
-    id: data.id,
-    status: data.status,
-    username: data.username ?? undefined,
-    parsedUsername: data.parsed_username ?? undefined,
-    siteUrl: data.site_url ?? undefined,
-    error: data.error ?? undefined,
-    repoOwner: data.repo_owner ?? undefined,
-    repoName: data.repo_name ?? undefined,
-    repoUrl: data.repo_url ?? undefined,
-    defaultBranch: data.default_branch ?? undefined,
-  };
+  return mapRow(data);
+}
+
+// Used by the admin dashboard to list every job, most recent first.
+export async function listJobs(limit = 200): Promise<Job[]> {
+  const { data, error } = await getSupabase()
+    .from("jobs")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  if (error) throw new Error(`Supabase list failed: ${error.message}`);
+  return (data ?? []).map(mapRow);
 }
 
 export async function updateJob(id: string, patch: Partial<Job>): Promise<Job> {
@@ -68,6 +92,7 @@ export async function updateJob(id: string, patch: Partial<Job>): Promise<Job> {
   if (patch.status !== undefined) row.status = patch.status;
   if (patch.username !== undefined) row.username = patch.username;
   if (patch.parsedUsername !== undefined) row.parsed_username = patch.parsedUsername;
+  if (patch.email !== undefined) row.email = patch.email;
   if (patch.siteUrl !== undefined) row.site_url = patch.siteUrl;
   if (patch.error !== undefined) row.error = patch.error;
   if (patch.repoOwner !== undefined) row.repo_owner = patch.repoOwner;
