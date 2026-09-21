@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
   }
 
   const cleanUsername = sanitizeUsername(username);
-  await updateJob(jobId, { status: "pending_payment", username: cleanUsername });
+  await updateJob(jobId, { status: "pending_payment", username: cleanUsername, email });
 
   const baseUrl = process.env.BASE_URL;
   const amount = Number(process.env.PAYSTACK_AMOUNT);
