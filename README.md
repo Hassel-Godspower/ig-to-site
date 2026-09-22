@@ -43,8 +43,14 @@ project of your own.)
    paying or not.
 2. Browser redirects to `/preview/[jobId]`, showing the site in an iframe
    served from `/api/site/[jobId]/index.html`, which reads the file out of
-   Supabase Storage. "Edit content" turns on `document.designMode`; "Save
-   changes" PUTs the edited HTML back, overwriting it in the bucket.
+   Supabase Storage. A **Design sidebar** next to the preview exposes
+   structured controls — site title, headline, subheadline, CTA button
+   text/link, brand color, and section reordering — that write directly
+   into specific elements in the live iframe DOM (see "Structured editing"
+   below for how this is targeted). A separate **"Freeform edit"** toggle
+   turns on `document.designMode` for click-and-type tweaks to anything
+   the sidebar doesn't cover. Either way, "Save changes" PUTs the current
+   full HTML back, overwriting it in the bucket.
 3. "Go live" opens a modal asking for the desired subdomain and an email
    address (Paystack requires an email to start a transaction), then
    redirects to a Paystack-hosted payment page for $9.
@@ -70,6 +76,30 @@ project of your own.)
    you beyond the Vercel import itself. If repo creation itself failed
    (e.g. a transient GitHub error), the customer sees a "Retry" button
    that calls `POST /api/deploy` to try again without re-charging them.
+
+## Structured editing
+
+Rather than one big contenteditable blob, `lib/generateSite.ts`'s prompt
+requires the model to tag specific elements as it writes the HTML/CSS:
+
+- `#site-title`, `#hero-headline`, `#hero-subheadline` — text content
+- `#cta-button` — the main call-to-action link (text + `href`)
+- `.site-section[data-section-name="..."]` — every top-level content
+  block, wrapped so it can be identified and reordered
+- `--primary-color` — a single CSS custom property on `:root` that
+  everything brand-colored references, so recoloring the site is one
+  variable, not a find-and-replace across the stylesheet
+
+`app/preview/[jobId]/page.tsx` scans the loaded iframe for these on load
+and builds the sidebar from whatever it actually finds — a site missing
+`#cta-button` just doesn't get a button-text field, rather than crashing.
+Every sidebar edit writes straight into the live iframe DOM (instant
+visual feedback, no round trip), and color changes land as an inline
+style on `<html>`, which — like every other change — gets captured
+automatically when "Save changes" serializes the whole document and PUTs
+it back. Section reordering physically moves the `.site-section` DOM
+nodes, which is why it persists through that same save path with no
+special-casing needed.
 
 ## Your one manual step
 
@@ -166,11 +196,19 @@ needs access, this is the first thing to upgrade to real accounts.
   Vercel.** There's no notification to you that a new repo is waiting;
   you'd want to check the account's repo list (or add a simple admin view
   over the `jobs` table) periodically.
-- **Editing is a raw `designMode` overlay**, not a structured content
-  editor. Fine for text tweaks; anything more (reordering sections, image
-  swaps) needs a real editing UI. Editing is also locked once a job has
-  gone live — the repo becomes the source of truth at that point, and this
-  app doesn't push further edits into it.
+- **Structured editing depends on the generator's output following
+  convention.** The sidebar targets specific IDs/classes
+  (`#site-title`, `#hero-headline`, `#cta-button`, `.site-section`,
+  `--primary-color`) that the generation prompt requires the model to
+  use — an LLM occasionally drifting from instructions means a given
+  site might be missing one or two controls (the sidebar just hides
+  what it can't find, rather than erroring). Sites generated before this
+  existed have none of these markers at all — freeform edit still works
+  on those, they just don't get sidebar controls unless re-generated.
+  Image swapping and adding/removing whole sections still aren't
+  supported by either editing mode. Editing is also locked once a job
+  has gone live — the repo becomes the source of truth at that point,
+  and this app doesn't push further edits into it.
 - **No auth** — anyone with a `jobId` can view or edit that draft.
 - **No queue** — generation, storage writes, and repo creation all run
   inline in the request. Fine at low volume, worth revisiting as usage
@@ -180,6 +218,17 @@ needs access, this is the first thing to upgrade to real accounts.
   `?paid=1&reference=...`, nothing checks that reference again — the job
   just sits at `pending_payment`. The webhook is the real safety net for
   that case, as long as it's configured and reachable.
+- **4 MB upload limit, enforced by Vercel itself.** Vercel's serverless
+  functions hard-cap request bodies at 4.5 MB on every plan, and it isn't
+  configurable — not via `next.config.js`, not via `vercel.json`. The app
+  only ever reads `profile.json`/`posts_*.json` out of the export (see
+  `lib/parseInstagramExport.ts`), so this is rarely a real constraint if
+  someone exports just Profile information + Posts as the how-to-export
+  guide now instructs — but a full "everything" export with messages and
+  media attached will hit this wall. If you host this app elsewhere
+  (Render, a VM) instead of Vercel, this specific limit goes away, but the
+  `MAX_FILE_BYTES` check in `app/api/generate/route.ts` still applies as a
+  sane default — raise it there if you want to.
 - **No cleanup job for abandoned drafts** — a visitor who generates a site
   and never pays leaves their files sitting in the `sites` bucket
   indefinitely (harmless, since nothing's created in GitHub, but worth a
