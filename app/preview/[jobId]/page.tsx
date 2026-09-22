@@ -7,6 +7,19 @@ type Phase = "editing" | "modal" | "verifying" | "polling" | "live" | "failed" |
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+interface SiteFields {
+  title: string;
+  headline: string;
+  subheadline: string;
+  ctaText: string;
+  ctaLink: string;
+  primaryColor: string;
+}
+
+interface SectionInfo {
+  name: string;
+}
+
 export default function PreviewPage() {
   const { jobId } = useParams<{ jobId: string }>();
   const searchParams = useSearchParams();
@@ -22,7 +35,108 @@ export default function PreviewPage() {
   const [siteUrl, setSiteUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  // Structured "Design" panel state -- read from the live iframe DOM once it
+  // loads, then kept in sync as the person edits. null field = this
+  // particular site (likely generated before these markers existed) doesn't
+  // have that element, so its control is hidden rather than erroring.
+  const [fields, setFields] = useState<Partial<SiteFields>>({});
+  const [sections, setSections] = useState<SectionInfo[]>([]);
+  const [fieldsAvailable, setFieldsAvailable] = useState(false);
+
   const previewSrc = `/api/site/${jobId}/index.html`;
+
+  function markDirty() {
+    setSaved(false);
+  }
+
+  function scanIframe() {
+    const doc = iframeRef.current?.contentDocument;
+    if (!doc) return;
+
+    const titleEl = doc.getElementById("site-title");
+    const headlineEl = doc.getElementById("hero-headline");
+    const subheadlineEl = doc.getElementById("hero-subheadline");
+    const ctaEl = doc.getElementById("cta-button") as HTMLAnchorElement | null;
+    const primaryColor = getComputedStyle(doc.documentElement)
+      .getPropertyValue("--primary-color")
+      .trim();
+
+    const found = !!(titleEl || headlineEl || ctaEl);
+    setFieldsAvailable(found);
+    setFields({
+      title: titleEl?.textContent ?? undefined,
+      headline: headlineEl?.textContent ?? undefined,
+      subheadline: subheadlineEl?.textContent ?? undefined,
+      ctaText: ctaEl?.textContent ?? undefined,
+      ctaLink: ctaEl?.getAttribute("href") ?? undefined,
+      primaryColor: primaryColor || undefined,
+    });
+
+    const sectionNodes = Array.from(doc.querySelectorAll(".site-section"));
+    setSections(
+      sectionNodes.map((el, i) => ({
+        name: el.getAttribute("data-section-name") || `Section ${i + 1}`,
+      }))
+    );
+  }
+
+  function onIframeLoad() {
+    const doc = iframeRef.current?.contentDocument;
+    if (editing && doc) doc.designMode = "on";
+    scanIframe();
+  }
+
+  function updateField(key: keyof SiteFields, value: string) {
+    const doc = iframeRef.current?.contentDocument;
+    if (!doc) return;
+
+    setFields((prev) => ({ ...prev, [key]: value }));
+
+    if (key === "title") {
+      const el = doc.getElementById("site-title");
+      if (el) el.textContent = value;
+    } else if (key === "headline") {
+      const el = doc.getElementById("hero-headline");
+      if (el) el.textContent = value;
+    } else if (key === "subheadline") {
+      const el = doc.getElementById("hero-subheadline");
+      if (el) el.textContent = value;
+    } else if (key === "ctaText") {
+      const el = doc.getElementById("cta-button");
+      if (el) el.textContent = value;
+    } else if (key === "ctaLink") {
+      const el = doc.getElementById("cta-button");
+      if (el) el.setAttribute("href", value);
+    } else if (key === "primaryColor") {
+      doc.documentElement.style.setProperty("--primary-color", value);
+    }
+    markDirty();
+  }
+
+  function moveSection(index: number, direction: -1 | 1) {
+    const doc = iframeRef.current?.contentDocument;
+    if (!doc) return;
+    const target = index + direction;
+    if (target < 0 || target >= sections.length) return;
+
+    const nodes = Array.from(doc.querySelectorAll(".site-section"));
+    const a = nodes[index];
+    const b = nodes[target];
+    if (!a || !b || !a.parentNode) return;
+
+    if (direction === 1) {
+      a.parentNode.insertBefore(a, b.nextSibling);
+    } else {
+      a.parentNode.insertBefore(a, b);
+    }
+
+    setSections((prev) => {
+      const next = [...prev];
+      [next[index], next[target]] = [next[target], next[index]];
+      return next;
+    });
+    markDirty();
+  }
 
   // Runs once, right after landing back on this page from Paystack.
   // Paystack's callback_url fires regardless of whether the payment
@@ -97,7 +211,6 @@ export default function PreviewPage() {
     const next = !editing;
     doc.designMode = next ? "on" : "off";
     setEditing(next);
-    setSaved(true);
   }
 
   async function saveEdits() {
@@ -153,6 +266,16 @@ export default function PreviewPage() {
 
   return (
     <main style={s.main}>
+      <style>{`
+        .editor-body { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+        .editor-sidebar { width: 100%; border-bottom: 1px solid #2a2a2a; overflow-y: auto; }
+        .editor-iframe-wrap { flex: 1; padding: 16px; min-height: 420px; }
+        @media (min-width: 860px) {
+          .editor-body { flex-direction: row; }
+          .editor-sidebar { width: 300px; border-bottom: none; border-right: 1px solid #2a2a2a; overflow-y: auto; }
+        }
+      `}</style>
+
       <header style={s.toolbar}>
         <div style={s.toolbarLeft}>
           <button
@@ -160,9 +283,9 @@ export default function PreviewPage() {
             style={editing ? s.buttonActive : s.button}
             disabled={phase !== "editing"}
           >
-            {editing ? "Editing (click to stop)" : "Edit content"}
+            {editing ? "Freeform edit (on)" : "Freeform edit"}
           </button>
-          {editing && (
+          {phase === "editing" && (
             <button onClick={saveEdits} style={s.button} disabled={saved}>
               Save changes
             </button>
@@ -180,18 +303,121 @@ export default function PreviewPage() {
         )}
       </header>
 
-      <div style={s.iframeWrap}>
-        <iframe
-          ref={iframeRef}
-          src={previewSrc}
-          style={s.iframe}
-          title="Site preview"
-          onLoad={() => {
-            if (editing && iframeRef.current?.contentDocument) {
-              iframeRef.current.contentDocument.designMode = "on";
-            }
-          }}
-        />
+      <div className="editor-body">
+        {phase === "editing" && (
+          <aside className="editor-sidebar" style={s.sidebar}>
+            {!fieldsAvailable && (
+              <p style={s.sidebarNote}>
+                This site was generated before structured editing existed —
+                re-upload your export to get headline/CTA/color/section
+                controls here. Freeform edit still works below.
+              </p>
+            )}
+
+            {fieldsAvailable && (
+              <>
+                {fields.title !== undefined && (
+                  <label style={s.fieldLabel}>
+                    Site title
+                    <input
+                      value={fields.title}
+                      onChange={(e) => updateField("title", e.target.value)}
+                      style={s.sidebarInput}
+                    />
+                  </label>
+                )}
+                {fields.headline !== undefined && (
+                  <label style={s.fieldLabel}>
+                    Headline
+                    <input
+                      value={fields.headline}
+                      onChange={(e) => updateField("headline", e.target.value)}
+                      style={s.sidebarInput}
+                    />
+                  </label>
+                )}
+                {fields.subheadline !== undefined && (
+                  <label style={s.fieldLabel}>
+                    Subheadline
+                    <input
+                      value={fields.subheadline}
+                      onChange={(e) => updateField("subheadline", e.target.value)}
+                      style={s.sidebarInput}
+                    />
+                  </label>
+                )}
+                {fields.ctaText !== undefined && (
+                  <label style={s.fieldLabel}>
+                    Button text
+                    <input
+                      value={fields.ctaText}
+                      onChange={(e) => updateField("ctaText", e.target.value)}
+                      style={s.sidebarInput}
+                    />
+                  </label>
+                )}
+                {fields.ctaLink !== undefined && (
+                  <label style={s.fieldLabel}>
+                    Button link
+                    <input
+                      value={fields.ctaLink}
+                      onChange={(e) => updateField("ctaLink", e.target.value)}
+                      style={s.sidebarInput}
+                    />
+                  </label>
+                )}
+                {fields.primaryColor !== undefined && (
+                  <label style={s.fieldLabel}>
+                    Brand color
+                    <input
+                      type="color"
+                      value={fields.primaryColor}
+                      onChange={(e) => updateField("primaryColor", e.target.value)}
+                      style={s.colorInput}
+                    />
+                  </label>
+                )}
+
+                {sections.length > 0 && (
+                  <div style={{ marginTop: 8 }}>
+                    <p style={s.fieldLabelText}>Section order</p>
+                    {sections.map((sec, i) => (
+                      <div key={`${sec.name}-${i}`} style={s.sectionRow}>
+                        <span style={s.sectionName}>{sec.name}</span>
+                        <div style={{ display: "flex", gap: 4 }}>
+                          <button
+                            onClick={() => moveSection(i, -1)}
+                            disabled={i === 0}
+                            style={s.moveButton}
+                          >
+                            ↑
+                          </button>
+                          <button
+                            onClick={() => moveSection(i, 1)}
+                            disabled={i === sections.length - 1}
+                            style={s.moveButton}
+                          >
+                            ↓
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+          </aside>
+        )}
+
+        <div className="editor-iframe-wrap">
+          <iframe
+            ref={iframeRef}
+            src={previewSrc}
+            style={s.iframe}
+            title="Site preview"
+            onLoad={onIframeLoad}
+          />
+        </div>
       </div>
 
       {phase === "modal" && (
@@ -296,8 +522,9 @@ const s: Record<string, React.CSSProperties> = {
   main: { minHeight: "100vh", background: "#0d0d0d", display: "flex", flexDirection: "column", fontFamily: "system-ui, sans-serif" },
   toolbar: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 20px", borderBottom: "1px solid #2a2a2a" },
   toolbarLeft: { display: "flex", gap: 8 },
-  iframeWrap: { flex: 1, padding: 16 },
-  iframe: { width: "100%", height: "calc(100vh - 100px)", border: "1px solid #2a2a2a", borderRadius: 8, background: "#fff" },
+  sidebar: { background: "#111111", padding: 16, display: "flex", flexDirection: "column", gap: 12 },
+  sidebarNote: { color: "#a3a3a3", fontSize: 12, lineHeight: 1.5, margin: 0 },
+  iframe: { width: "100%", height: "100%", minHeight: 420, border: "1px solid #2a2a2a", borderRadius: 8, background: "#fff" },
   button: { background: "transparent", color: "#d4d4d4", border: "1px solid #2a2a2a", borderRadius: 8, padding: "8px 14px", fontSize: 13, cursor: "pointer" },
   buttonActive: { background: "#f5f5f5", color: "#0d0d0d", border: "1px solid #f5f5f5", borderRadius: 8, padding: "8px 14px", fontSize: 13, cursor: "pointer" },
   primaryButton: { background: "#22c55e", color: "#052e12", border: "none", borderRadius: 8, padding: "8px 18px", fontSize: 13, fontWeight: 500, cursor: "pointer" },
@@ -306,7 +533,13 @@ const s: Record<string, React.CSSProperties> = {
   modal: { background: "#171717", border: "1px solid #2a2a2a", borderRadius: 12, padding: 28, width: 360 },
   modalHeading: { color: "#f5f5f5", fontSize: 18, fontWeight: 500, margin: "0 0 8px" },
   modalSub: { color: "#a3a3a3", fontSize: 13, margin: "0 0 16px" },
-  fieldLabel: { display: "block", color: "#a3a3a3", fontSize: 12, marginBottom: 6 },
+  fieldLabel: { display: "flex", flexDirection: "column", gap: 6, color: "#a3a3a3", fontSize: 12 },
+  fieldLabelText: { color: "#a3a3a3", fontSize: 12, margin: "0 0 8px" },
+  sidebarInput: { background: "#0d0d0d", border: "1px solid #2a2a2a", borderRadius: 6, padding: "8px 10px", color: "#f5f5f5", fontSize: 13, outline: "none" },
+  colorInput: { width: "100%", height: 32, background: "#0d0d0d", border: "1px solid #2a2a2a", borderRadius: 6, padding: 2, cursor: "pointer" },
+  sectionRow: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0", borderTop: "1px solid #1f1f1f" },
+  sectionName: { color: "#d4d4d4", fontSize: 12 },
+  moveButton: { background: "transparent", color: "#d4d4d4", border: "1px solid #2a2a2a", borderRadius: 4, padding: "2px 8px", fontSize: 12, cursor: "pointer" },
   emailInput: { width: "100%", background: "#0d0d0d", border: "1px solid #2a2a2a", borderRadius: 8, padding: "10px 12px", color: "#f5f5f5", fontSize: 14, outline: "none", marginBottom: 16, boxSizing: "border-box" },
   usernameRow: { display: "flex", alignItems: "center", border: "1px solid #2a2a2a", borderRadius: 8, overflow: "hidden" },
   usernameInput: { flex: 1, background: "#0d0d0d", border: "none", padding: "10px 12px", color: "#f5f5f5", fontSize: 14, outline: "none" },
