@@ -10,6 +10,11 @@ import type { InstagramProfile } from "./parseInstagramExport";
  * token caps as of writing) — fine for a low-volume site generator, but
  * worth checking console.groq.com/settings/limits if generation starts
  * throwing 429s under real usage.
+ *
+ * Model: Groq deprecated llama-3.3-70b-versatile on 2026-08-16 (see
+ * console.groq.com/docs/deprecations) and it now 404s. openai/gpt-oss-120b
+ * is their recommended replacement -- if Groq deprecates this one too in
+ * the future, that same page will list the next recommended model ID.
  */
 export async function generateSite(
   profile: InstagramProfile
@@ -21,7 +26,7 @@ export async function generateSite(
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      model: "llama-3.3-70b-versatile",
+      model: "openai/gpt-oss-120b",
       max_tokens: 8000,
       messages: [{ role: "user", content: buildPrompt(profile) }],
     }),
