@@ -63,6 +63,24 @@ Requirements:
 - No placeholder lorem ipsum — write real copy grounded in the data above.
 - Do not invent contact details, prices, or claims not implied by the data.
 
+Structural markers -- REQUIRED, exact IDs/classes below, because a visual
+editor targets these elements directly:
+- The business/creator name in the header: wrap it in <span id="site-title">.
+- The main hero headline: wrap it in an element with id="hero-headline".
+- The hero subheadline/tagline directly below it: id="hero-subheadline".
+- The primary call-to-action button: <a id="cta-button" href="#contact"
+  class="cta-button">Button Text</a> (use a real href, not empty).
+- Wrap EVERY top-level content block (hero, about, services, gallery,
+  contact, etc.) in <section class="site-section" data-section-name="Human
+  Readable Name">...</section> — these become reorderable blocks in the
+  editor, so every major visual section needs this wrapper with a distinct,
+  descriptive data-section-name.
+- In styles.css, define the site's single accent/brand color as a CSS
+  custom property on :root: :root { --primary-color: #yourcolor; } and use
+  var(--primary-color) everywhere that color is used (buttons, links,
+  accents) instead of hardcoding the hex value more than once. This lets
+  the editor recolor the whole site by changing one variable.
+
 Output EXACTLY this format, nothing before or after, no markdown fences:
 
 ===HTML===
