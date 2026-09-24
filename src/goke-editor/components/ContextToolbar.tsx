@@ -1,6 +1,6 @@
 /**
- * Floating context toolbar on the selected element
- * Duplicate · Delete · Move up/down
+ * Floating context toolbar
+ * Move · Duplicate · Copy style · Paste style · Save template · Delete
  */
 
 "use client";
@@ -14,6 +14,10 @@ interface ContextToolbarProps {
   onDelete: () => void;
   onMoveUp: () => void;
   onMoveDown: () => void;
+  onCopyStyle?: () => void;
+  onPasteStyle?: () => void;
+  onSaveTemplate?: () => void;
+  canPasteStyle?: boolean;
 }
 
 export function ContextToolbar({
@@ -23,6 +27,10 @@ export function ContextToolbar({
   onDelete,
   onMoveUp,
   onMoveDown,
+  onCopyStyle,
+  onPasteStyle,
+  onSaveTemplate,
+  canPasteStyle,
 }: ContextToolbarProps) {
   const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
 
@@ -53,7 +61,7 @@ export function ContextToolbar({
   return (
     <div
       className="goke-context-toolbar"
-      style={{ top: pos.top, left: pos.left }}
+      style={{ top: pos.top, left: Math.max(8, pos.left) }}
     >
       <button type="button" title="Move up" onClick={onMoveUp}>
         ↑
@@ -64,6 +72,26 @@ export function ContextToolbar({
       <button type="button" title="Duplicate" onClick={onDuplicate}>
         Duplicate
       </button>
+      {onCopyStyle && (
+        <button type="button" title="Copy styles" onClick={onCopyStyle}>
+          Copy style
+        </button>
+      )}
+      {onPasteStyle && (
+        <button
+          type="button"
+          title="Paste styles"
+          onClick={onPasteStyle}
+          disabled={!canPasteStyle}
+        >
+          Paste style
+        </button>
+      )}
+      {onSaveTemplate && (
+        <button type="button" title="Save as template" onClick={onSaveTemplate}>
+          Save template
+        </button>
+      )}
       <button
         type="button"
         title="Delete"
