@@ -4,7 +4,7 @@
 
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import type { NavNode } from "../types/document";
 
 interface NavigatorProps {
@@ -22,21 +22,45 @@ function NodeRow({
   selectedElement: HTMLElement | null;
   onSelect: (el: HTMLElement) => void;
 }) {
+  const [open, setOpen] = useState(node.depth < 2);
   const active = selectedElement === node.element;
+  const hasKids = node.children.length > 0;
+
   return (
-    <li>
-      <button
-        type="button"
+    <li className="goke-nav-li">
+      <div
         className={`goke-nav-item ${active ? "active" : ""}`}
-        style={{ paddingLeft: 8 + node.depth * 12 }}
-        onClick={() => onSelect(node.element)}
-        title={node.tag}
+        style={{ paddingLeft: 8 + node.depth * 14 }}
       >
-        <span className="goke-nav-tag">{node.tag}</span>
-        <span className="goke-nav-label">{node.label}</span>
-      </button>
-      {node.children.length > 0 && (
-        <ul>
+        {hasKids ? (
+          <button
+            type="button"
+            className="goke-nav-caret"
+            aria-label={open ? "Collapse" : "Expand"}
+            onClick={(e) => {
+              e.stopPropagation();
+              setOpen((v) => !v);
+            }}
+          >
+            {open ? "▾" : "▸"}
+          </button>
+        ) : (
+          <span className="goke-nav-caret-spacer" />
+        )}
+        <button
+          type="button"
+          className="goke-nav-main"
+          onClick={() => onSelect(node.element)}
+          title={node.tag}
+        >
+          <span className="goke-nav-icon" aria-hidden>
+            {node.icon || "◇"}
+          </span>
+          <span className="goke-nav-label">{node.label}</span>
+        </button>
+      </div>
+      {hasKids && open && (
+        <ul className="goke-nav-children">
           {node.children.map((child) => (
             <NodeRow
               key={child.id}
