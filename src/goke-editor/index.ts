@@ -62,6 +62,11 @@ export type {
   SectionTemplate,
 } from "./types/document";
 
-export { GOOGLE_FONTS, ensureGoogleFontsInDocument, fontSelectOptions } from "./data/google-fonts";
-export { ICONS, iconSvgMarkup, searchIcons, getIcon } from "./data/icons";
-export { IconPicker } from "./components/IconPicker";
+export {
+  STARTER_TEMPLATES,
+  starterCategories,
+  startersByCategory,
+  findStarter,
+} from "./data/starter-templates";
+export type { StarterTemplate } from "./data/starter-templates";
+export { loadStarterHtml, bodyInnerFromHtml } from "./core/load-starter";
