@@ -1,154 +1,132 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+/**
+ * Preview + visual editor for a generated site.
+ *
+ * - iframe loads the stored site from /api/site/[jobId]/index.html
+ * - Goke Builder attaches for Elementor-style select / drag / properties
+ * - Save still PUTs full HTML back to the same API
+ * - Payment / deploy phase machine is unchanged
+ */
+
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 
-type Phase = "editing" | "modal" | "verifying" | "polling" | "live" | "failed" | "payment_failed";
+import { Builder } from "@/src/goke-editor/core/builder";
+import { Undo } from "@/src/goke-editor/core/undo";
+import { styleManager } from "@/src/goke-editor/core/style-manager";
+import { registry } from "@/src/goke-editor/core/registry";
+import type {
+  ComponentDefinition,
+  ComponentProperty,
+  EditorState,
+} from "@/src/goke-editor/types";
+import { ComponentPalette } from "@/src/goke-editor/components/ComponentPalette";
+import { PropertiesPanel } from "@/src/goke-editor/components/PropertiesPanel";
+import { matchSiteElement } from "@/src/goke-editor/components/site-markers";
+
+// Register palette components + site markers
+import "@/src/goke-editor/components/goke-components";
+import "@/src/goke-editor/components/site-markers";
+
+import "@/src/goke-editor/styles/editor.css";
+
+type Phase =
+  | "editing"
+  | "modal"
+  | "verifying"
+  | "polling"
+  | "live"
+  | "failed"
+  | "payment_failed";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-interface SiteFields {
-  title: string;
-  headline: string;
-  subheadline: string;
-  ctaText: string;
-  ctaLink: string;
-  primaryColor: string;
-}
-
-interface SectionInfo {
-  name: string;
-}
 
 export default function PreviewPage() {
   const { jobId } = useParams<{ jobId: string }>();
   const searchParams = useSearchParams();
   const paid = searchParams.get("paid");
-  const reference = searchParams.get("reference") || searchParams.get("trxref");
+  const reference =
+    searchParams.get("reference") || searchParams.get("trxref");
 
   const iframeRef = useRef<HTMLIFrameElement>(null);
-  const [editing, setEditing] = useState(false);
+  const builderRef = useRef<Builder | null>(null);
+
   const [saved, setSaved] = useState(true);
   const [phase, setPhase] = useState<Phase>(paid ? "verifying" : "editing");
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [siteUrl, setSiteUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [builderReady, setBuilderReady] = useState(false);
 
-  // Structured "Design" panel state -- read from the live iframe DOM once it
-  // loads, then kept in sync as the person edits. null field = this
-  // particular site (likely generated before these markers existed) doesn't
-  // have that element, so its control is hidden rather than erroring.
-  const [fields, setFields] = useState<Partial<SiteFields>>({});
-  const [sections, setSections] = useState<SectionInfo[]>([]);
-  const [fieldsAvailable, setFieldsAvailable] = useState(false);
+  const [selectedElement, setSelectedElement] =
+    useState<HTMLElement | null>(null);
+  const [selectedComponent, setSelectedComponent] =
+    useState<ComponentDefinition | null>(null);
+  const [canUndo, setCanUndo] = useState(false);
+  const [canRedo, setCanRedo] = useState(false);
+  const [device, setDevice] =
+    useState<EditorState["device"]>("desktop");
 
   const previewSrc = `/api/site/${jobId}/index.html`;
 
-  function markDirty() {
-    setSaved(false);
-  }
+  // ── Attach Goke Builder once the iframe has loaded the site ──
 
-  function scanIframe() {
-    const doc = iframeRef.current?.contentDocument;
-    if (!doc) return;
+  const attachBuilder = useCallback(async () => {
+    const iframe = iframeRef.current;
+    if (!iframe) return;
 
-    const titleEl = doc.getElementById("site-title");
-    const headlineEl = doc.getElementById("hero-headline");
-    const subheadlineEl = doc.getElementById("hero-subheadline");
-    const ctaEl = doc.getElementById("cta-button") as HTMLAnchorElement | null;
-    const primaryColor = getComputedStyle(doc.documentElement)
-      .getPropertyValue("--primary-color")
-      .trim();
+    builderRef.current?.destroy();
 
-    const found = !!(titleEl || headlineEl || ctaEl);
-    setFieldsAvailable(found);
-    setFields({
-      title: titleEl?.textContent ?? undefined,
-      headline: headlineEl?.textContent ?? undefined,
-      subheadline: subheadlineEl?.textContent ?? undefined,
-      ctaText: ctaEl?.textContent ?? undefined,
-      ctaLink: ctaEl?.getAttribute("href") ?? undefined,
-      primaryColor: primaryColor || undefined,
+    const builder = new Builder();
+    builderRef.current = builder;
+
+    await builder.attach(iframe);
+
+    builder.on("select", ({ element }: { element: HTMLElement | null }) => {
+      if (!element) {
+        setSelectedElement(null);
+        setSelectedComponent(null);
+        return;
+      }
+      const component =
+        matchSiteElement(element) ?? registry.matchNode(element);
+      setSelectedElement(element);
+      setSelectedComponent(component);
     });
 
-    const sectionNodes = Array.from(doc.querySelectorAll(".site-section"));
-    setSections(
-      sectionNodes.map((el, i) => ({
-        name: el.getAttribute("data-section-name") || `Section ${i + 1}`,
-      }))
-    );
-  }
+    builder.on("change", () => {
+      setSaved(false);
+    });
+
+    setBuilderReady(true);
+  }, []);
 
   function onIframeLoad() {
-    const doc = iframeRef.current?.contentDocument;
-    if (editing && doc) doc.designMode = "on";
-    scanIframe();
+    attachBuilder();
   }
 
-  function updateField(key: keyof SiteFields, value: string) {
-    const doc = iframeRef.current?.contentDocument;
-    if (!doc) return;
+  useEffect(() => {
+    const onUndoChange = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      setCanUndo(detail.canUndo);
+      setCanRedo(detail.canRedo);
+    };
+    window.addEventListener("goke.undo.change", onUndoChange);
+    return () => {
+      window.removeEventListener("goke.undo.change", onUndoChange);
+      builderRef.current?.destroy();
+      builderRef.current = null;
+    };
+  }, []);
 
-    setFields((prev) => ({ ...prev, [key]: value }));
+  // ── Payment verification (unchanged) ──
 
-    if (key === "title") {
-      const el = doc.getElementById("site-title");
-      if (el) el.textContent = value;
-    } else if (key === "headline") {
-      const el = doc.getElementById("hero-headline");
-      if (el) el.textContent = value;
-    } else if (key === "subheadline") {
-      const el = doc.getElementById("hero-subheadline");
-      if (el) el.textContent = value;
-    } else if (key === "ctaText") {
-      const el = doc.getElementById("cta-button");
-      if (el) el.textContent = value;
-    } else if (key === "ctaLink") {
-      const el = doc.getElementById("cta-button");
-      if (el) el.setAttribute("href", value);
-    } else if (key === "primaryColor") {
-      doc.documentElement.style.setProperty("--primary-color", value);
-    }
-    markDirty();
-  }
-
-  function moveSection(index: number, direction: -1 | 1) {
-    const doc = iframeRef.current?.contentDocument;
-    if (!doc) return;
-    const target = index + direction;
-    if (target < 0 || target >= sections.length) return;
-
-    const nodes = Array.from(doc.querySelectorAll(".site-section"));
-    const a = nodes[index];
-    const b = nodes[target];
-    if (!a || !b || !a.parentNode) return;
-
-    if (direction === 1) {
-      a.parentNode.insertBefore(a, b.nextSibling);
-    } else {
-      a.parentNode.insertBefore(a, b);
-    }
-
-    setSections((prev) => {
-      const next = [...prev];
-      [next[index], next[target]] = [next[target], next[index]];
-      return next;
-    });
-    markDirty();
-  }
-
-  // Runs once, right after landing back on this page from Paystack.
-  // Paystack's callback_url fires regardless of whether the payment
-  // succeeded, failed, or was abandoned, so this is what actually tells
-  // those outcomes apart -- otherwise a failed payment would leave the
-  // customer staring at "Creating live website..." forever.
   useEffect(() => {
     if (phase !== "verifying") return;
 
     if (!reference) {
-      // No reference to check (shouldn't normally happen) -- fall back to
-      // just waiting on the webhook, same as before.
       setPhase("polling");
       return;
     }
@@ -175,8 +153,6 @@ export default function PreviewPage() {
           setError(data.error);
           setPhase("failed");
         } else {
-          // "deploying" -- payment confirmed, repo created, now waiting on
-          // you to import it into Vercel. Hand off to the existing poll.
           setPhase("polling");
         }
       } catch (err: any) {
@@ -186,7 +162,8 @@ export default function PreviewPage() {
     })();
   }, [phase, jobId, reference]);
 
-  // Poll job status while waiting for you to import the repo into Vercel.
+  // ── Poll deploy status (unchanged) ──
+
   useEffect(() => {
     if (phase !== "polling") return;
     const interval = setInterval(async () => {
@@ -205,21 +182,68 @@ export default function PreviewPage() {
     return () => clearInterval(interval);
   }, [phase, jobId]);
 
-  function toggleEdit() {
-    const doc = iframeRef.current?.contentDocument;
-    if (!doc) return;
-    const next = !editing;
-    doc.designMode = next ? "on" : "off";
-    setEditing(next);
-  }
+  // ── Editor actions ──
+
+  const handleUndo = useCallback(() => {
+    Undo.undo();
+    setSaved(false);
+  }, []);
+
+  const handleRedo = useCallback(() => {
+    Undo.redo();
+    setSaved(false);
+  }, []);
 
   async function saveEdits() {
+    const builder = builderRef.current;
     const doc = iframeRef.current?.contentDocument;
     if (!doc) return;
-    const html = "<!DOCTYPE html>\n" + doc.documentElement.outerHTML;
-    await fetch(`/api/site/${jobId}/index.html`, { method: "PUT", body: html });
+
+    const html =
+      builder?.getHtml() ||
+      "<!DOCTYPE html>\n" + doc.documentElement.outerHTML;
+
+    await fetch(`/api/site/${jobId}/index.html`, {
+      method: "PUT",
+      body: html,
+    });
     setSaved(true);
   }
+
+  function startDrag(type: string, e: React.DragEvent) {
+    builderRef.current?.startDrag(type, e.nativeEvent);
+  }
+
+  function updateProperty(
+    key: string,
+    value: string | number | boolean,
+    property: ComponentProperty
+  ) {
+    const el = selectedElement;
+    const builder = builderRef.current;
+    if (!el || !builder) return;
+
+    let target = el;
+    if (property.child) {
+      const child = el.querySelector(property.child) as HTMLElement | null;
+      if (child) target = child;
+    }
+
+    if (property.onChange) {
+      const result = property.onChange(target, value);
+      if (result instanceof HTMLElement) {
+        builder.selectNode(result);
+      }
+    } else if (property.htmlAttr) {
+      builder.setAttribute(target, property.htmlAttr, String(value));
+    } else if (property.cssProperty) {
+      styleManager.setStyle(target, property.cssProperty, String(value));
+    }
+
+    setSaved(false);
+  }
+
+  // ── Payment / deploy (unchanged) ──
 
   async function goLive() {
     setError(null);
@@ -239,7 +263,11 @@ export default function PreviewPage() {
     const res = await fetch("/api/checkout", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ jobId, username: username.trim(), email: email.trim() }),
+      body: JSON.stringify({
+        jobId,
+        username: username.trim(),
+        email: email.trim(),
+      }),
     });
     const data = await res.json();
     if (!res.ok) {
@@ -264,286 +292,303 @@ export default function PreviewPage() {
     }
   }
 
-  return (
-    <main style={s.main}>
-      <style>{`
-        .editor-body { display: flex; flex-direction: column; flex: 1; min-height: 0; }
-        .editor-sidebar { width: 100%; border-bottom: 1px solid #2a2a2a; overflow-y: auto; }
-        .editor-iframe-wrap { flex: 1; padding: 16px; min-height: 420px; }
-        @media (min-width: 860px) {
-          .editor-body { flex-direction: row; }
-          .editor-sidebar { width: 300px; border-bottom: none; border-right: 1px solid #2a2a2a; overflow-y: auto; }
-        }
-      `}</style>
+  const deviceWidths: Record<string, string> = {
+    desktop: "100%",
+    tablet: "768px",
+    mobile: "390px",
+  };
 
-      <header style={s.toolbar}>
-        <div style={s.toolbarLeft}>
-          <button
-            onClick={toggleEdit}
-            style={editing ? s.buttonActive : s.button}
-            disabled={phase !== "editing"}
-          >
-            {editing ? "Freeform edit (on)" : "Freeform edit"}
-          </button>
-          {phase === "editing" && (
-            <button onClick={saveEdits} style={s.button} disabled={saved}>
-              Save changes
+  return (
+    <div className="goke-editor" style={{ height: "100vh" }}>
+      <header className="goke-toolbar">
+        <div className="goke-toolbar-left">
+          <span className="goke-logo">gòke</span>
+          <div className="goke-toolbar-group">
+            <button
+              type="button"
+              disabled={!canUndo}
+              onClick={handleUndo}
+              title="Undo"
+            >
+              ↶ Undo
             </button>
+            <button
+              type="button"
+              disabled={!canRedo}
+              onClick={handleRedo}
+              title="Redo"
+            >
+              ↷ Redo
+            </button>
+          </div>
+          {!saved && (
+            <span style={{ color: "#fbbf24", fontSize: 12 }}>Unsaved</span>
           )}
         </div>
-        {phase === "editing" && (
-          <button onClick={goLive} style={s.primaryButton}>
-            Go live
-          </button>
-        )}
-        {phase === "live" && siteUrl && (
-          <a href={siteUrl} target="_blank" rel="noreferrer" style={s.liveLink}>
-            Live at {siteUrl}
-          </a>
-        )}
+
+        <div className="goke-toolbar-center">
+          <div className="goke-device-switch">
+            {(
+              [
+                ["desktop", "Desktop"],
+                ["tablet", "Tablet"],
+                ["mobile", "Mobile"],
+              ] as const
+            ).map(([id, label]) => (
+              <button
+                key={id}
+                type="button"
+                className={device === id ? "active" : ""}
+                onClick={() => setDevice(id)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="goke-toolbar-right">
+          {phase === "live" && siteUrl ? (
+            <a
+              href={siteUrl}
+              target="_blank"
+              rel="noreferrer"
+              style={{ color: "#4ade80", fontSize: 13 }}
+            >
+              {siteUrl.replace(/^https?:\/\//, "")}
+            </a>
+          ) : phase === "polling" || phase === "verifying" ? (
+            <span style={{ color: "#a3a3a3", fontSize: 13 }}>
+              Creating live website…
+            </span>
+          ) : phase === "failed" ? (
+            <button type="button" onClick={retryDeploy}>
+              Retry deploy
+            </button>
+          ) : phase === "payment_failed" ? (
+            <button type="button" className="goke-btn-primary" onClick={goLive}>
+              Try payment again
+            </button>
+          ) : (
+            <>
+              <button type="button" onClick={saveEdits} disabled={saved}>
+                {saved ? "Saved" : "Save changes"}
+              </button>
+              <button
+                type="button"
+                className="goke-btn-primary"
+                onClick={goLive}
+              >
+                Go live
+              </button>
+            </>
+          )}
+        </div>
       </header>
 
-      <div className="editor-body">
-        {phase === "editing" && (
-          <aside className="editor-sidebar" style={s.sidebar}>
-            {!fieldsAvailable && (
-              <p style={s.sidebarNote}>
-                This site was generated before structured editing existed —
-                re-upload your export to get headline/CTA/color/section
-                controls here. Freeform edit still works below.
-              </p>
-            )}
-
-            {fieldsAvailable && (
-              <>
-                {fields.title !== undefined && (
-                  <label style={s.fieldLabel}>
-                    Site title
-                    <input
-                      value={fields.title}
-                      onChange={(e) => updateField("title", e.target.value)}
-                      style={s.sidebarInput}
-                    />
-                  </label>
-                )}
-                {fields.headline !== undefined && (
-                  <label style={s.fieldLabel}>
-                    Headline
-                    <input
-                      value={fields.headline}
-                      onChange={(e) => updateField("headline", e.target.value)}
-                      style={s.sidebarInput}
-                    />
-                  </label>
-                )}
-                {fields.subheadline !== undefined && (
-                  <label style={s.fieldLabel}>
-                    Subheadline
-                    <input
-                      value={fields.subheadline}
-                      onChange={(e) => updateField("subheadline", e.target.value)}
-                      style={s.sidebarInput}
-                    />
-                  </label>
-                )}
-                {fields.ctaText !== undefined && (
-                  <label style={s.fieldLabel}>
-                    Button text
-                    <input
-                      value={fields.ctaText}
-                      onChange={(e) => updateField("ctaText", e.target.value)}
-                      style={s.sidebarInput}
-                    />
-                  </label>
-                )}
-                {fields.ctaLink !== undefined && (
-                  <label style={s.fieldLabel}>
-                    Button link
-                    <input
-                      value={fields.ctaLink}
-                      onChange={(e) => updateField("ctaLink", e.target.value)}
-                      style={s.sidebarInput}
-                    />
-                  </label>
-                )}
-                {fields.primaryColor !== undefined && (
-                  <label style={s.fieldLabel}>
-                    Brand color
-                    <input
-                      type="color"
-                      value={fields.primaryColor}
-                      onChange={(e) => updateField("primaryColor", e.target.value)}
-                      style={s.colorInput}
-                    />
-                  </label>
-                )}
-
-                {sections.length > 0 && (
-                  <div style={{ marginTop: 8 }}>
-                    <p style={s.fieldLabelText}>Section order</p>
-                    {sections.map((sec, i) => (
-                      <div key={`${sec.name}-${i}`} style={s.sectionRow}>
-                        <span style={s.sectionName}>{sec.name}</span>
-                        <div style={{ display: "flex", gap: 4 }}>
-                          <button
-                            onClick={() => moveSection(i, -1)}
-                            disabled={i === 0}
-                            style={s.moveButton}
-                          >
-                            ↑
-                          </button>
-                          <button
-                            onClick={() => moveSection(i, 1)}
-                            disabled={i === sections.length - 1}
-                            style={s.moveButton}
-                          >
-                            ↓
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </>
-            )}
-          </aside>
-        )}
-
-        <div className="editor-iframe-wrap">
-          <iframe
-            ref={iframeRef}
-            src={previewSrc}
-            style={s.iframe}
-            title="Site preview"
-            onLoad={onIframeLoad}
-          />
+      {(phase === "failed" || phase === "payment_failed") && error && (
+        <div
+          style={{
+            background: "#450a0a",
+            color: "#fca5a5",
+            padding: "8px 16px",
+            fontSize: 13,
+          }}
+        >
+          {error}
         </div>
+      )}
+
+      <div className="goke-workspace">
+        <ComponentPalette onDragStart={startDrag} />
+
+        <main className="goke-canvas-wrap" style={{ position: "relative" }}>
+          <div
+            className="goke-canvas-frame"
+            style={{
+              width: deviceWidths[device],
+              maxWidth: "100%",
+              margin: "0 auto",
+              transition: "width 0.25s ease",
+            }}
+          >
+            <iframe
+              ref={iframeRef}
+              title="Site preview"
+              src={previewSrc}
+              className="goke-canvas"
+              sandbox="allow-same-origin allow-scripts"
+              onLoad={onIframeLoad}
+            />
+          </div>
+          {!builderReady && (
+            <div
+              style={{
+                position: "absolute",
+                inset: 0,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "#9aa0a6",
+                pointerEvents: "none",
+              }}
+            >
+              Loading editor…
+            </div>
+          )}
+        </main>
+
+        <PropertiesPanel
+          element={selectedElement}
+          component={selectedComponent}
+          onUpdate={updateProperty}
+        />
       </div>
 
       {phase === "modal" && (
         <div style={s.overlay}>
           <div style={s.modal}>
-            <h2 style={s.modalHeading}>Ready to go live?</h2>
-            <p style={s.modalSub}>Support the platform with $9 to publish your site.</p>
+            <h2 style={s.modalHeading}>Go live</h2>
+            <p style={s.modalSub}>
+              Pick a subdomain and email. You&apos;ll pay on the next screen,
+              then we&apos;ll publish your site.
+            </p>
 
-            <label style={s.fieldLabel}>Email (for your Paystack receipt)</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
-              style={s.emailInput}
-              autoComplete="email"
-            />
+            <label style={s.fieldLabel}>
+              Subdomain
+              <div style={s.usernameRow}>
+                <input
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="yourname"
+                  style={s.usernameInput}
+                />
+                <span style={s.usernameSuffix}>.vercel.app</span>
+              </div>
+            </label>
 
-            <label style={s.fieldLabel}>Subdomain</label>
-            <div style={s.usernameRow}>
+            <label style={{ ...s.fieldLabel, marginTop: 12 }}>
+              Email
               <input
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="yourname"
-                style={s.usernameInput}
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@example.com"
+                style={s.emailInput}
               />
-              <span style={s.usernameSuffix}>.vercel.app</span>
-            </div>
+            </label>
 
             {error && <p style={s.error}>{error}</p>}
+
             <div style={s.modalActions}>
-              <button onClick={() => setPhase("editing")} style={s.button}>
-                Cancel
-              </button>
-              <button onClick={confirmPayment} style={s.primaryButton}>
-                Pay $9 and go live
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {phase === "verifying" && (
-        <div style={s.overlay}>
-          <div style={s.modal}>
-            <h2 style={s.modalHeading}>Confirming your payment…</h2>
-            <p style={s.modalSub}>One moment while we check with Paystack.</p>
-          </div>
-        </div>
-      )}
-
-      {phase === "polling" && (
-        <div style={s.overlay}>
-          <div style={s.modal}>
-            <h2 style={s.modalHeading}>Creating live website…</h2>
-            <p style={s.modalSub}>Payment confirmed — your site will be live shortly.</p>
-          </div>
-        </div>
-      )}
-
-      {phase === "payment_failed" && (
-        <div style={s.overlay}>
-          <div style={s.modal}>
-            <h2 style={{ ...s.modalHeading, color: "#f87171" }}>Payment wasn't completed</h2>
-            <p style={s.modalSub}>{error || "The payment was cancelled or didn't go through."}</p>
-            <div style={s.modalActions}>
-              <button onClick={() => setPhase("editing")} style={s.button}>
-                Keep editing
-              </button>
               <button
+                type="button"
+                style={s.button}
                 onClick={() => {
                   setError(null);
-                  setPhase("modal");
+                  setPhase("editing");
                 }}
-                style={s.primaryButton}
               >
-                Try again
+                Cancel
+              </button>
+              <button
+                type="button"
+                style={s.primaryButton}
+                onClick={confirmPayment}
+              >
+                Continue to payment
               </button>
             </div>
           </div>
         </div>
       )}
-
-      {phase === "failed" && (
-        <div style={s.overlay}>
-          <div style={s.modal}>
-            <h2 style={{ ...s.modalHeading, color: "#f87171" }}>Deploy failed</h2>
-            <p style={s.modalSub}>{error}</p>
-            <div style={s.modalActions}>
-              <button onClick={retryDeploy} style={s.primaryButton}>
-                Retry
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </main>
+    </div>
   );
 }
 
 const s: Record<string, React.CSSProperties> = {
-  main: { minHeight: "100vh", background: "#0d0d0d", display: "flex", flexDirection: "column", fontFamily: "system-ui, sans-serif" },
-  toolbar: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 20px", borderBottom: "1px solid #2a2a2a" },
-  toolbarLeft: { display: "flex", gap: 8 },
-  sidebar: { background: "#111111", padding: 16, display: "flex", flexDirection: "column", gap: 12 },
-  sidebarNote: { color: "#a3a3a3", fontSize: 12, lineHeight: 1.5, margin: 0 },
-  iframe: { width: "100%", height: "100%", minHeight: 420, border: "1px solid #2a2a2a", borderRadius: 8, background: "#fff" },
-  button: { background: "transparent", color: "#d4d4d4", border: "1px solid #2a2a2a", borderRadius: 8, padding: "8px 14px", fontSize: 13, cursor: "pointer" },
-  buttonActive: { background: "#f5f5f5", color: "#0d0d0d", border: "1px solid #f5f5f5", borderRadius: 8, padding: "8px 14px", fontSize: 13, cursor: "pointer" },
-  primaryButton: { background: "#22c55e", color: "#052e12", border: "none", borderRadius: 8, padding: "8px 18px", fontSize: 13, fontWeight: 500, cursor: "pointer" },
-  liveLink: { color: "#4ade80", fontSize: 13 },
-  overlay: { position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center" },
-  modal: { background: "#171717", border: "1px solid #2a2a2a", borderRadius: 12, padding: 28, width: 360 },
-  modalHeading: { color: "#f5f5f5", fontSize: 18, fontWeight: 500, margin: "0 0 8px" },
+  overlay: {
+    position: "fixed",
+    inset: 0,
+    background: "rgba(0,0,0,0.6)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 10050,
+  },
+  modal: {
+    background: "#171717",
+    border: "1px solid #2a2a2a",
+    borderRadius: 12,
+    padding: 28,
+    width: 360,
+  },
+  modalHeading: {
+    color: "#f5f5f5",
+    fontSize: 18,
+    fontWeight: 500,
+    margin: "0 0 8px",
+  },
   modalSub: { color: "#a3a3a3", fontSize: 13, margin: "0 0 16px" },
-  fieldLabel: { display: "flex", flexDirection: "column", gap: 6, color: "#a3a3a3", fontSize: 12 },
-  fieldLabelText: { color: "#a3a3a3", fontSize: 12, margin: "0 0 8px" },
-  sidebarInput: { background: "#0d0d0d", border: "1px solid #2a2a2a", borderRadius: 6, padding: "8px 10px", color: "#f5f5f5", fontSize: 13, outline: "none" },
-  colorInput: { width: "100%", height: 32, background: "#0d0d0d", border: "1px solid #2a2a2a", borderRadius: 6, padding: 2, cursor: "pointer" },
-  sectionRow: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0", borderTop: "1px solid #1f1f1f" },
-  sectionName: { color: "#d4d4d4", fontSize: 12 },
-  moveButton: { background: "transparent", color: "#d4d4d4", border: "1px solid #2a2a2a", borderRadius: 4, padding: "2px 8px", fontSize: 12, cursor: "pointer" },
-  emailInput: { width: "100%", background: "#0d0d0d", border: "1px solid #2a2a2a", borderRadius: 8, padding: "10px 12px", color: "#f5f5f5", fontSize: 14, outline: "none", marginBottom: 16, boxSizing: "border-box" },
-  usernameRow: { display: "flex", alignItems: "center", border: "1px solid #2a2a2a", borderRadius: 8, overflow: "hidden" },
-  usernameInput: { flex: 1, background: "#0d0d0d", border: "none", padding: "10px 12px", color: "#f5f5f5", fontSize: 14, outline: "none" },
+  fieldLabel: {
+    display: "flex",
+    flexDirection: "column",
+    gap: 6,
+    color: "#a3a3a3",
+    fontSize: 12,
+  },
+  emailInput: {
+    width: "100%",
+    background: "#0d0d0d",
+    border: "1px solid #2a2a2a",
+    borderRadius: 8,
+    padding: "10px 12px",
+    color: "#f5f5f5",
+    fontSize: 14,
+    outline: "none",
+    boxSizing: "border-box",
+  },
+  usernameRow: {
+    display: "flex",
+    alignItems: "center",
+    border: "1px solid #2a2a2a",
+    borderRadius: 8,
+    overflow: "hidden",
+  },
+  usernameInput: {
+    flex: 1,
+    background: "#0d0d0d",
+    border: "none",
+    padding: "10px 12px",
+    color: "#f5f5f5",
+    fontSize: 14,
+    outline: "none",
+  },
   usernameSuffix: { color: "#6b6b6b", fontSize: 13, padding: "0 12px" },
   error: { color: "#f87171", fontSize: 13, margin: "8px 0 0" },
-  modalActions: { display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 20 },
+  modalActions: {
+    display: "flex",
+    justifyContent: "flex-end",
+    gap: 8,
+    marginTop: 20,
+  },
+  button: {
+    background: "transparent",
+    color: "#d4d4d4",
+    border: "1px solid #2a2a2a",
+    borderRadius: 8,
+    padding: "8px 14px",
+    fontSize: 13,
+    cursor: "pointer",
+  },
+  primaryButton: {
+    background: "#22c55e",
+    color: "#052e12",
+    border: "none",
+    borderRadius: 8,
+    padding: "8px 18px",
+    fontSize: 13,
+    fontWeight: 500,
+    cursor: "pointer",
+  },
 };
