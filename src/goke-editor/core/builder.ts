@@ -105,28 +105,99 @@ export class Builder {
     if (this.frameDoc.getElementById("goke-editor-chrome")) return;
     const style = this.frameDoc.createElement("style");
     style.id = "goke-editor-chrome";
-    // Minimal editor-only hints — do NOT reset site typography/colors
     style.textContent = `
       body { position: relative; }
       [data-goke-empty] {
-        min-height: 100px;
-        border: 2px dashed #c5c9d3;
-        border-radius: 2px;
+        min-height: 96px;
+        border: 2px dashed #cbd5e1;
+        border-radius: 8px;
         display: flex;
         align-items: center;
         justify-content: center;
-        color: #7a7a7a;
-        font-size: 13px;
-        background: rgba(248,249,250,0.6);
+        color: #94a3b8;
+        font-size: 14px;
+        background: repeating-linear-gradient(
+          -45deg, transparent, transparent 8px,
+          rgba(148,163,184,0.08) 8px, rgba(148,163,184,0.08) 16px
+        );
       }
-      [data-goke-empty]:empty::before { content: "Drag widget here"; }
+      [data-goke-empty]:empty::before { content: "Drop a component here"; }
       .goke-drop-target {
-        outline: 2px solid #58d0f8 !important;
+        outline: 2px solid #3b82f6 !important;
         outline-offset: 2px;
       }
     `;
     this.frameHead.appendChild(style);
   }
+
+  setHtml(html: string): void {
+    if (!this.frameDoc) return;
+
+    this.frameDoc.open();
+    this.frameDoc.write(html);
+    this.frameDoc.close();
+
+    this.frameHead = this.frameDoc.head;
+    this.frameBody = this.frameDoc.body;
+    styleManager.setDocument(this.frameDoc);
+
+    this.injectBaseStyles();
+    this.bindCanvasEvents();
+  }
+
+  getHtml(): string {
+    if (!this.frameDoc) return "";
+    // Remove editor-only UI nodes from the export
+    this.frameDoc
+      .querySelectorAll("[data-goke-ui]")
+      .forEach((n) => n.remove());
+    this.hideDropIndicator();
+    // Bake responsive + hover CSS into the document before serialize
+    applyResponsiveStylesToDocument(this.frameDoc);
+    return "<!DOCTYPE html>\n" + this.frameDoc.documentElement.outerHTML;
+  }
+
+  getBodyHtml(): string {
+    return this.frameBody?.innerHTML ?? "";
+  }
+
+  destroy(): void {
+    this.highlightBox?.remove();
+    this.selectBox?.remove();
+    this.listeners = {};
+    this.selectedEl = null;
+    this.iframe = null;
+    this.frameDoc = null;
+    this.frameBody = null;
+  }
+
+  // ── Selection ──────────────────────────────────
+
+  selectNode(element: HTMLElement | null): void {
+    if (
+      !element ||
+      element === this.frameDoc?.documentElement ||
+      element === this.frameBody
+    ) {
+      this.selectedEl = null;
+      this.hideSelectBox();
+      this.emit("select", { element: null, component: null });
+      return;
+    }
+
+    this.selectedEl = element;
+    this.showSelectBox(element);
+    const component = registry.matchNode(element);
+    this.emit("select", { element, component });
+  }
+
+  highlightNode(element: HTMLElement | null): void {
+    this.highlightEl = element;
+    if (element) this.showHighlightBox(element);
+    else this.hideHighlightBox();
+  }
+
+  // ── Overlay boxes (live outside the iframe) ────
 
   private createOverlayBoxes(): void {
     if (typeof document === "undefined") return;
@@ -332,6 +403,10 @@ export class Builder {
       body {
         margin: 0;
         position: relative;
+        font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+        line-height: 1.5;
+        color: #111;
+        background: #fff;
       }
       img { max-width: 100%; height: auto; display: block; }
       a { color: inherit; }
