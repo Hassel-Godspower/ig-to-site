@@ -51,7 +51,6 @@ import { saveTemplate } from "@/lib/templateStore";
 import "@/src/goke-editor/components/goke-components";
 import "@/src/goke-editor/components/site-markers";
 import "@/src/goke-editor/components/section-kits";
-import "@/src/goke-editor/styles/editor.css";
 
 type Phase =
   | "editing"
@@ -133,25 +132,23 @@ export default function PreviewPage() {
       refreshTree();
     });
 
-    // Load editor.json tokens if present
+    // Tokens: only override site CSS when editor.json exists.
+    // Avoid re-theming a freshly generated site (stops outlook flash).
     try {
       const res = await fetch(`/api/site/${jobId}/editor.json`);
       if (res.ok) {
         const raw = await res.text();
         const parsed = parseDocument(raw);
-        if (parsed?.tokens) {
+        if (parsed?.tokens && iframe.contentDocument) {
           setTokens(parsed.tokens);
-          applyTokensToDocument(iframe.contentDocument!, parsed.tokens);
+          applyTokensToDocument(iframe.contentDocument, parsed.tokens);
         }
       } else if (iframe.contentDocument) {
-        const fromDom = readTokensFromDocument(iframe.contentDocument);
-        setTokens(fromDom);
-        applyTokensToDocument(iframe.contentDocument, fromDom);
+        // Read for Globals panel only — do not rewrite :root
+        setTokens(readTokensFromDocument(iframe.contentDocument));
       }
     } catch {
-      if (iframe.contentDocument) {
-        applyTokensToDocument(iframe.contentDocument, DEFAULT_TOKENS);
-      }
+      /* keep generated site styles as-is */
     }
 
     setBuilderReady(true);
