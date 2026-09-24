@@ -1,12 +1,8 @@
 "use client";
 
 /**
- * Preview + visual editor for a generated site.
- *
- * - iframe loads the stored site from /api/site/[jobId]/index.html
- * - Goke Builder attaches for Elementor-style select / drag / properties
- * - Save still PUTs full HTML back to the same API
- * - Payment / deploy phase machine is unchanged
+ * Live site builder — Elementor-style structure + design
+ * Keeps payment / deploy / save pipeline unchanged.
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -19,16 +15,17 @@ import { registry } from "@/src/goke-editor/core/registry";
 import type {
   ComponentDefinition,
   ComponentProperty,
-  EditorState,
 } from "@/src/goke-editor/types";
+import type { Breakpoint, NavNode } from "@/src/goke-editor/types/document";
 import { ComponentPalette } from "@/src/goke-editor/components/ComponentPalette";
 import { PropertiesPanel } from "@/src/goke-editor/components/PropertiesPanel";
+import { Navigator } from "@/src/goke-editor/components/Navigator";
+import { ContextToolbar } from "@/src/goke-editor/components/ContextToolbar";
+import { StylePanel } from "@/src/goke-editor/components/StylePanel";
 import { matchSiteElement } from "@/src/goke-editor/components/site-markers";
 
-// Register palette components + site markers
 import "@/src/goke-editor/components/goke-components";
 import "@/src/goke-editor/components/site-markers";
-
 import "@/src/goke-editor/styles/editor.css";
 
 type Phase =
@@ -66,22 +63,24 @@ export default function PreviewPage() {
     useState<ComponentDefinition | null>(null);
   const [canUndo, setCanUndo] = useState(false);
   const [canRedo, setCanRedo] = useState(false);
-  const [device, setDevice] =
-    useState<EditorState["device"]>("desktop");
+  const [device, setDevice] = useState<Breakpoint>("desktop");
+  const [tree, setTree] = useState<NavNode[]>([]);
+  const [rightTab, setRightTab] = useState<"content" | "design">("content");
 
   const previewSrc = `/api/site/${jobId}/index.html`;
 
-  // ── Attach Goke Builder once the iframe has loaded the site ──
+  const refreshTree = useCallback(() => {
+    const t = builderRef.current?.getTree() ?? [];
+    setTree(t);
+  }, []);
 
   const attachBuilder = useCallback(async () => {
     const iframe = iframeRef.current;
     if (!iframe) return;
 
     builderRef.current?.destroy();
-
     const builder = new Builder();
     builderRef.current = builder;
-
     await builder.attach(iframe);
 
     builder.on("select", ({ element }: { element: HTMLElement | null }) => {
@@ -94,14 +93,20 @@ export default function PreviewPage() {
         matchSiteElement(element) ?? registry.matchNode(element);
       setSelectedElement(element);
       setSelectedComponent(component);
+      setRightTab(component?.properties?.length ? "content" : "design");
     });
 
     builder.on("change", () => {
       setSaved(false);
     });
 
+    builder.on("tree", () => {
+      refreshTree();
+    });
+
     setBuilderReady(true);
-  }, []);
+    refreshTree();
+  }, [refreshTree]);
 
   function onIframeLoad() {
     attachBuilder();
@@ -121,16 +126,13 @@ export default function PreviewPage() {
     };
   }, []);
 
-  // ── Payment verification (unchanged) ──
-
+  // Payment verification
   useEffect(() => {
     if (phase !== "verifying") return;
-
     if (!reference) {
       setPhase("polling");
       return;
     }
-
     (async () => {
       try {
         const res = await fetch("/api/verify-payment", {
@@ -139,7 +141,6 @@ export default function PreviewPage() {
           body: JSON.stringify({ jobId, reference }),
         });
         const data = await res.json();
-
         if (!res.ok) {
           setError(data.error);
           setPhase("failed");
@@ -162,8 +163,7 @@ export default function PreviewPage() {
     })();
   }, [phase, jobId, reference]);
 
-  // ── Poll deploy status (unchanged) ──
-
+  // Deploy poll
   useEffect(() => {
     if (phase !== "polling") return;
     const interval = setInterval(async () => {
@@ -182,27 +182,25 @@ export default function PreviewPage() {
     return () => clearInterval(interval);
   }, [phase, jobId]);
 
-  // ── Editor actions ──
-
   const handleUndo = useCallback(() => {
     Undo.undo();
     setSaved(false);
-  }, []);
+    refreshTree();
+  }, [refreshTree]);
 
   const handleRedo = useCallback(() => {
     Undo.redo();
     setSaved(false);
-  }, []);
+    refreshTree();
+  }, [refreshTree]);
 
   async function saveEdits() {
     const builder = builderRef.current;
     const doc = iframeRef.current?.contentDocument;
     if (!doc) return;
-
     const html =
       builder?.getHtml() ||
       "<!DOCTYPE html>\n" + doc.documentElement.outerHTML;
-
     await fetch(`/api/site/${jobId}/index.html`, {
       method: "PUT",
       body: html,
@@ -215,7 +213,7 @@ export default function PreviewPage() {
   }
 
   function updateProperty(
-    key: string,
+    _key: string,
     value: string | number | boolean,
     property: ComponentProperty
   ) {
@@ -231,19 +229,14 @@ export default function PreviewPage() {
 
     if (property.onChange) {
       const result = property.onChange(target, value);
-      if (result instanceof HTMLElement) {
-        builder.selectNode(result);
-      }
+      if (result instanceof HTMLElement) builder.selectNode(result);
     } else if (property.htmlAttr) {
       builder.setAttribute(target, property.htmlAttr, String(value));
     } else if (property.cssProperty) {
       styleManager.setStyle(target, property.cssProperty, String(value));
     }
-
     setSaved(false);
   }
-
-  // ── Payment / deploy (unchanged) ──
 
   async function goLive() {
     setError(null);
@@ -303,24 +296,12 @@ export default function PreviewPage() {
       <header className="goke-toolbar">
         <div className="goke-toolbar-left">
           <span className="goke-logo">gòke</span>
-          <div className="goke-toolbar-group">
-            <button
-              type="button"
-              disabled={!canUndo}
-              onClick={handleUndo}
-              title="Undo"
-            >
-              ↶ Undo
-            </button>
-            <button
-              type="button"
-              disabled={!canRedo}
-              onClick={handleRedo}
-              title="Redo"
-            >
-              ↷ Redo
-            </button>
-          </div>
+          <button type="button" disabled={!canUndo} onClick={handleUndo}>
+            ↶ Undo
+          </button>
+          <button type="button" disabled={!canRedo} onClick={handleRedo}>
+            ↷ Redo
+          </button>
           {!saved && (
             <span style={{ color: "#fbbf24", fontSize: 12 }}>Unsaved</span>
           )}
@@ -400,8 +381,17 @@ export default function PreviewPage() {
       )}
 
       <div className="goke-workspace">
-        <ComponentPalette onDragStart={startDrag} />
+        {/* Left: structure + components */}
+        <div className="goke-left-stack">
+          <Navigator
+            tree={tree}
+            selectedElement={selectedElement}
+            onSelect={(el) => builderRef.current?.selectNode(el)}
+          />
+          <ComponentPalette onDragStart={startDrag} />
+        </div>
 
+        {/* Center: canvas */}
         <main className="goke-canvas-wrap" style={{ position: "relative" }}>
           <div
             className="goke-canvas-frame"
@@ -438,12 +428,60 @@ export default function PreviewPage() {
           )}
         </main>
 
-        <PropertiesPanel
-          element={selectedElement}
-          component={selectedComponent}
-          onUpdate={updateProperty}
-        />
+        {/* Right: content props + design panel */}
+        <aside className="goke-properties">
+          <div className="goke-properties-header">
+            <h2>{selectedComponent?.name || "Properties"}</h2>
+            {selectedElement && (
+              <div className="goke-device-switch" style={{ marginTop: 8 }}>
+                <button
+                  type="button"
+                  className={rightTab === "content" ? "active" : ""}
+                  onClick={() => setRightTab("content")}
+                >
+                  Content
+                </button>
+                <button
+                  type="button"
+                  className={rightTab === "design" ? "active" : ""}
+                  onClick={() => setRightTab("design")}
+                >
+                  Design
+                </button>
+              </div>
+            )}
+          </div>
+          <div className="goke-properties-body">
+            {!selectedElement ? (
+              <p className="goke-properties-empty">
+                Select an element on the canvas
+              </p>
+            ) : rightTab === "content" ? (
+              <PropertiesPanel
+                embedded
+                element={selectedElement}
+                component={selectedComponent}
+                onUpdate={updateProperty}
+              />
+            ) : (
+              <StylePanel
+                element={selectedElement}
+                breakpoint={device}
+                onChange={() => setSaved(false)}
+              />
+            )}
+          </div>
+        </aside>
       </div>
+
+      <ContextToolbar
+        element={selectedElement}
+        iframe={iframeRef.current}
+        onDuplicate={() => builderRef.current?.duplicateNode()}
+        onDelete={() => builderRef.current?.deleteNode()}
+        onMoveUp={() => builderRef.current?.moveNode(undefined, "up")}
+        onMoveDown={() => builderRef.current?.moveNode(undefined, "down")}
+      />
 
       {phase === "modal" && (
         <div style={s.overlay}>
@@ -453,7 +491,6 @@ export default function PreviewPage() {
               Pick a subdomain and email. You&apos;ll pay on the next screen,
               then we&apos;ll publish your site.
             </p>
-
             <label style={s.fieldLabel}>
               Subdomain
               <div style={s.usernameRow}>
@@ -466,7 +503,6 @@ export default function PreviewPage() {
                 <span style={s.usernameSuffix}>.vercel.app</span>
               </div>
             </label>
-
             <label style={{ ...s.fieldLabel, marginTop: 12 }}>
               Email
               <input
@@ -477,9 +513,7 @@ export default function PreviewPage() {
                 style={s.emailInput}
               />
             </label>
-
             {error && <p style={s.error}>{error}</p>}
-
             <div style={s.modalActions}>
               <button
                 type="button"
