@@ -38,7 +38,8 @@ export type InputType =
   | "image"
   | "link"
   | "css-unit"
-  | "section";
+  | "section"
+  | "spacing-box";
 
 export interface PropertyOption {
   value: string;
