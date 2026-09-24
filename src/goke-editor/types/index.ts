@@ -39,7 +39,8 @@ export type InputType =
   | "link"
   | "css-unit"
   | "section"
-  | "spacing-box";
+  | "spacing-box"
+  | "icon";
 
 export interface PropertyOption {
   value: string;

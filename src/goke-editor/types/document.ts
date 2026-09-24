@@ -57,8 +57,8 @@ export const DEFAULT_TOKENS: DesignTokens = {
     background: "#ffffff",
   },
   fonts: {
-    heading: "system-ui, -apple-system, sans-serif",
-    body: "system-ui, -apple-system, sans-serif",
+    heading: "'Inter', system-ui, sans-serif",
+    body: "'Inter', system-ui, sans-serif",
   },
 };
 
