@@ -12,6 +12,7 @@ import {
   labelForElement,
   getKind,
 } from "./structure";
+import { applyResponsiveStylesToDocument } from "./responsive-export";
 import type { BuilderOptions, ComponentDefinition } from "../types";
 import type { NavNode } from "../types/document";
 
@@ -94,6 +95,38 @@ export class Builder {
     styleManager.setDocument(this.frameDoc);
     this.bindCanvasEvents();
     this.createOverlayBoxes();
+    this.injectEditorChrome();
+  }
+
+  /** Lightweight styles for drop targets / empty states on generated sites */
+  private injectEditorChrome(): void {
+    if (!this.frameHead || !this.frameDoc) return;
+    if (this.frameDoc.getElementById("goke-editor-chrome")) return;
+    const style = this.frameDoc.createElement("style");
+    style.id = "goke-editor-chrome";
+    style.textContent = `
+      body { position: relative; }
+      [data-goke-empty] {
+        min-height: 96px;
+        border: 2px dashed #cbd5e1;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #94a3b8;
+        font-size: 14px;
+        background: repeating-linear-gradient(
+          -45deg, transparent, transparent 8px,
+          rgba(148,163,184,0.08) 8px, rgba(148,163,184,0.08) 16px
+        );
+      }
+      [data-goke-empty]:empty::before { content: "Drop a component here"; }
+      .goke-drop-target {
+        outline: 2px solid #3b82f6 !important;
+        outline-offset: 2px;
+      }
+    `;
+    this.frameHead.appendChild(style);
   }
 
   setHtml(html: string): void {
@@ -113,6 +146,13 @@ export class Builder {
 
   getHtml(): string {
     if (!this.frameDoc) return "";
+    // Remove editor-only UI nodes from the export
+    this.frameDoc
+      .querySelectorAll("[data-goke-ui]")
+      .forEach((n) => n.remove());
+    this.hideDropIndicator();
+    // Bake responsive + hover CSS into the document before serialize
+    applyResponsiveStylesToDocument(this.frameDoc);
     return "<!DOCTYPE html>\n" + this.frameDoc.documentElement.outerHTML;
   }
 
@@ -245,17 +285,113 @@ export class Builder {
     this.frameBody.addEventListener("dragover", (e) => {
       e.preventDefault();
       e.dataTransfer!.dropEffect = "copy";
+      this.isDragging = true;
+      const type =
+        e.dataTransfer?.types.includes("text/goke-component")
+          ? "widget"
+          : "widget";
+      const target = e.target as HTMLElement;
+      // Use last dragged type stored on instance
+      const compType = this._dragType || "content/text";
+      const resolved = resolveDropTarget(target, compType);
+      this.showDropIndicator(resolved.parent, resolved.position, e as DragEvent);
+    });
+
+    this.frameBody.addEventListener("dragleave", (e) => {
+      // Only hide when leaving the body entirely
+      if (e.target === this.frameBody) this.hideDropIndicator();
     });
 
     this.frameBody.addEventListener("drop", (e) => {
       e.preventDefault();
-      const type = e.dataTransfer?.getData("text/goke-component");
+      this.hideDropIndicator();
+      const type =
+        e.dataTransfer?.getData("text/goke-component") || this._dragType;
       if (!type) return;
       const target = e.target as HTMLElement;
       const resolved = resolveDropTarget(target, type);
       this.dropComponent(type, resolved.parent, resolved.position);
+      this._dragType = null;
+      this.isDragging = false;
     });
   }
+
+  private _dragType: string | null = null;
+  private dropIndicator: HTMLElement | null = null;
+
+  private ensureDropIndicator(): HTMLElement {
+    if (this.dropIndicator && this.dropIndicator.isConnected) {
+      return this.dropIndicator;
+    }
+    const el = this.frameDoc!.createElement("div");
+    el.className = "goke-drop-indicator";
+    el.setAttribute("data-goke-ui", "drop-indicator");
+    Object.assign(el.style, {
+      position: "absolute",
+      height: "4px",
+      background: "#3b82f6",
+      borderRadius: "2px",
+      pointerEvents: "none",
+      zIndex: "99999",
+      boxShadow: "0 0 0 2px rgba(59,130,246,0.35)",
+      transition: "top 0.05s ease, left 0.05s ease, width 0.05s ease",
+    });
+    this.frameBody!.appendChild(el);
+    this.dropIndicator = el;
+    return el;
+  }
+
+  private showDropIndicator(
+    parent: HTMLElement,
+    position: "before" | "after" | "inside",
+    e: DragEvent
+  ): void {
+    if (!this.frameBody || !this.frameDoc) return;
+    const ind = this.ensureDropIndicator();
+    const bodyRect = this.frameBody.getBoundingClientRect();
+
+    // Highlight drop parent
+    this.frameBody
+      .querySelectorAll(".goke-drop-target")
+      .forEach((n) => n.classList.remove("goke-drop-target"));
+    parent.classList.add("goke-drop-target");
+
+    if (position === "inside") {
+      const rect = parent.getBoundingClientRect();
+      // Line at bottom of container to suggest append
+      const top = rect.bottom - bodyRect.top + this.frameBody.scrollTop - 2;
+      const left = rect.left - bodyRect.left + this.frameBody.scrollLeft + 8;
+      const width = Math.max(rect.width - 16, 40);
+      Object.assign(ind.style, {
+        display: "block",
+        top: top + "px",
+        left: left + "px",
+        width: width + "px",
+      });
+    } else {
+      const rect = parent.getBoundingClientRect();
+      const top =
+        (position === "before" ? rect.top : rect.bottom) -
+        bodyRect.top +
+        this.frameBody.scrollTop -
+        2;
+      const left = rect.left - bodyRect.left + this.frameBody.scrollLeft;
+      Object.assign(ind.style, {
+        display: "block",
+        top: top + "px",
+        left: left + "px",
+        width: Math.max(rect.width, 40) + "px",
+      });
+    }
+  }
+
+  private hideDropIndicator(): void {
+    if (this.dropIndicator) this.dropIndicator.style.display = "none";
+    this.frameBody
+      ?.querySelectorAll(".goke-drop-target")
+      .forEach((n) => n.classList.remove("goke-drop-target"));
+  }
+
 
   private injectBaseStyles(): void {
     if (!this.frameHead) return;
@@ -265,6 +401,7 @@ export class Builder {
       *, *::before, *::after { box-sizing: border-box; }
       body {
         margin: 0;
+        position: relative;
         font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
         line-height: 1.5;
         color: #111;
@@ -273,13 +410,28 @@ export class Builder {
       img { max-width: 100%; height: auto; display: block; }
       a { color: inherit; }
       [data-goke-empty] {
-        min-height: 80px;
-        border: 2px dashed #d1d5db;
+        min-height: 96px;
+        border: 2px dashed #cbd5e1;
+        border-radius: 8px;
         display: flex;
         align-items: center;
         justify-content: center;
-        color: #9ca3af;
+        color: #94a3b8;
         font-size: 14px;
+        background: repeating-linear-gradient(
+          -45deg,
+          transparent,
+          transparent 8px,
+          rgba(148,163,184,0.08) 8px,
+          rgba(148,163,184,0.08) 16px
+        );
+      }
+      [data-goke-empty]::before {
+        content: "Drop a component here";
+      }
+      .goke-drop-target {
+        outline: 2px solid #3b82f6 !important;
+        outline-offset: 2px;
       }
     `;
     this.frameHead.appendChild(style);
@@ -292,6 +444,7 @@ export class Builder {
     if (!component) return;
 
     this.isDragging = true;
+    this._dragType = componentType;
     event.dataTransfer?.setData("text/goke-component", componentType);
     event.dataTransfer!.effectAllowed = "copy";
   }

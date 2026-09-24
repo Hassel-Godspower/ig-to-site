@@ -1,25 +1,28 @@
 /**
  * Style engine — responsive property map + grouped controls
- * Builds on style-manager for live iframe writes.
+ * Includes per-side spacing and hover state.
  */
 
 import { styleManager } from "./style-manager";
 import type { Breakpoint, CSSProps, ResponsiveStyles } from "../types/document";
+import { STYLE_ATTR, HOVER_ATTR } from "./responsive-export";
 
 export type StyleGroupId =
   | "layout"
   | "spacing"
   | "typography"
   | "background"
-  | "border";
+  | "border"
+  | "hover";
 
 export type StyleControl = {
   key: string;
   cssProperty: string;
   label: string;
-  inputType: "text" | "color" | "css-unit" | "select";
+  inputType: "text" | "color" | "css-unit" | "select" | "spacing-box";
   options?: { value: string; label: string }[];
   units?: string[];
+  hover?: boolean;
 };
 
 export const STYLE_GROUPS: Record<
@@ -43,11 +46,33 @@ export const STYLE_GROUPS: Record<
         ],
       },
       {
+        key: "flexDirection",
+        cssProperty: "flex-direction",
+        label: "Direction",
+        inputType: "select",
+        options: [
+          { value: "row", label: "Row" },
+          { value: "column", label: "Column" },
+          { value: "row-reverse", label: "Row reverse" },
+          { value: "column-reverse", label: "Column reverse" },
+        ],
+      },
+      {
+        key: "flexWrap",
+        cssProperty: "flex-wrap",
+        label: "Wrap",
+        inputType: "select",
+        options: [
+          { value: "nowrap", label: "No wrap" },
+          { value: "wrap", label: "Wrap" },
+        ],
+      },
+      {
         key: "width",
         cssProperty: "width",
         label: "Width",
         inputType: "css-unit",
-        units: ["px", "%", "rem", "vw"],
+        units: ["px", "%", "rem", "vw", "auto"],
       },
       {
         key: "maxWidth",
@@ -73,6 +98,7 @@ export const STYLE_GROUPS: Record<
           { value: "center", label: "Center" },
           { value: "flex-end", label: "End" },
           { value: "space-between", label: "Space between" },
+          { value: "space-around", label: "Space around" },
         ],
       },
       {
@@ -93,17 +119,17 @@ export const STYLE_GROUPS: Record<
     label: "Spacing",
     controls: [
       {
-        key: "margin",
+        key: "marginBox",
         cssProperty: "margin",
         label: "Margin",
-        inputType: "css-unit",
+        inputType: "spacing-box",
         units: ["px", "rem"],
       },
       {
-        key: "padding",
+        key: "paddingBox",
         cssProperty: "padding",
         label: "Padding",
-        inputType: "css-unit",
+        inputType: "spacing-box",
         units: ["px", "rem"],
       },
     ],
@@ -138,6 +164,13 @@ export const STYLE_GROUPS: Record<
         inputType: "text",
       },
       {
+        key: "letterSpacing",
+        cssProperty: "letter-spacing",
+        label: "Letter spacing",
+        inputType: "css-unit",
+        units: ["px", "em"],
+      },
+      {
         key: "textAlign",
         cssProperty: "text-align",
         label: "Align",
@@ -165,6 +198,18 @@ export const STYLE_GROUPS: Record<
         label: "Color",
         inputType: "color",
       },
+      {
+        key: "backgroundImage",
+        cssProperty: "background-image",
+        label: "Image / gradient",
+        inputType: "text",
+      },
+      {
+        key: "opacity",
+        cssProperty: "opacity",
+        label: "Opacity",
+        inputType: "text",
+      },
     ],
   },
   border: {
@@ -185,6 +230,18 @@ export const STYLE_GROUPS: Record<
         units: ["px"],
       },
       {
+        key: "borderStyle",
+        cssProperty: "border-style",
+        label: "Style",
+        inputType: "select",
+        options: [
+          { value: "none", label: "None" },
+          { value: "solid", label: "Solid" },
+          { value: "dashed", label: "Dashed" },
+          { value: "dotted", label: "Dotted" },
+        ],
+      },
+      {
         key: "borderColor",
         cssProperty: "border-color",
         label: "Color",
@@ -198,13 +255,44 @@ export const STYLE_GROUPS: Record<
       },
     ],
   },
+  hover: {
+    label: "Hover",
+    controls: [
+      {
+        key: "hoverBg",
+        cssProperty: "background-color",
+        label: "Background",
+        inputType: "color",
+        hover: true,
+      },
+      {
+        key: "hoverColor",
+        cssProperty: "color",
+        label: "Text color",
+        inputType: "color",
+        hover: true,
+      },
+      {
+        key: "hoverOpacity",
+        cssProperty: "opacity",
+        label: "Opacity",
+        inputType: "text",
+        hover: true,
+      },
+      {
+        key: "hoverTransform",
+        cssProperty: "transform",
+        label: "Transform",
+        inputType: "text",
+        hover: true,
+      },
+    ],
+  },
 };
-
-const BP_ATTR = "data-goke-styles";
 
 function readStore(el: HTMLElement): ResponsiveStyles {
   try {
-    const raw = el.getAttribute(BP_ATTR);
+    const raw = el.getAttribute(STYLE_ATTR);
     if (raw) return JSON.parse(raw) as ResponsiveStyles;
   } catch {
     /* ignore */
@@ -213,19 +301,43 @@ function readStore(el: HTMLElement): ResponsiveStyles {
 }
 
 function writeStore(el: HTMLElement, store: ResponsiveStyles): void {
-  el.setAttribute(BP_ATTR, JSON.stringify(store));
+  el.setAttribute(STYLE_ATTR, JSON.stringify(store));
+}
+
+function readHover(el: HTMLElement): CSSProps {
+  try {
+    const raw = el.getAttribute(HOVER_ATTR);
+    if (raw) return JSON.parse(raw) as CSSProps;
+  } catch {
+    /* ignore */
+  }
+  return {};
+}
+
+function writeHover(el: HTMLElement, hover: CSSProps): void {
+  if (Object.keys(hover).length === 0) el.removeAttribute(HOVER_ATTR);
+  else el.setAttribute(HOVER_ATTR, JSON.stringify(hover));
+}
+
+function ensureId(el: HTMLElement): void {
+  if (!el.getAttribute("data-goke-id") && !el.id) {
+    el.setAttribute(
+      "data-goke-id",
+      `goke_${Math.random().toString(36).slice(2, 9)}`
+    );
+  }
 }
 
 export function getStyle(
   el: HTMLElement,
   cssProperty: string,
-  breakpoint: Breakpoint = "desktop"
+  breakpoint: Breakpoint = "desktop",
+  hover = false
 ): string {
+  if (hover) return readHover(el)[cssProperty] || "";
   const store = readStore(el);
   const fromStore = store[breakpoint]?.[cssProperty];
   if (fromStore) return fromStore;
-
-  // Fall back to inline / computed for desktop
   if (breakpoint === "desktop") {
     return (
       styleManager.getStyle(el, cssProperty, true) ||
@@ -240,25 +352,48 @@ export function setStyle(
   el: HTMLElement,
   cssProperty: string,
   value: string,
-  breakpoint: Breakpoint = "desktop"
+  breakpoint: Breakpoint = "desktop",
+  hover = false
 ): void {
+  ensureId(el);
+  if (hover) {
+    const h = readHover(el);
+    if (!value) delete h[cssProperty];
+    else h[cssProperty] = value;
+    writeHover(el, h);
+    return;
+  }
   const store = readStore(el);
   if (!store[breakpoint]) store[breakpoint] = {};
   const slice = store[breakpoint]!;
   if (!value) delete slice[cssProperty];
   else slice[cssProperty] = value;
   writeStore(el, store);
+  styleManager.setStyle(el, cssProperty, value);
+}
 
-  // Live preview: always apply current breakpoint to inline style
-  // Full multi-breakpoint CSS is emitted at publish time later
-  if (breakpoint === "desktop" || !store.desktop?.[cssProperty]) {
-    styleManager.setStyle(el, cssProperty, value);
-  } else if (breakpoint === "desktop") {
-    styleManager.setStyle(el, cssProperty, value);
-  } else {
-    // For non-desktop while editing that breakpoint, apply temporarily
-    styleManager.setStyle(el, cssProperty, value);
+export function setSpacingBox(
+  el: HTMLElement,
+  prefix: "margin" | "padding",
+  sides: { top?: string; right?: string; bottom?: string; left?: string },
+  breakpoint: Breakpoint = "desktop"
+): void {
+  for (const side of ["top", "right", "bottom", "left"] as const) {
+    setStyle(el, `${prefix}-${side}`, sides[side] ?? "", breakpoint);
   }
+}
+
+export function getSpacingBox(
+  el: HTMLElement,
+  prefix: "margin" | "padding",
+  breakpoint: Breakpoint = "desktop"
+): { top: string; right: string; bottom: string; left: string } {
+  return {
+    top: getStyle(el, `${prefix}-top`, breakpoint),
+    right: getStyle(el, `${prefix}-right`, breakpoint),
+    bottom: getStyle(el, `${prefix}-bottom`, breakpoint),
+    left: getStyle(el, `${prefix}-left`, breakpoint),
+  };
 }
 
 export function getAllStyles(
@@ -268,12 +403,20 @@ export function getAllStyles(
   const result: CSSProps = {};
   for (const group of Object.values(STYLE_GROUPS)) {
     for (const control of group.controls) {
-      const v = getStyle(el, control.cssProperty, breakpoint);
+      if (control.inputType === "spacing-box") continue;
+      const v = getStyle(el, control.cssProperty, breakpoint, !!control.hover);
       if (v) result[control.cssProperty] = v;
     }
   }
   return result;
 }
 
-export const styleEngine = { getStyle, setStyle, getAllStyles, STYLE_GROUPS };
+export const styleEngine = {
+  getStyle,
+  setStyle,
+  getAllStyles,
+  setSpacingBox,
+  getSpacingBox,
+  STYLE_GROUPS,
+};
 export default styleEngine;
