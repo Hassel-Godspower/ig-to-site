@@ -67,7 +67,17 @@ export type NavNode = {
   id: string;
   label: string;
   tag: string;
+  icon?: string;
   depth: number;
   element: HTMLElement;
   children: NavNode[];
+};
+
+
+export type SectionTemplate = {
+  id: string;
+  name: string;
+  html: string;
+  createdAt: string;
+  category?: string;
 };
