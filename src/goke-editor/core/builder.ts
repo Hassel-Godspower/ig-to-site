@@ -121,7 +121,14 @@ export class Builder {
           rgba(148,163,184,0.08) 8px, rgba(148,163,184,0.08) 16px
         );
       }
-      [data-goke-empty]:empty::before { content: "Drop a component here"; }
+      [data-goke-empty]:empty::before { content: "Drag widget here"; }
+      [data-goke-empty] {
+        min-height: 120px !important;
+        border: 2px dashed #c5c9d3 !important;
+        border-radius: 2px !important;
+        background: #f8f9fa !important;
+        color: #7a7a7a !important;
+      }
       .goke-drop-target {
         outline: 2px solid #3b82f6 !important;
         outline-offset: 2px;
