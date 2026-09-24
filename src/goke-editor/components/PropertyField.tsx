@@ -1,5 +1,5 @@
 /**
- * Single property control – pure React, no Bootstrap
+ * Single property control — includes spacing-box for per-side margin/padding
  */
 
 "use client";
@@ -8,19 +8,82 @@ import React from "react";
 import type { ComponentProperty } from "../types";
 
 interface PropertyFieldProps {
-  property: ComponentProperty;
+  property: ComponentProperty & {
+    inputType?: string;
+    hover?: boolean;
+  };
   value: string;
   onChange: (value: string | number | boolean) => void;
+  /** For spacing-box: controlled sides */
+  spacingValue?: { top: string; right: string; bottom: string; left: string };
+  onSpacingChange?: (sides: {
+    top: string;
+    right: string;
+    bottom: string;
+    left: string;
+  }) => void;
 }
 
 export function PropertyField({
   property,
   value,
   onChange,
+  spacingValue,
+  onSpacingChange,
 }: PropertyFieldProps) {
   const id = `prop-${property.key}`;
+  const inputType = property.inputType as string;
 
-  switch (property.inputType) {
+  if (inputType === "spacing-box") {
+    const sides = spacingValue || {
+      top: "",
+      right: "",
+      bottom: "",
+      left: "",
+    };
+    const set = (side: keyof typeof sides, v: string) => {
+      onSpacingChange?.({ ...sides, [side]: v });
+    };
+    return (
+      <div className="goke-field goke-spacing-box">
+        <label>{property.name}</label>
+        <div className="goke-spacing-grid">
+          <input
+            placeholder="T"
+            title="Top"
+            value={sides.top}
+            onChange={(e) => set("top", e.target.value)}
+          />
+          <input
+            placeholder="R"
+            title="Right"
+            value={sides.right}
+            onChange={(e) => set("right", e.target.value)}
+          />
+          <input
+            placeholder="B"
+            title="Bottom"
+            value={sides.bottom}
+            onChange={(e) => set("bottom", e.target.value)}
+          />
+          <input
+            placeholder="L"
+            title="Left"
+            value={sides.left}
+            onChange={(e) => set("left", e.target.value)}
+          />
+        </div>
+        <div className="goke-spacing-labels">
+          <span>Top</span>
+          <span>Right</span>
+          <span>Bottom</span>
+          <span>Left</span>
+        </div>
+      </div>
+    );
+  }
+
+  switch (inputType) {
     case "text":
     case "link":
       return (
@@ -32,7 +95,6 @@ export function PropertyField({
             value={value}
             placeholder={property.placeholder}
             onChange={(e) => onChange(e.target.value)}
-            onBlur={(e) => onChange(e.target.value)}
           />
         </div>
       );
@@ -75,6 +137,7 @@ export function PropertyField({
             value={value}
             onChange={(e) => onChange(e.target.value)}
           >
+            <option value="">—</option>
             {(property.options ?? []).map((opt) => (
               <option key={opt.value} value={opt.value}>
                 {opt.label}
@@ -92,7 +155,7 @@ export function PropertyField({
             <input
               id={id}
               type="color"
-              value={value || "#000000"}
+              value={value && value.startsWith("#") ? value : "#000000"}
               onChange={(e) => onChange(e.target.value)}
             />
             <input
@@ -131,7 +194,7 @@ export function PropertyField({
             min={property.min ?? 0}
             max={property.max ?? 100}
             step={property.step ?? 1}
-            value={value}
+            value={value || "0"}
             onChange={(e) => onChange(e.target.value)}
           />
         </div>
@@ -139,7 +202,7 @@ export function PropertyField({
 
     case "css-unit": {
       const match = String(value).match(/^([\d.]+)([a-z%]*)$/i);
-      const num = match ? match[1] : "";
+      const num = match ? match[1] : value === "auto" ? "" : value;
       const unit = match ? match[2] || "px" : "px";
       const units = property.units ?? ["px", "rem", "%", "em"];
 
@@ -148,13 +211,18 @@ export function PropertyField({
           <label>{property.name}</label>
           <div className="goke-unit-row">
             <input
-              type="number"
+              type="text"
               value={num}
-              onChange={(e) => onChange(e.target.value + unit)}
+              placeholder="auto"
+              onChange={(e) => {
+                const n = e.target.value;
+                if (n === "" || n === "auto") onChange(n || "");
+                else onChange(n + unit);
+              }}
             />
             <select
               value={unit}
-              onChange={(e) => onChange(num + e.target.value)}
+              onChange={(e) => onChange((num || "0") + e.target.value)}
             >
               {units.map((u) => (
                 <option key={u} value={u}>

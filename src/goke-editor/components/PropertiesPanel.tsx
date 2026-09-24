@@ -1,5 +1,5 @@
 /**
- * Right sidebar – properties of the selected element
+ * Properties of the selected element (content controls)
  */
 
 "use client";
@@ -17,12 +17,11 @@ interface PropertiesPanelProps {
     value: string | number | boolean,
     property: ComponentProperty
   ) => void;
+  /** When true, render fields only (parent owns the aside shell) */
+  embedded?: boolean;
 }
 
-function readValue(
-  el: HTMLElement,
-  prop: ComponentProperty
-): string {
+function readValue(el: HTMLElement, prop: ComponentProperty): string {
   let target = el;
   if (prop.child) {
     const child = el.querySelector(prop.child) as HTMLElement | null;
@@ -33,9 +32,11 @@ function readValue(
     return target.getAttribute(prop.htmlAttr) ?? "";
   }
   if (prop.cssProperty) {
-    return styleManager.getStyle(target, prop.cssProperty, true) ||
+    return (
+      styleManager.getStyle(target, prop.cssProperty, true) ||
       styleManager.getStyle(target, prop.cssProperty) ||
-      "";
+      ""
+    );
   }
   if (prop.key === "text" || prop.inputType === "textarea") {
     return target.textContent ?? "";
@@ -47,6 +48,7 @@ export function PropertiesPanel({
   element,
   component,
   onUpdate,
+  embedded = false,
 }: PropertiesPanelProps) {
   const properties = component?.properties ?? [];
 
@@ -59,38 +61,38 @@ export function PropertiesPanel({
     return map;
   }, [element, properties]);
 
-  if (!element || !component) {
-    return (
-      <aside className="goke-properties">
-        <div className="goke-properties-header">
-          <h2>Properties</h2>
-        </div>
-        <div className="goke-properties-empty">
-          Select an element on the canvas
-        </div>
-      </aside>
-    );
-  }
-
-  return (
-    <aside className="goke-properties">
-      <div className="goke-properties-header">
-        <h2>{component.name}</h2>
-        <span className="goke-properties-type">{component.type}</span>
-      </div>
-      <div className="goke-properties-body">
-        {properties.length === 0 && (
-          <p className="goke-properties-empty">No editable properties</p>
-        )}
-        {properties.map((prop) => (
+  const fields = (
+    <>
+      {!element || !component ? (
+        <p className="goke-properties-empty">Select an element on the canvas</p>
+      ) : properties.length === 0 ? (
+        <p className="goke-properties-empty">
+          No content properties — use the Design tab
+        </p>
+      ) : (
+        properties.map((prop) => (
           <PropertyField
             key={prop.key}
             property={prop}
             value={values[prop.key] ?? ""}
             onChange={(val) => onUpdate(prop.key, val, prop)}
           />
-        ))}
+        ))
+      )}
+    </>
+  );
+
+  if (embedded) return <div>{fields}</div>;
+
+  return (
+    <aside className="goke-properties">
+      <div className="goke-properties-header">
+        <h2>{component?.name || "Properties"}</h2>
+        {component && (
+          <span className="goke-properties-type">{component.type}</span>
+        )}
       </div>
+      <div className="goke-properties-body">{fields}</div>
     </aside>
   );
 }
