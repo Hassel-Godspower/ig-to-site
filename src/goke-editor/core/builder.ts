@@ -7,7 +7,13 @@ import { Undo } from "./undo";
 import { registry } from "./registry";
 import { styleManager } from "./style-manager";
 import { generateElements, delay } from "../utils/dom";
+import {
+  resolveDropTarget,
+  labelForElement,
+  getKind,
+} from "./structure";
 import type { BuilderOptions, ComponentDefinition } from "../types";
+import type { NavNode } from "../types/document";
 
 type Listener = (payload?: any) => void;
 
@@ -208,6 +214,18 @@ export class Builder {
       true
     );
 
+    // Inline text edit — double-click text nodes
+    this.frameBody.addEventListener(
+      "dblclick",
+      (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const target = e.target as HTMLElement;
+        this.startInlineEdit(target);
+      },
+      true
+    );
+
     this.frameBody.addEventListener(
       "mousemove",
       delay((e: MouseEvent) => {
@@ -224,7 +242,6 @@ export class Builder {
       this.highlightNode(null);
     });
 
-    // Allow dropping components
     this.frameBody.addEventListener("dragover", (e) => {
       e.preventDefault();
       e.dataTransfer!.dropEffect = "copy";
@@ -235,7 +252,8 @@ export class Builder {
       const type = e.dataTransfer?.getData("text/goke-component");
       if (!type) return;
       const target = e.target as HTMLElement;
-      this.dropComponent(type, target, "inside");
+      const resolved = resolveDropTarget(target, type);
+      this.dropComponent(type, resolved.parent, resolved.position);
     });
   }
 
@@ -290,12 +308,16 @@ export class Builder {
     const node = elements[0];
     if (!node) return null;
 
+    // Ensure stable id for navigator
+    if (!node.id) {
+      node.dataset.gokeId = `goke_${Math.random().toString(36).slice(2, 9)}`;
+    }
+
     if (position === "before") {
       target.parentNode?.insertBefore(node, target);
     } else if (position === "after") {
       target.parentNode?.insertBefore(node, target.nextSibling);
     } else {
-      // If target has data-goke-empty, replace it
       if (target.hasAttribute("data-goke-empty")) {
         target.replaceWith(node);
       } else {
@@ -317,7 +339,142 @@ export class Builder {
     this.selectNode(node);
     this.isDragging = false;
     this.emit("change");
+    this.emit("tree");
     return node;
+  }
+
+  // ── Structure operations ───────────────────────
+
+  duplicateNode(el: HTMLElement | null = this.selectedEl): HTMLElement | null {
+    if (!el || el === this.frameBody) return null;
+    const clone = el.cloneNode(true) as HTMLElement;
+    clone.dataset.gokeId = `goke_${Math.random().toString(36).slice(2, 9)}`;
+    el.parentNode?.insertBefore(clone, el.nextSibling);
+    Undo.addMutation({
+      type: "childList",
+      target: el.parentElement!,
+      addedNodes: [clone],
+      removedNodes: [],
+      parentNode: el.parentNode,
+    });
+    this.selectNode(clone);
+    this.emit("change");
+    this.emit("tree");
+    return clone;
+  }
+
+  deleteNode(el: HTMLElement | null = this.selectedEl): void {
+    if (!el || el === this.frameBody || el === this.frameDoc?.documentElement)
+      return;
+    const parent = el.parentElement;
+    const next = (el.nextElementSibling ||
+      el.previousElementSibling ||
+      parent) as HTMLElement | null;
+    Undo.addMutation({
+      type: "childList",
+      target: parent!,
+      addedNodes: [],
+      removedNodes: [el],
+      parentNode: parent,
+      nextSibling: el.nextSibling,
+      previousSibling: el.previousSibling,
+    });
+    el.remove();
+    this.selectNode(next && next !== this.frameBody ? next : null);
+    this.emit("change");
+    this.emit("tree");
+  }
+
+  moveNode(
+    el: HTMLElement | null = this.selectedEl,
+    direction: "up" | "down"
+  ): void {
+    if (!el || !el.parentNode) return;
+    if (direction === "up" && el.previousElementSibling) {
+      el.parentNode.insertBefore(el, el.previousElementSibling);
+    } else if (direction === "down" && el.nextElementSibling) {
+      el.parentNode.insertBefore(el.nextElementSibling, el);
+    } else {
+      return;
+    }
+    this.selectNode(el);
+    this.emit("change");
+    this.emit("tree");
+  }
+
+  /** Build navigator tree from body */
+  getTree(): NavNode[] {
+    if (!this.frameBody) return [];
+    const walk = (parent: HTMLElement, depth: number): NavNode[] => {
+      const nodes: NavNode[] = [];
+      for (const child of Array.from(parent.children) as HTMLElement[]) {
+        if (child.tagName === "SCRIPT" || child.tagName === "STYLE") continue;
+        const kind = getKind(child);
+        // Show sections, containers, and direct widgets
+        if (kind === "unknown" && depth > 2) continue;
+        const id =
+          child.dataset.gokeId ||
+          child.id ||
+          `anon_${nodes.length}_${depth}`;
+        if (!child.dataset.gokeId && !child.id) {
+          child.dataset.gokeId = id;
+        }
+        nodes.push({
+          id,
+          label: labelForElement(child),
+          tag: child.tagName.toLowerCase(),
+          depth,
+          element: child,
+          children: walk(child, depth + 1),
+        });
+      }
+      return nodes;
+    };
+    return walk(this.frameBody, 0);
+  }
+
+  // ── Inline text editing ────────────────────────
+
+  private inlineEl: HTMLElement | null = null;
+  private inlineOriginal = "";
+
+  startInlineEdit(el: HTMLElement): void {
+    const tag = el.tagName;
+    const editable = [
+      "H1", "H2", "H3", "H4", "H5", "H6", "P", "SPAN", "A", "BUTTON", "LI", "LABEL",
+    ].includes(tag);
+    if (!editable) return;
+    if (this.inlineEl) this.commitInlineEdit();
+
+    this.inlineEl = el;
+    this.inlineOriginal = el.textContent || "";
+    el.contentEditable = "true";
+    el.focus();
+    this.selectNode(el);
+
+    const onBlur = () => {
+      el.removeEventListener("blur", onBlur);
+      this.commitInlineEdit();
+    };
+    el.addEventListener("blur", onBlur);
+  }
+
+  commitInlineEdit(): void {
+    const el = this.inlineEl;
+    if (!el) return;
+    el.contentEditable = "false";
+    const next = el.textContent || "";
+    if (next !== this.inlineOriginal) {
+      Undo.addMutation({
+        type: "characterData",
+        target: el,
+        oldValue: this.inlineOriginal,
+        newValue: next,
+      });
+      this.emit("change");
+    }
+    this.inlineEl = null;
+    this.inlineOriginal = "";
   }
 
   // ── Property updates ───────────────────────────
