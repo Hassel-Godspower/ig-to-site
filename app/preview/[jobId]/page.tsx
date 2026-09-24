@@ -24,6 +24,8 @@ import { ContextToolbar } from "@/src/goke-editor/components/ContextToolbar";
 import { StylePanel } from "@/src/goke-editor/components/StylePanel";
 import { GlobalsPanel } from "@/src/goke-editor/components/GlobalsPanel";
 import { TemplatesPanel } from "@/src/goke-editor/components/TemplatesPanel";
+import { loadStarterHtml } from "@/src/goke-editor/core/load-starter";
+import type { StarterTemplate } from "@/src/goke-editor/data/starter-templates";
 import { matchSiteElement } from "@/src/goke-editor/components/site-markers";
 import {
   applyBreakpointPreview,
@@ -465,6 +467,26 @@ export default function PreviewPage() {
     refreshTree();
   }
 
+  async function handleApplyStarter(starter: StarterTemplate) {
+    const builder = builderRef.current;
+    const iframe = iframeRef.current;
+    if (!builder || !iframe) throw new Error("Editor not ready");
+    const ok = window.confirm(
+      `Replace the current page with "${starter.name}"? Unsaved edits will be lost.`
+    );
+    if (!ok) return;
+    const { html } = await loadStarterHtml(starter);
+    // setHtml document.write + rebinds canvas events on the new body
+    builder.setHtml(html);
+    const doc = iframe.contentDocument;
+    if (doc) applyTokensToDocument(doc, tokens);
+    setSaved(false);
+    refreshTree();
+    setSelectedElement(null);
+    setSelectedComponent(null);
+  }
+
+
   async function goLive() {
     setError(null);
     setPhase("modal");
@@ -649,6 +671,7 @@ export default function PreviewPage() {
           {leftTab === "templates" && (
             <TemplatesPanel
               onInsert={insertTemplateHtml}
+              onApplyStarter={handleApplyStarter}
               refreshKey={tplRefresh}
             />
           )}
