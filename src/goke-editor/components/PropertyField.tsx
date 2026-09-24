@@ -5,6 +5,7 @@
 "use client";
 
 import React from "react";
+import { IconPicker } from "./IconPicker";
 import type { ComponentProperty } from "../types";
 
 interface PropertyFieldProps {
@@ -144,6 +145,14 @@ export function PropertyField({
               </option>
             ))}
           </select>
+        </div>
+      );
+
+    case "icon":
+      return (
+        <div className="goke-field">
+          <label>{property.name}</label>
+          <IconPicker value={value || "heart"} onChange={(v) => onChange(v)} />
         </div>
       );
 

@@ -1,5 +1,5 @@
 /**
- * Tier 2 — Global design tokens (colors + fonts)
+ * Global design tokens (colors + Google Fonts)
  */
 
 "use client";
@@ -7,6 +7,7 @@
 import React from "react";
 import type { DesignTokens } from "../types/document";
 import { DEFAULT_TOKENS } from "../types/document";
+import { GOOGLE_FONTS, fontSelectOptions } from "../data/google-fonts";
 
 interface GlobalsPanelProps {
   tokens: DesignTokens;
@@ -15,11 +16,9 @@ interface GlobalsPanelProps {
 
 export function GlobalsPanel({ tokens, onChange }: GlobalsPanelProps) {
   const t = tokens || DEFAULT_TOKENS;
+  const options = fontSelectOptions();
 
-  function setColor(
-    key: keyof DesignTokens["colors"],
-    value: string
-  ) {
+  function setColor(key: keyof DesignTokens["colors"], value: string) {
     onChange({
       ...t,
       colors: { ...t.colors, [key]: value },
@@ -31,6 +30,19 @@ export function GlobalsPanel({ tokens, onChange }: GlobalsPanelProps) {
       ...t,
       fonts: { ...t.fonts, [key]: value },
     });
+  }
+
+  /** Prefer matching catalog entry so the <select> shows the right option */
+  function selectValue(stack: string): string {
+    const exact = options.find((o) => o.value === stack);
+    if (exact) return exact.value;
+    const lower = stack.toLowerCase();
+    const soft = GOOGLE_FONTS.find(
+      (f) =>
+        lower.includes(f.name.toLowerCase()) ||
+        lower.includes(f.family.split(",")[0].replace(/['"]/g, "").toLowerCase())
+    );
+    return soft?.family ?? stack;
   }
 
   const colorFields: { key: keyof DesignTokens["colors"]; label: string }[] = [
@@ -71,25 +83,37 @@ export function GlobalsPanel({ tokens, onChange }: GlobalsPanelProps) {
       </div>
       <div className="goke-field">
         <label>Heading font</label>
-        <input
-          type="text"
-          value={t.fonts.heading}
+        <select
+          value={selectValue(t.fonts.heading)}
           onChange={(e) => setFont("heading", e.target.value)}
-          placeholder="system-ui, sans-serif"
-        />
+          style={{ fontFamily: selectValue(t.fonts.heading) }}
+        >
+          {options.map((o) => (
+            <option key={o.value} value={o.value} style={{ fontFamily: o.value }}>
+              {o.label}
+            </option>
+          ))}
+        </select>
       </div>
       <div className="goke-field">
         <label>Body font</label>
-        <input
-          type="text"
-          value={t.fonts.body}
+        <select
+          value={selectValue(t.fonts.body)}
           onChange={(e) => setFont("body", e.target.value)}
-          placeholder="system-ui, sans-serif"
-        />
+          style={{ fontFamily: selectValue(t.fonts.body) }}
+        >
+          {options.map((o) => (
+            <option key={o.value} value={o.value} style={{ fontFamily: o.value }}>
+              {o.label}
+            </option>
+          ))}
+        </select>
       </div>
       <p className="goke-properties-empty" style={{ marginTop: 12 }}>
-        Use <code>var(--goke-primary)</code> in kits and styles. Changing
-        tokens updates the whole site.
+        Fonts load from Google Fonts into the canvas. Use{" "}
+        <code>var(--goke-font-heading)</code> /{" "}
+        <code>var(--goke-font-body)</code> and{" "}
+        <code>var(--goke-primary)</code> in kits and styles.
       </p>
     </div>
   );

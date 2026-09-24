@@ -5,6 +5,7 @@
 
 import { registry } from "../core/registry";
 import type { ComponentDefinition } from "../types";
+import { iconSvgMarkup } from "../data/icons";
 
 const components: ComponentDefinition[] = [
   // ── Layout ─────────────────────────────────────
@@ -402,6 +403,58 @@ const components: ComponentDefinition[] = [
     attributes: ["data-goke"],
   },
 ];
+
+
+  // ── Icons ──────────────────────────────────────
+  {
+    type: "content/icon",
+    name: "Icon",
+    category: "Content",
+    icon: "★",
+    html: `<span data-goke="icon" data-icon="heart" style="display:inline-flex;align-items:center;justify-content:center;width:48px;height:48px;color:var(--goke-primary,#3b82f6);">${iconSvgMarkup("heart", 32)}</span>`,
+    attributes: ["data-goke"],
+    properties: [
+      {
+        name: "Icon",
+        key: "icon",
+        htmlAttr: "data-icon",
+        inputType: "icon",
+        defaultValue: "heart",
+        onChange(node, value) {
+          const name = String(value || "heart");
+          node.setAttribute("data-icon", name);
+          node.innerHTML = iconSvgMarkup(name, 32);
+          return node;
+        },
+      },
+      {
+        name: "Color",
+        key: "color",
+        cssProperty: "color",
+        inputType: "color",
+        defaultValue: "#3b82f6",
+      },
+      {
+        name: "Size",
+        key: "size",
+        inputType: "css-unit",
+        units: ["px", "rem"],
+        defaultValue: "32px",
+        onChange(node, value) {
+          const size = String(value || "32px");
+          const px = parseInt(size, 10) || 32;
+          node.style.width = size;
+          node.style.height = size;
+          const svg = node.querySelector("svg");
+          if (svg) {
+            svg.setAttribute("width", String(px));
+            svg.setAttribute("height", String(px));
+          }
+          return node;
+        },
+      },
+    ],
+  },
 
 // Register everything
 registry.registerMany(components);
