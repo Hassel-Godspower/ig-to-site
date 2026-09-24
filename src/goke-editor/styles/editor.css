@@ -626,3 +626,309 @@
   overflow-y: auto;
   padding: 8px 0;
 }
+
+
+/* ═══════════════════════════════════════════════
+   Tier 4 — Elementor / Wix outlook + scroll fix
+   ═══════════════════════════════════════════════ */
+
+.goke-editor {
+  height: 100vh;
+  max-height: 100vh;
+}
+
+.goke-workspace {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 0; /* force flex child to respect parent — enables nested scroll */
+  display: flex;
+  overflow: hidden;
+}
+
+.goke-left-stack {
+  width: 280px !important;
+  flex: 0 0 280px;
+  height: 100% !important;
+  max-height: 100%;
+  min-height: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+  background: #1a1d24;
+  border-right: 1px solid #2c313c;
+}
+
+.goke-left-tabs {
+  flex: 0 0 auto;
+  display: flex;
+  background: #14161c;
+  border-bottom: 1px solid #2c313c;
+}
+
+.goke-left-tabs button {
+  flex: 1;
+  padding: 12px 6px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #8b93a7;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.goke-left-tabs button:hover {
+  color: #e8eaed;
+}
+
+.goke-left-tabs button.active {
+  color: #fff;
+  border-bottom-color: #93003c; /* Elementor-like accent */
+}
+
+/* Structure navigator — MUST scroll */
+.goke-navigator {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  max-height: 100%;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+}
+
+.goke-navigator .goke-palette-header {
+  flex: 0 0 auto;
+}
+
+.goke-navigator-body {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  overflow-y: scroll !important; /* always show scrollbar gutter */
+  overflow-x: hidden !important;
+  overscroll-behavior: contain;
+  padding: 4px 0 24px;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: #4b5563 #1a1d24;
+}
+
+.goke-navigator-body::-webkit-scrollbar {
+  width: 10px;
+}
+.goke-navigator-body::-webkit-scrollbar-track {
+  background: #14161c;
+}
+.goke-navigator-body::-webkit-scrollbar-thumb {
+  background: #4b5563;
+  border-radius: 5px;
+  border: 2px solid #14161c;
+}
+.goke-navigator-body::-webkit-scrollbar-thumb:hover {
+  background: #6b7280;
+}
+
+/* Palette as Elementor 2-col widget grid */
+.goke-left-stack .goke-palette {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  width: 100% !important;
+  border-right: none !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+  background: transparent;
+}
+
+.goke-palette-search {
+  flex: 0 0 auto;
+  padding: 10px 12px 6px;
+}
+
+.goke-palette-search input {
+  width: 100%;
+  box-sizing: border-box;
+  background: #0f1117;
+  border: 1px solid #2c313c;
+  border-radius: 6px;
+  color: #e8eaed;
+  padding: 8px 12px 8px 32px;
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+}
+
+.goke-palette-search input:focus {
+  border-color: #93003c;
+}
+
+.goke-palette-search {
+  position: relative;
+}
+.goke-palette-search::before {
+  content: "⌕";
+  position: absolute;
+  left: 22px;
+  top: 50%;
+  transform: translateY(-40%);
+  color: #8b93a7;
+  font-size: 14px;
+  pointer-events: none;
+}
+
+.goke-palette-body {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  padding: 4px 10px 20px;
+  scrollbar-width: thin;
+}
+
+.goke-palette-group-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #8b93a7;
+  padding: 12px 4px 8px;
+  text-transform: uppercase;
+}
+
+.goke-widget-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.goke-widget-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 72px;
+  padding: 12px 8px;
+  background: #22262f;
+  border: 1px solid #2c313c;
+  border-radius: 4px;
+  cursor: grab;
+  user-select: none;
+  transition: border-color 0.12s, background 0.12s, transform 0.12s;
+  color: #c5c9d3;
+  font-family: inherit;
+  font-size: 12px;
+  text-align: center;
+}
+
+.goke-widget-card:hover {
+  border-color: #93003c;
+  background: #2a2f3a;
+  color: #fff;
+}
+
+.goke-widget-card:active {
+  cursor: grabbing;
+  transform: scale(0.98);
+}
+
+.goke-widget-card-icon {
+  font-size: 22px;
+  line-height: 1;
+  color: #93003c;
+  opacity: 0.9;
+}
+
+.goke-widget-card:hover .goke-widget-card-icon {
+  opacity: 1;
+}
+
+/* Selection chrome (Elementor cyan box) */
+.goke-select-box {
+  border: 2px solid #58d0f8 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+}
+
+.goke-highlight-box {
+  border: 1px dashed #58d0f8 !important;
+  background: rgba(88, 208, 248, 0.06) !important;
+}
+
+/* Right panel Elementor-style */
+.goke-properties {
+  width: 300px !important;
+  background: #1a1d24 !important;
+  border-left: 1px solid #2c313c;
+}
+
+.goke-properties-header h2 {
+  font-size: 12px;
+  letter-spacing: 0.04em;
+}
+
+/* Canvas empty-state helpers (outside iframe) */
+.goke-canvas-empty-hint {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  pointer-events: none;
+  color: #8b93a7;
+  font-size: 13px;
+}
+
+.goke-canvas-empty-hint .goke-empty-actions {
+  display: flex;
+  gap: 10px;
+  pointer-events: auto;
+}
+
+.goke-canvas-empty-hint button {
+  background: #93003c;
+  color: #fff;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 3px;
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.goke-canvas-empty-hint button.secondary {
+  background: #4b5563;
+}
+
+/* Toolbar publish green like Elementor */
+.goke-toolbar .goke-btn-primary {
+  background: #39b54a !important;
+  color: #fff !important;
+  border: none !important;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.goke-toolbar .goke-btn-primary:hover {
+  background: #2d9a3c !important;
+}
+
+.goke-logo {
+  color: #93003c;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.goke-templates-panel {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+}
