@@ -61,3 +61,7 @@ export type {
   NavNode,
   SectionTemplate,
 } from "./types/document";
+
+export { GOOGLE_FONTS, ensureGoogleFontsInDocument, fontSelectOptions } from "./data/google-fonts";
+export { ICONS, iconSvgMarkup, searchIcons, getIcon } from "./data/icons";
+export { IconPicker } from "./components/IconPicker";
