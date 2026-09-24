@@ -1,5 +1,5 @@
 /**
- * Pre-built section kits for IG/business sites
+ * Tier 2 — Pre-built section kits for IG/business sites
  * Registered into the component registry under category "Kits".
  */
 
@@ -134,5 +134,4 @@ const kits: ComponentDefinition[] = [
 ];
 
 registry.registerMany(kits);
-
 export default kits;
