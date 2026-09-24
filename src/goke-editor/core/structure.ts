@@ -102,25 +102,95 @@ export function kindFromComponentType(type: string): StructureKind {
 
 /** Human label for navigator */
 export function labelForElement(el: HTMLElement): string {
-  const goke = el.getAttribute("data-goke");
-  if (goke) return goke.charAt(0).toUpperCase() + goke.slice(1);
-
   const sectionName = el.getAttribute("data-section-name");
   if (sectionName) return sectionName;
 
-  if (el.id === "site-title") return "Site title";
-  if (el.id === "hero-headline") return "Headline";
-  if (el.id === "hero-subheadline") return "Subheadline";
-  if (el.id === "cta-button") return "CTA button";
+  const goke = el.getAttribute("data-goke");
+  if (goke && !["container", "columns", "text"].includes(goke)) {
+    return goke.charAt(0).toUpperCase() + goke.slice(1);
+  }
+
+  const idMap: Record<string, string> = {
+    "site-title": "Site title",
+    "hero-headline": "Headline",
+    "hero-subheadline": "Subheadline",
+    "cta-button": "CTA button",
+  };
+  if (el.id && idMap[el.id]) return idMap[el.id];
+  if (el.id) {
+    const pretty = el.id
+      .replace(/[-_]+/g, " ")
+      .replace(/\b\w/g, (c) => c.toUpperCase());
+    if (pretty.length < 40) return pretty;
+  }
+
+  const cls = typeof el.className === "string" ? el.className : "";
+  const classHints = [
+    "hero", "about", "services", "gallery", "contact", "footer",
+    "header", "nav", "navbar", "pricing", "testimonial", "cta",
+  ];
+  for (const hint of classHints) {
+    if (cls.toLowerCase().split(/\s+/).some((c) => c === hint || c.includes(hint))) {
+      return hint.charAt(0).toUpperCase() + hint.slice(1);
+    }
+  }
 
   const tag = el.tagName.toLowerCase();
-  const text = (el.textContent || "").trim().slice(0, 24);
-  if (text && ["h1", "h2", "h3", "h4", "p", "a", "button"].includes(tag)) {
-    return `${tag}: ${text}${text.length >= 24 ? "…" : ""}`;
+  const tagLabels: Record<string, string> = {
+    header: "Header",
+    footer: "Footer",
+    nav: "Navigation",
+    main: "Main",
+    section: "Section",
+    article: "Article",
+    aside: "Aside",
+    img: "Image",
+    video: "Video",
+    form: "Form",
+    ul: "List",
+    ol: "List",
+    li: "List item",
+    button: "Button",
+    a: "Link",
+    div: "Block",
+    span: "Text",
+  };
+
+  const textTags = ["h1", "h2", "h3", "h4", "h5", "h6", "p", "a", "button", "label", "li"];
+  if (textTags.includes(tag)) {
+    let text = "";
+    for (const node of Array.from(el.childNodes)) {
+      if (node.nodeType === 3) text += node.textContent || "";
+    }
+    if (!text.trim()) text = (el.textContent || "").trim();
+    text = text.replace(/\s+/g, " ").trim().slice(0, 28);
+    const level =
+      tag.startsWith("h") && tag.length === 2
+        ? `Heading ${tag[1]}`
+        : tagLabels[tag] || tag.toUpperCase();
+    if (text) return `${level}: ${text}${text.length >= 28 ? "…" : ""}`;
+    return level;
   }
-  if (tag === "img") return "Image";
-  if (tag === "section") return "Section";
-  return tag;
+
+  if (tagLabels[tag]) return tagLabels[tag];
+  return tag.toUpperCase();
+}
+
+/** Icon key for navigator row */
+export function iconForElement(el: HTMLElement): string {
+  const tag = el.tagName.toLowerCase();
+  const goke = el.getAttribute("data-goke") || "";
+  if (tag === "header" || goke === "header") return "▣";
+  if (tag === "section" || goke === "section" || goke === "hero") return "▭";
+  if (tag === "footer") return "▬";
+  if (tag === "nav") return "☰";
+  if (tag === "img") return "▣";
+  if (tag === "a" || tag === "button" || goke === "button") return "▶";
+  if (tag.startsWith("h") && tag.length === 2) return "T";
+  if (tag === "p") return "¶";
+  if (tag === "ul" || tag === "ol") return "≡";
+  if (getKind(el) === "container") return "▦";
+  return "◇";
 }
 
 export function matchesSection(el: HTMLElement): boolean {

@@ -10,6 +10,7 @@ import { generateElements, delay } from "../utils/dom";
 import {
   resolveDropTarget,
   labelForElement,
+  iconForElement,
   getKind,
 } from "./structure";
 import { applyResponsiveStylesToDocument } from "./responsive-export";
@@ -576,6 +577,7 @@ export class Builder {
           id,
           label: labelForElement(child),
           tag: child.tagName.toLowerCase(),
+          icon: iconForElement(child),
           depth,
           element: child,
           children: walk(child, depth + 1),
