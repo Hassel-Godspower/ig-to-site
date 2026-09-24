@@ -616,6 +616,13 @@ export default function PreviewPage() {
           <div className="goke-left-tabs">
             <button
               type="button"
+              className={leftTab === "components" ? "active" : ""}
+              onClick={() => setLeftTab("components")}
+            >
+              Elements
+            </button>
+            <button
+              type="button"
               className={leftTab === "structure" ? "active" : ""}
               onClick={() => setLeftTab("structure")}
             >
@@ -623,17 +630,10 @@ export default function PreviewPage() {
             </button>
             <button
               type="button"
-              className={leftTab === "components" ? "active" : ""}
-              onClick={() => setLeftTab("components")}
-            >
-              Components
-            </button>
-            <button
-              type="button"
               className={leftTab === "templates" ? "active" : ""}
               onClick={() => setLeftTab("templates")}
             >
-              Templates
+              Library
             </button>
           </div>
           {leftTab === "structure" && (
