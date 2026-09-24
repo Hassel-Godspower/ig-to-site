@@ -384,3 +384,46 @@
   display: none;
   box-sizing: border-box;
 }
+
+/* ── Spacing box ──────────────────────────────── */
+
+.goke-spacing-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.goke-spacing-grid input {
+  width: 100%;
+  background: var(--goke-bg);
+  border: 1px solid var(--goke-border);
+  border-radius: 6px;
+  color: var(--goke-text);
+  padding: 6px 8px;
+  font-size: 12px;
+  font-family: inherit;
+  outline: none;
+}
+
+.goke-spacing-grid input:focus {
+  border-color: var(--goke-accent);
+}
+
+.goke-spacing-labels {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.goke-spacing-labels span {
+  font-size: 10px;
+  color: var(--goke-text-muted);
+  text-align: center;
+}
+
+.goke-kbd-hint {
+  font-size: 11px;
+  color: var(--goke-text-muted);
+  padding: 4px 8px;
+}
