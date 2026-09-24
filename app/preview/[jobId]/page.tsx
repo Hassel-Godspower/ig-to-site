@@ -22,14 +22,35 @@ import { PropertiesPanel } from "@/src/goke-editor/components/PropertiesPanel";
 import { Navigator } from "@/src/goke-editor/components/Navigator";
 import { ContextToolbar } from "@/src/goke-editor/components/ContextToolbar";
 import { StylePanel } from "@/src/goke-editor/components/StylePanel";
+import { GlobalsPanel } from "@/src/goke-editor/components/GlobalsPanel";
+import { TemplatesPanel } from "@/src/goke-editor/components/TemplatesPanel";
 import { matchSiteElement } from "@/src/goke-editor/components/site-markers";
 import {
   applyBreakpointPreview,
   applyResponsiveStylesToDocument,
 } from "@/src/goke-editor/core/responsive-export";
+import {
+  applyTokensToDocument,
+  documentFromDom,
+  serializeDocument,
+  parseDocument,
+  captureSectionTemplate,
+  emptyDocument,
+  readTokensFromDocument,
+} from "@/src/goke-editor/core/document-io";
+import {
+  copyStyles,
+  pasteStyles,
+  hasStyleClipboard,
+} from "@/src/goke-editor/core/style-clipboard";
+import { generateElements } from "@/src/goke-editor/utils/dom";
+import type { DesignTokens } from "@/src/goke-editor/types/document";
+import { DEFAULT_TOKENS } from "@/src/goke-editor/types/document";
+import { saveTemplate } from "@/lib/templateStore";
 
 import "@/src/goke-editor/components/goke-components";
 import "@/src/goke-editor/components/site-markers";
+import "@/src/goke-editor/components/section-kits";
 import "@/src/goke-editor/styles/editor.css";
 
 type Phase =
@@ -69,7 +90,11 @@ export default function PreviewPage() {
   const [canRedo, setCanRedo] = useState(false);
   const [device, setDevice] = useState<Breakpoint>("desktop");
   const [tree, setTree] = useState<NavNode[]>([]);
-  const [rightTab, setRightTab] = useState<"content" | "design">("content");
+  const [rightTab, setRightTab] = useState<"content" | "design" | "globals">("content");
+  const [leftTab, setLeftTab] = useState<"structure" | "components" | "templates">("components");
+  const [tokens, setTokens] = useState<DesignTokens>(DEFAULT_TOKENS);
+  const [tplRefresh, setTplRefresh] = useState(0);
+  const [canPasteStyle, setCanPasteStyle] = useState(false);
 
   const previewSrc = `/api/site/${jobId}/index.html`;
 
@@ -108,9 +133,30 @@ export default function PreviewPage() {
       refreshTree();
     });
 
+    // Load editor.json tokens if present
+    try {
+      const res = await fetch(`/api/site/${jobId}/editor.json`);
+      if (res.ok) {
+        const raw = await res.text();
+        const parsed = parseDocument(raw);
+        if (parsed?.tokens) {
+          setTokens(parsed.tokens);
+          applyTokensToDocument(iframe.contentDocument!, parsed.tokens);
+        }
+      } else if (iframe.contentDocument) {
+        const fromDom = readTokensFromDocument(iframe.contentDocument);
+        setTokens(fromDom);
+        applyTokensToDocument(iframe.contentDocument, fromDom);
+      }
+    } catch {
+      if (iframe.contentDocument) {
+        applyTokensToDocument(iframe.contentDocument, DEFAULT_TOKENS);
+      }
+    }
+
     setBuilderReady(true);
     refreshTree();
-  }, [refreshTree]);
+  }, [refreshTree, jobId]);
 
   function onIframeLoad() {
     attachBuilder();
@@ -168,6 +214,18 @@ export default function PreviewPage() {
         if (editingText) return;
         e.preventDefault();
         builderRef.current?.duplicateNode();
+        return;
+      }
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === "c") {
+        if (editingText) return;
+        e.preventDefault();
+        handleCopyStyle();
+        return;
+      }
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === "v") {
+        if (editingText) return;
+        e.preventDefault();
+        handlePasteStyle();
         return;
       }
 
@@ -316,6 +374,20 @@ export default function PreviewPage() {
       /* styles.css optional */
     }
 
+
+    // Tier 3: persist editor.json (tokens + tree snapshot)
+    try {
+      const gdoc = documentFromDom(doc, jobId);
+      gdoc.tokens = tokens;
+      await fetch(`/api/site/${jobId}/editor.json`, {
+        method: "PUT",
+        body: serializeDocument(gdoc),
+        headers: { "Content-Type": "application/json" },
+      });
+    } catch {
+      /* non-fatal */
+    }
+
     setSaved(true);
   }
 
@@ -347,6 +419,50 @@ export default function PreviewPage() {
       styleManager.setStyle(target, property.cssProperty, String(value));
     }
     setSaved(false);
+  }
+
+
+  function handleTokensChange(next: DesignTokens) {
+    setTokens(next);
+    const doc = iframeRef.current?.contentDocument;
+    if (doc) applyTokensToDocument(doc, next);
+    setSaved(false);
+  }
+
+  function handleCopyStyle() {
+    if (!selectedElement) return;
+    copyStyles(selectedElement);
+    setCanPasteStyle(true);
+  }
+
+  function handlePasteStyle() {
+    if (!selectedElement) return;
+    if (pasteStyles(selectedElement)) {
+      setSaved(false);
+    }
+  }
+
+  function handleSaveTemplate() {
+    if (!selectedElement) return;
+    const name = window.prompt("Template name", "My section");
+    if (!name) return;
+    const tpl = captureSectionTemplate(selectedElement, name.trim());
+    saveTemplate(tpl);
+    setTplRefresh((n) => n + 1);
+    setLeftTab("templates");
+  }
+
+  function insertTemplateHtml(html: string) {
+    const builder = builderRef.current;
+    const doc = iframeRef.current?.contentDocument;
+    if (!builder || !doc?.body) return;
+    const nodes = generateElements(html);
+    const node = nodes[0];
+    if (!node) return;
+    doc.body.appendChild(node);
+    builder.selectNode(node);
+    setSaved(false);
+    refreshTree();
   }
 
   async function goLive() {
@@ -497,12 +613,45 @@ export default function PreviewPage() {
       <div className="goke-workspace">
         {/* Left: structure + components */}
         <div className="goke-left-stack">
-          <Navigator
-            tree={tree}
-            selectedElement={selectedElement}
-            onSelect={(el) => builderRef.current?.selectNode(el)}
-          />
-          <ComponentPalette onDragStart={startDrag} />
+          <div className="goke-left-tabs">
+            <button
+              type="button"
+              className={leftTab === "structure" ? "active" : ""}
+              onClick={() => setLeftTab("structure")}
+            >
+              Structure
+            </button>
+            <button
+              type="button"
+              className={leftTab === "components" ? "active" : ""}
+              onClick={() => setLeftTab("components")}
+            >
+              Components
+            </button>
+            <button
+              type="button"
+              className={leftTab === "templates" ? "active" : ""}
+              onClick={() => setLeftTab("templates")}
+            >
+              Templates
+            </button>
+          </div>
+          {leftTab === "structure" && (
+            <Navigator
+              tree={tree}
+              selectedElement={selectedElement}
+              onSelect={(el) => builderRef.current?.selectNode(el)}
+            />
+          )}
+          {leftTab === "components" && (
+            <ComponentPalette onDragStart={startDrag} />
+          )}
+          {leftTab === "templates" && (
+            <TemplatesPanel
+              onInsert={insertTemplateHtml}
+              refreshKey={tplRefresh}
+            />
+          )}
         </div>
 
         {/* Center: canvas */}
@@ -546,27 +695,34 @@ export default function PreviewPage() {
         <aside className="goke-properties">
           <div className="goke-properties-header">
             <h2>{selectedComponent?.name || "Properties"}</h2>
-            {selectedElement && (
-              <div className="goke-device-switch" style={{ marginTop: 8 }}>
-                <button
-                  type="button"
-                  className={rightTab === "content" ? "active" : ""}
-                  onClick={() => setRightTab("content")}
-                >
-                  Content
-                </button>
-                <button
-                  type="button"
-                  className={rightTab === "design" ? "active" : ""}
-                  onClick={() => setRightTab("design")}
-                >
-                  Design
-                </button>
-              </div>
-            )}
+            <div className="goke-device-switch" style={{ marginTop: 8 }}>
+              <button
+                type="button"
+                className={rightTab === "content" ? "active" : ""}
+                onClick={() => setRightTab("content")}
+              >
+                Content
+              </button>
+              <button
+                type="button"
+                className={rightTab === "design" ? "active" : ""}
+                onClick={() => setRightTab("design")}
+              >
+                Design
+              </button>
+              <button
+                type="button"
+                className={rightTab === "globals" ? "active" : ""}
+                onClick={() => setRightTab("globals")}
+              >
+                Globals
+              </button>
+            </div>
           </div>
           <div className="goke-properties-body">
-            {!selectedElement ? (
+            {rightTab === "globals" ? (
+              <GlobalsPanel tokens={tokens} onChange={handleTokensChange} />
+            ) : !selectedElement ? (
               <p className="goke-properties-empty">
                 Select an element on the canvas
               </p>
@@ -595,6 +751,10 @@ export default function PreviewPage() {
         onDelete={() => builderRef.current?.deleteNode()}
         onMoveUp={() => builderRef.current?.moveNode(undefined, "up")}
         onMoveDown={() => builderRef.current?.moveNode(undefined, "down")}
+        onCopyStyle={handleCopyStyle}
+        onPasteStyle={handlePasteStyle}
+        onSaveTemplate={handleSaveTemplate}
+        canPasteStyle={canPasteStyle || hasStyleClipboard()}
       />
 
       {phase === "modal" && (
