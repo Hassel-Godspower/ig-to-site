@@ -14,6 +14,7 @@ import type {
 import { DEFAULT_TOKENS as TOKENS_FALLBACK } from "../types/document";
 import { getKind } from "./structure";
 import { STYLE_ATTR, HOVER_ATTR } from "./responsive-export";
+import { ensureGoogleFontsInDocument } from "../data/google-fonts";
 
 const TOKENS_STYLE_ID = "goke-design-tokens";
 
@@ -58,7 +59,11 @@ export function applyTokensToDocument(
   --goke-font-heading: ${tokens.fonts.heading};
   --goke-font-body: ${tokens.fonts.body};
   --primary-color: ${tokens.colors.primary};
-}`;
+}
+body { font-family: var(--goke-font-body); color: var(--goke-text); background: var(--goke-bg); }
+h1, h2, h3, h4, h5, h6 { font-family: var(--goke-font-heading); }`;
+
+  ensureGoogleFontsInDocument(doc, [tokens.fonts.heading, tokens.fonts.body]);
 }
 
 /** Read tokens currently applied (or defaults) */

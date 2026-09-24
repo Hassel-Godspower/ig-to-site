@@ -6,6 +6,7 @@
 import { styleManager } from "./style-manager";
 import type { Breakpoint, CSSProps, ResponsiveStyles } from "../types/document";
 import { STYLE_ATTR, HOVER_ATTR } from "./responsive-export";
+import { fontSelectOptions } from "../data/google-fonts";
 
 export type StyleGroupId =
   | "layout"
@@ -137,6 +138,13 @@ export const STYLE_GROUPS: Record<
   typography: {
     label: "Typography",
     controls: [
+      {
+        key: "fontFamily",
+        cssProperty: "font-family",
+        label: "Font",
+        inputType: "select",
+        options: fontSelectOptions(),
+      },
       {
         key: "fontSize",
         cssProperty: "font-size",
