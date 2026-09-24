@@ -626,3 +626,63 @@
   overflow-y: auto;
   padding: 8px 0;
 }
+
+
+/* ── Icon picker ──────────────────────────────── */
+.goke-icon-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.goke-icon-picker-search {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--goke-border, #2a2f3c);
+  background: var(--goke-surface-2, #1e222d);
+  color: var(--goke-text, #e8eaed);
+  font-size: 12px;
+}
+.goke-icon-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 4px;
+  max-height: 200px;
+  overflow-y: auto;
+  padding: 2px;
+}
+.goke-icon-picker-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  aspect-ratio: 1;
+  padding: 6px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--goke-text, #e8eaed);
+  cursor: pointer;
+}
+.goke-icon-picker-item:hover {
+  background: var(--goke-surface-2, #1e222d);
+  border-color: var(--goke-border, #2a2f3c);
+}
+.goke-icon-picker-item.is-selected {
+  border-color: var(--goke-accent, #3b82f6);
+  background: rgba(59, 130, 246, 0.15);
+  color: var(--goke-accent, #3b82f6);
+}
+.goke-icon-picker-item svg {
+  width: 18px;
+  height: 18px;
+}
+.goke-icon-picker-meta {
+  font-size: 11px;
+  color: var(--goke-text-muted, #9aa0a6);
+  margin: 0;
+}
+.goke-icon-picker-meta code {
+  font-size: 11px;
+}
