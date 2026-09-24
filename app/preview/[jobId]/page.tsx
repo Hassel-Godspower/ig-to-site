@@ -23,6 +23,10 @@ import { Navigator } from "@/src/goke-editor/components/Navigator";
 import { ContextToolbar } from "@/src/goke-editor/components/ContextToolbar";
 import { StylePanel } from "@/src/goke-editor/components/StylePanel";
 import { matchSiteElement } from "@/src/goke-editor/components/site-markers";
+import {
+  applyBreakpointPreview,
+  applyResponsiveStylesToDocument,
+} from "@/src/goke-editor/core/responsive-export";
 
 import "@/src/goke-editor/components/goke-components";
 import "@/src/goke-editor/components/site-markers";
@@ -126,6 +130,81 @@ export default function PreviewPage() {
     };
   }, []);
 
+
+  // Keyboard shortcuts (Elementor-style)
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      const tag = (e.target as HTMLElement)?.tagName;
+      const editingText =
+        tag === "INPUT" ||
+        tag === "TEXTAREA" ||
+        tag === "SELECT" ||
+        (e.target as HTMLElement)?.isContentEditable;
+
+      // Ctrl/Cmd+Z undo, Ctrl/Cmd+Shift+Z or Ctrl+Y redo
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "z" && !e.shiftKey) {
+        e.preventDefault();
+        Undo.undo();
+        setSaved(false);
+        refreshTree();
+        return;
+      }
+      if (
+        ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === "z") ||
+        ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "y")
+      ) {
+        e.preventDefault();
+        Undo.redo();
+        setSaved(false);
+        refreshTree();
+        return;
+      }
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        void saveEdits();
+        return;
+      }
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "d") {
+        if (editingText) return;
+        e.preventDefault();
+        builderRef.current?.duplicateNode();
+        return;
+      }
+
+      if (editingText) return;
+
+      if (e.key === "Delete" || e.key === "Backspace") {
+        e.preventDefault();
+        builderRef.current?.deleteNode();
+        return;
+      }
+      if (e.key === "Escape") {
+        builderRef.current?.selectNode(null);
+        return;
+      }
+      if (e.key === "ArrowUp" && (e.altKey || e.metaKey)) {
+        e.preventDefault();
+        builderRef.current?.moveNode(undefined, "up");
+        return;
+      }
+      if (e.key === "ArrowDown" && (e.altKey || e.metaKey)) {
+        e.preventDefault();
+        builderRef.current?.moveNode(undefined, "down");
+        return;
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // When device breakpoint changes, re-apply stored responsive styles on canvas
+  useEffect(() => {
+    const doc = iframeRef.current?.contentDocument;
+    if (!doc || !builderReady) return;
+    applyBreakpointPreview(doc, device);
+  }, [device, builderReady]);
+
   // Payment verification
   useEffect(() => {
     if (phase !== "verifying") return;
@@ -198,13 +277,45 @@ export default function PreviewPage() {
     const builder = builderRef.current;
     const doc = iframeRef.current?.contentDocument;
     if (!doc) return;
+
+    // Ensure responsive + hover CSS is baked into the HTML
+    applyResponsiveStylesToDocument(doc);
     const html =
       builder?.getHtml() ||
       "<!DOCTYPE html>\n" + doc.documentElement.outerHTML;
+
     await fetch(`/api/site/${jobId}/index.html`, {
       method: "PUT",
       body: html,
     });
+
+    // Also append editor CSS into styles.css if it exists (non-fatal)
+    try {
+      const styleTag = doc.getElementById("goke-editor-responsive");
+      if (styleTag?.textContent) {
+        const existing = await fetch(`/api/site/${jobId}/styles.css`).then(
+          (r) => (r.ok ? r.text() : "")
+        );
+        const marker = "/* === goke-editor-responsive === */";
+        let next = existing || "";
+        const idx = next.indexOf(marker);
+        if (idx >= 0) next = next.slice(0, idx).trimEnd();
+        next =
+          next +
+          "\n\n" +
+          marker +
+          "\n" +
+          styleTag.textContent +
+          "\n";
+        await fetch(`/api/site/${jobId}/styles.css`, {
+          method: "PUT",
+          body: next,
+        });
+      }
+    } catch {
+      /* styles.css optional */
+    }
+
     setSaved(true);
   }
 
@@ -305,6 +416,9 @@ export default function PreviewPage() {
           {!saved && (
             <span style={{ color: "#fbbf24", fontSize: 12 }}>Unsaved</span>
           )}
+          <span className="goke-kbd-hint" title="Del delete · ⌘Z undo · ⌘S save · ⌘D duplicate · Esc deselect">
+            ⌨ shortcuts
+          </span>
         </div>
 
         <div className="goke-toolbar-center">
