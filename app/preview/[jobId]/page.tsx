@@ -51,6 +51,7 @@ import { saveTemplate } from "@/lib/templateStore";
 import "@/src/goke-editor/components/goke-components";
 import "@/src/goke-editor/components/site-markers";
 import "@/src/goke-editor/components/section-kits";
+import "@/src/goke-editor/styles/editor.css";
 
 type Phase =
   | "editing"
@@ -132,23 +133,25 @@ export default function PreviewPage() {
       refreshTree();
     });
 
-    // Tokens: only override site CSS when editor.json exists.
-    // Avoid re-theming a freshly generated site (stops outlook flash).
+    // Load editor.json tokens if present
     try {
       const res = await fetch(`/api/site/${jobId}/editor.json`);
       if (res.ok) {
         const raw = await res.text();
         const parsed = parseDocument(raw);
-        if (parsed?.tokens && iframe.contentDocument) {
+        if (parsed?.tokens) {
           setTokens(parsed.tokens);
-          applyTokensToDocument(iframe.contentDocument, parsed.tokens);
+          applyTokensToDocument(iframe.contentDocument!, parsed.tokens);
         }
       } else if (iframe.contentDocument) {
-        // Read for Globals panel only — do not rewrite :root
-        setTokens(readTokensFromDocument(iframe.contentDocument));
+        const fromDom = readTokensFromDocument(iframe.contentDocument);
+        setTokens(fromDom);
+        applyTokensToDocument(iframe.contentDocument, fromDom);
       }
     } catch {
-      /* keep generated site styles as-is */
+      if (iframe.contentDocument) {
+        applyTokensToDocument(iframe.contentDocument, DEFAULT_TOKENS);
+      }
     }
 
     setBuilderReady(true);
@@ -613,13 +616,6 @@ export default function PreviewPage() {
           <div className="goke-left-tabs">
             <button
               type="button"
-              className={leftTab === "components" ? "active" : ""}
-              onClick={() => setLeftTab("components")}
-            >
-              Elements
-            </button>
-            <button
-              type="button"
               className={leftTab === "structure" ? "active" : ""}
               onClick={() => setLeftTab("structure")}
             >
@@ -627,10 +623,17 @@ export default function PreviewPage() {
             </button>
             <button
               type="button"
+              className={leftTab === "components" ? "active" : ""}
+              onClick={() => setLeftTab("components")}
+            >
+              Components
+            </button>
+            <button
+              type="button"
               className={leftTab === "templates" ? "active" : ""}
               onClick={() => setLeftTab("templates")}
             >
-              Library
+              Templates
             </button>
           </div>
           {leftTab === "structure" && (
