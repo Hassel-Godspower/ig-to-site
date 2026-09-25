@@ -24,6 +24,7 @@ import { ContextToolbar } from "@/src/goke-editor/components/ContextToolbar";
 import { StylePanel } from "@/src/goke-editor/components/StylePanel";
 import { GlobalsPanel } from "@/src/goke-editor/components/GlobalsPanel";
 import { TemplatesPanel } from "@/src/goke-editor/components/TemplatesPanel";
+import { MediaPanel } from "@/src/goke-editor/components/MediaPanel";
 import { loadStarterHtml } from "@/src/goke-editor/core/load-starter";
 import type { StarterTemplate } from "@/src/goke-editor/data/starter-templates";
 import { mergeCurrentDocIntoTemplate } from "@/src/goke-editor/core/merge-content";
@@ -97,7 +98,7 @@ export default function PreviewPage() {
   const [device, setDevice] = useState<Breakpoint>("desktop");
   const [tree, setTree] = useState<NavNode[]>([]);
   const [rightTab, setRightTab] = useState<"content" | "design" | "globals">("content");
-  const [leftTab, setLeftTab] = useState<"structure" | "components" | "templates">("components");
+  const [leftTab, setLeftTab] = useState<"structure" | "components" | "templates" | "media">("components");
   const [tokens, setTokens] = useState<DesignTokens>(DEFAULT_TOKENS);
   const [tplRefresh, setTplRefresh] = useState(0);
   const [canPasteStyle, setCanPasteStyle] = useState(false);
@@ -674,6 +675,13 @@ export default function PreviewPage() {
               onClick={() => setLeftTab("templates")}
             >
               Templates
+            </button>
+            <button
+              type="button"
+              className={leftTab === "media" ? "active" : ""}
+              onClick={() => setLeftTab("media")}
+            >
+              Media
             </button>
           </div>
           {leftTab === "structure" && (
