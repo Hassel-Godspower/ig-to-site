@@ -23,14 +23,13 @@ export interface CreatedRepo {
   defaultBranch: string;
 }
 
-// Creates a private repo (with an initial commit, so it has a branch to push
-// to) named after the customer's chosen subdomain, and pushes the generated
-// files into it. Only called once payment has succeeded -- nothing gets
-// created in your GitHub account for visitors who never pay. If the name is
-// taken, retries with a short random suffix (GitHub repo names only need to
-// be unique within your account, so collisions should be rare).
+export type RepoFile =
+  | { path: string; content: string; encoding?: "utf-8" }
+  | { path: string; contentBase64: string };
+
+// Creates a private repo and pushes files. contentBase64 preferred for binary.
 export async function createRepoWithFiles(
-  files: Record<string, string>,
+  files: Record<string, string> | RepoFile[],
   preferredName: string
 ): Promise<CreatedRepo> {
   let name = preferredName;
@@ -57,8 +56,12 @@ export async function createRepoWithFiles(
   const repoName = repo.name as string;
   const defaultBranch = repo.default_branch as string;
 
+  const list: RepoFile[] = Array.isArray(files)
+    ? files
+    : Object.entries(files).map(([path, content]) => ({ path, content }));
+
   await Promise.all(
-    Object.entries(files).map(([path, content]) => pushFile(owner, repoName, path, content, defaultBranch))
+    list.map((f) => pushFile(owner, repoName, f, defaultBranch))
   );
 
   return { owner, repoName, repoUrl: repo.html_url, defaultBranch };
@@ -67,17 +70,33 @@ export async function createRepoWithFiles(
 async function pushFile(
   owner: string,
   repo: string,
-  path: string,
-  content: string,
+  file: RepoFile,
   branch: string
 ): Promise<void> {
-  const res = await gh(`/repos/${owner}/${repo}/contents/${encodeURIComponent(path)}`, {
-    method: "PUT",
-    body: JSON.stringify({
-      message: `Add ${path}`,
-      content: Buffer.from(content, "utf-8").toString("base64"),
-      branch,
-    }),
-  });
-  if (!res.ok) throw new Error(`GitHub push failed for ${path}: ${res.status} ${await res.text()}`);
+  const path = file.path;
+  const contentBase64 =
+    "contentBase64" in file
+      ? file.contentBase64
+      : Buffer.from(file.content, "utf-8").toString("base64");
+
+  const res = await gh(
+    `/repos/${owner}/${repo}/contents/${path
+      .split("/")
+      .map(encodeURIComponent)
+      .join("/")}`,
+    {
+      method: "PUT",
+      body: JSON.stringify({
+        message: `Add ${path}`,
+        content: contentBase64,
+        branch,
+      }),
+    }
+  );
+
+  if (!res.ok) {
+    throw new Error(
+      `GitHub file push failed for ${path}: ${res.status} ${await res.text()}`
+    );
+  }
 }
