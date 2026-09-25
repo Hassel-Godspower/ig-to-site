@@ -70,6 +70,73 @@ export async function saveSiteFile(
     );
 }
 
+// add next to your existing CONTENT_TYPES / helpers
+
+const BINARY_EXT = new Set([
+  ".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg", ".ico", ".mp4", ".webm",
+]);
+
+const BINARY_TYPES: Record<string, string> = {
+  ".png": "image/png",
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
+  ".gif": "image/gif",
+  ".webp": "image/webp",
+  ".svg": "image/svg+xml",
+  ".ico": "image/x-icon",
+  ".mp4": "video/mp4",
+  ".webm": "video/webm",
+};
+
+function extOf(filename: string): string {
+  const i = filename.lastIndexOf(".");
+  return i === -1 ? "" : filename.slice(i).toLowerCase();
+}
+
+export function isBinaryPath(filename: string): boolean {
+  return BINARY_EXT.has(extOf(filename));
+}
+
+export function contentTypeFor(filename: string): string {
+  return BINARY_TYPES[extOf(filename)] ?? "application/octet-stream";
+}
+
+/** Binary download — do NOT use .text() */
+export async function getSiteBinary(
+  jobId: string,
+  filename: string
+): Promise<Blob | null> {
+  const { data, error } = await getSupabase()
+    .storage.from("sites")
+    .download(`\( {jobId}/ \){filename}`);
+  if (error || !data) return null;
+  return data;
+}
+
+/** Binary upload for media library */
+export async function saveSiteBinary(
+  jobId: string,
+  filename: string,
+  data: ArrayBuffer | Buffer | Blob,
+  contentType?: string
+): Promise<void> {
+  const body =
+    data instanceof Blob
+      ? data
+      : new Blob([data as BlobPart], {
+          type: contentType ?? contentTypeFor(filename),
+        });
+  const { error } = await getSupabase()
+    .storage.from("sites")
+    .upload(`\( {jobId}/ \){filename}`, body, {
+      contentType: contentType ?? contentTypeFor(filename),
+      upsert: true,
+    });
+  if (error) {
+    throw new Error(`Upload failed for ${filename}: ${error.message}`);
+  }
+}
+
 /** Binary upload (images, video) into the job's storage prefix */
 export async function saveSiteBinary(
   jobId: string,
