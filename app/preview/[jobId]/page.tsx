@@ -26,6 +26,9 @@ import { GlobalsPanel } from "@/src/goke-editor/components/GlobalsPanel";
 import { TemplatesPanel } from "@/src/goke-editor/components/TemplatesPanel";
 import { loadStarterHtml } from "@/src/goke-editor/core/load-starter";
 import type { StarterTemplate } from "@/src/goke-editor/data/starter-templates";
+import { mergeCurrentDocIntoTemplate } from "@/src/goke-editor/core/merge-content";
+import type { StarterApplyMode } from "@/src/goke-editor/components/TemplatesPanel";
+import { MediaProvider } from "@/src/goke-editor/context/MediaContext";
 import { matchSiteElement } from "@/src/goke-editor/components/site-markers";
 import {
   applyBreakpointPreview,
@@ -467,16 +470,29 @@ export default function PreviewPage() {
     refreshTree();
   }
 
-  async function handleApplyStarter(starter: StarterTemplate) {
+  async function handleApplyStarter(
+    starter: StarterTemplate,
+    mode: StarterApplyMode = "merge"
+  ) {
     const builder = builderRef.current;
     const iframe = iframeRef.current;
     if (!builder || !iframe) throw new Error("Editor not ready");
-    const ok = window.confirm(
-      `Replace the current page with "${starter.name}"? Unsaved edits will be lost.`
-    );
-    if (!ok) return;
-    const { html } = await loadStarterHtml(starter);
-    // setHtml document.write + rebinds canvas events on the new body
+
+    const { html: templateHtml } = await loadStarterHtml(starter);
+    let html = templateHtml;
+
+    if (mode === "merge") {
+      const doc = iframe.contentDocument;
+      if (doc?.body) {
+        html = mergeCurrentDocIntoTemplate(doc, templateHtml);
+      }
+    } else {
+      const ok = window.confirm(
+        `Replace the current page with "${starter.name}"? Your current layout will be lost (content is not merged).`
+      );
+      if (!ok) return;
+    }
+
     builder.setHtml(html);
     const doc = iframe.contentDocument;
     if (doc) applyTokensToDocument(doc, tokens);
@@ -541,6 +557,7 @@ export default function PreviewPage() {
   };
 
   return (
+    <MediaProvider jobId={jobId}>
     <div className="goke-editor" style={{ height: "100vh" }}>
       <header className="goke-toolbar">
         <div className="goke-toolbar-left">
@@ -834,6 +851,7 @@ export default function PreviewPage() {
         </div>
       )}
     </div>
+    </MediaProvider>
   );
 }
 
