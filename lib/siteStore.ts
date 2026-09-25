@@ -195,6 +195,19 @@ export async function getPublishFiles(jobId: string): Promise<PublishFile[]> {
   return out;
 }
 
+
+export async function deleteSiteFile(
+  jobId: string,
+  filename: string
+): Promise<void> {
+  const { error } = await getSupabase()
+    .storage.from(BUCKET)
+    .remove([`${jobId}/${filename}`]);
+  if (error) {
+    throw new Error(`Delete failed for ${filename}: ${error.message}`);
+  }
+}
+
 export async function saveEditorDocument(
   jobId: string,
   json: string

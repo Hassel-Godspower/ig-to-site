@@ -44,6 +44,11 @@ export async function generateSite(
 
 function buildPrompt(profile: InstagramProfile): string {
   const captions = profile.posts.map((p) => `- ${p.caption}`).join("\n");
+  const mediaLines =
+    (profile as { mediaUrls?: string[] }).mediaUrls
+      ?.slice(0, 12)
+      .map((u, i) => `${i + 1}. ${u}`)
+      .join("\n") || "(no public image URLs in export — use tasteful placeholders from picsum.photos)";
 
   return `You are building a small static website (plain HTML, CSS, and
 JS — no framework, no build step, no external requests except Google
@@ -53,6 +58,9 @@ Business/creator name: ${profile.name || profile.username || "Unknown"}
 Instagram bio: ${profile.bio || "(none provided)"}
 Recent post captions (use these to infer tone, services, offerings):
 ${captions || "(no captions available)"}
+
+Public image URLs from the export (prefer these in <img src> for gallery/hero when present):
+${mediaLines}
 
 Requirements:
 - index.html links to styles.css and script.js as separate files
