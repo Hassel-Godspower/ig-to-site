@@ -56,6 +56,7 @@ import { saveTemplate } from "@/lib/templateStore";
 import "@/src/goke-editor/components/goke-components";
 import "@/src/goke-editor/components/site-markers";
 import "@/src/goke-editor/components/section-kits";
+import "@/src/goke-editor/data/icons";
 import "@/src/goke-editor/styles/editor.css";
 
 type Phase =
