@@ -6,6 +6,7 @@
 
 import React from "react";
 import { IconPicker } from "./IconPicker";
+import { useMediaUpload } from "../context/MediaContext";
 import type { ComponentProperty } from "../types";
 
 interface PropertyFieldProps {
@@ -246,16 +247,12 @@ export function PropertyField({
 
     case "image":
       return (
-        <div className="goke-field">
-          <label htmlFor={id}>{property.name}</label>
-          <input
-            id={id}
-            type="text"
-            value={value}
-            placeholder="https://… or /path/to/image"
-            onChange={(e) => onChange(e.target.value)}
-          />
-        </div>
+        <ImageField
+          id={id}
+          label={property.name}
+          value={value}
+          onChange={onChange}
+        />
       );
 
     case "section":
@@ -270,4 +267,83 @@ export function PropertyField({
   }
 }
 
+
+function ImageField({
+  id,
+  label,
+  value,
+  onChange,
+}: {
+  id: string;
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  const { jobId, uploadFile } = useMediaUpload();
+  const [busy, setBusy] = React.useState(false);
+  const [err, setErr] = React.useState<string | null>(null);
+  const inputRef = React.useRef<HTMLInputElement>(null);
+
+  async function onFile(file: File | null) {
+    if (!file) return;
+    setErr(null);
+    setBusy(true);
+    try {
+      const url = await uploadFile(file);
+      onChange(url);
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Upload failed");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="goke-field goke-field-image">
+      <label htmlFor={id}>{label}</label>
+      {value ? (
+        <div className="goke-image-preview">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={value} alt="" />
+        </div>
+      ) : null}
+      <input
+        id={id}
+        type="text"
+        value={value}
+        placeholder="https://… or upload below"
+        onChange={(e) => onChange(e.target.value)}
+      />
+      <div className="goke-image-actions">
+        <input
+          ref={inputRef}
+          type="file"
+          accept="image/png,image/jpeg,image/gif,image/webp,image/svg+xml"
+          style={{ display: "none" }}
+          onChange={(e) => onFile(e.target.files?.[0] ?? null)}
+        />
+        <button
+          type="button"
+          className="goke-btn-upload"
+          disabled={busy || !jobId}
+          onClick={() => inputRef.current?.click()}
+        >
+          {busy ? "Uploading…" : "Upload image"}
+        </button>
+      </div>
+      {err && (
+        <p className="goke-properties-empty" style={{ color: "#ef4444" }}>
+          {err}
+        </p>
+      )}
+      {!jobId && (
+        <p className="goke-properties-empty">
+          Open a site job to enable uploads.
+        </p>
+      )}
+    </div>
+  );
+}
+
 export default PropertyField;
+

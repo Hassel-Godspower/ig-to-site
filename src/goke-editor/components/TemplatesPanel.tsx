@@ -1,6 +1,6 @@
 /**
  * Templates panel — user-saved sections + full-page starters
- * (dawidolko/Website-Templates via CDN).
+ * Starters can MERGE Instagram/current content or fully replace the page.
  */
 
 "use client";
@@ -17,10 +17,14 @@ import {
   type StarterTemplate,
 } from "../data/starter-templates";
 
+export type StarterApplyMode = "merge" | "replace";
+
 interface TemplatesPanelProps {
   onInsert: (html: string) => void;
-  /** Replace the whole canvas with a starter page */
-  onApplyStarter?: (starter: StarterTemplate) => void | Promise<void>;
+  onApplyStarter?: (
+    starter: StarterTemplate,
+    mode: StarterApplyMode
+  ) => void | Promise<void>;
   refreshKey?: number;
 }
 
@@ -33,6 +37,7 @@ export function TemplatesPanel({
   const [tab, setTab] = useState<"starters" | "saved">("starters");
   const [category, setCategory] = useState<string>("All");
   const [query, setQuery] = useState("");
+  const [mode, setMode] = useState<StarterApplyMode>("merge");
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -64,7 +69,7 @@ export function TemplatesPanel({
     setError(null);
     setLoadingId(tpl.id);
     try {
-      await onApplyStarter(tpl);
+      await onApplyStarter(tpl, mode);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load template");
     } finally {
@@ -94,16 +99,39 @@ export function TemplatesPanel({
       {tab === "starters" && (
         <>
           <p className="goke-properties-empty" style={{ marginBottom: 8 }}>
-            Full-page HTML templates (
+            Apply a design from{" "}
             <a
               href="https://github.com/dawidolko/Website-Templates"
               target="_blank"
               rel="noopener noreferrer"
             >
-              MIT
+              open templates
             </a>
-            ). Applying replaces the current page.
+            . Prefer <strong>Keep content</strong> so Instagram text/images
+            stay when the layout changes.
           </p>
+
+          <div className="goke-tpl-mode">
+            <label>
+              <input
+                type="radio"
+                name="starter-mode"
+                checked={mode === "merge"}
+                onChange={() => setMode("merge")}
+              />
+              Keep content (sync)
+            </label>
+            <label>
+              <input
+                type="radio"
+                name="starter-mode"
+                checked={mode === "replace"}
+                onChange={() => setMode("replace")}
+              />
+              Replace whole page
+            </label>
+          </div>
+
           <input
             type="search"
             className="goke-tpl-search"
@@ -136,7 +164,11 @@ export function TemplatesPanel({
                   style={{ flex: 1 }}
                   disabled={!!loadingId || !onApplyStarter}
                   onClick={() => applyStarter(tpl)}
-                  title="Apply full page template"
+                  title={
+                    mode === "merge"
+                      ? "Apply design, keep current content"
+                      : "Replace entire page"
+                  }
                 >
                   <span className="goke-palette-icon">
                     {loadingId === tpl.id ? "…" : "▣"}
