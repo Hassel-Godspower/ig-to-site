@@ -1,6 +1,7 @@
 /**
- * Goke native components – zero Bootstrap
- * Layout, Content, Business, Commerce building blocks
+ * Goke native components – Elementor-style widget palette
+ * Layout · Content · Media · Forms · Business · Commerce
+ * Zero Bootstrap dependency in the editor chrome; HTML is plain.
  */
 
 import { registry } from "../core/registry";
@@ -8,19 +9,20 @@ import type { ComponentDefinition } from "../types";
 import { iconSvgMarkup } from "../data/icons";
 
 const components: ComponentDefinition[] = [
-  // ── Layout ─────────────────────────────────────
+  // ═══════════════════════════════════════════════
+  // Layout
+  // ═══════════════════════════════════════════════
   {
     type: "layout/section",
     name: "Section",
     category: "Layout",
     icon: "▣",
-    html: `<section data-goke="section" style="padding: 64px 24px;">
+    html: `<section data-goke="section" class="site-section" data-section-name="Section" style="padding: 64px 24px;">
   <div data-goke="container" style="max-width: 1120px; margin: 0 auto;">
     <div data-goke-empty>Drop content here</div>
   </div>
 </section>`,
     attributes: ["data-goke"],
-    classes: [],
     properties: [
       {
         name: "Padding Y",
@@ -60,6 +62,17 @@ const components: ComponentDefinition[] = [
     ],
   },
   {
+    type: "layout/inner-section",
+    name: "Inner section",
+    category: "Layout",
+    icon: "▦",
+    html: `<div data-goke="inner-section" style="display: flex; flex-wrap: wrap; gap: 24px; width: 100%;">
+  <div data-goke="column" style="flex: 1 1 280px; min-width: 0;"><div data-goke-empty>Column</div></div>
+  <div data-goke="column" style="flex: 1 1 280px; min-width: 0;"><div data-goke-empty>Column</div></div>
+</div>`,
+    attributes: ["data-goke"],
+  },
+  {
     type: "layout/columns",
     name: "Columns",
     category: "Layout",
@@ -95,17 +108,60 @@ const components: ComponentDefinition[] = [
       },
     ],
   },
+  {
+    type: "layout/spacer",
+    name: "Spacer",
+    category: "Layout",
+    icon: "↕",
+    html: `<div data-goke="spacer" style="height: 40px; width: 100%;" aria-hidden="true"></div>`,
+    attributes: ["data-goke"],
+    properties: [
+      {
+        name: "Height",
+        key: "height",
+        cssProperty: "height",
+        inputType: "css-unit",
+        units: ["px", "rem", "vh"],
+        defaultValue: "40px",
+      },
+    ],
+  },
+  {
+    type: "layout/divider",
+    name: "Divider",
+    category: "Layout",
+    icon: "—",
+    html: `<hr data-goke="divider" style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;" />`,
+    attributes: ["data-goke"],
+    properties: [
+      {
+        name: "Color",
+        key: "color",
+        cssProperty: "border-top-color",
+        inputType: "color",
+        defaultValue: "#e5e7eb",
+      },
+      {
+        name: "Thickness",
+        key: "thickness",
+        cssProperty: "border-top-width",
+        inputType: "css-unit",
+        units: ["px"],
+        defaultValue: "1px",
+      },
+    ],
+  },
 
-  // ── Content ────────────────────────────────────
+  // ═══════════════════════════════════════════════
+  // Content
+  // ═══════════════════════════════════════════════
   {
     type: "content/heading",
     name: "Heading",
     category: "Content",
     icon: "H",
-    tags: ["h1", "h2", "h3", "h4", "h5", "h6"],
-    html: `<h2 data-goke="heading" style="font-size: 2rem; font-weight: 700; line-height: 1.2; margin: 0 0 16px;">
-  Your heading here
-</h2>`,
+    html: `<h2 data-goke="heading" style="font-size: 2rem; font-weight: 700; line-height: 1.2; margin: 0 0 12px; color: #111827;">Add your heading here</h2>`,
+    attributes: ["data-goke"],
     properties: [
       {
         name: "Text",
@@ -117,62 +173,27 @@ const components: ComponentDefinition[] = [
         },
       },
       {
-        name: "Level",
-        key: "level",
-        inputType: "select",
-        options: [
-          { value: "h1", label: "H1" },
-          { value: "h2", label: "H2" },
-          { value: "h3", label: "H3" },
-          { value: "h4", label: "H4" },
-          { value: "h5", label: "H5" },
-          { value: "h6", label: "H6" },
-        ],
-        onChange(node, value) {
-          const newEl = document.createElement(String(value));
-          newEl.innerHTML = node.innerHTML;
-          Array.from(node.attributes).forEach((a) =>
-            newEl.setAttribute(a.name, a.value)
-          );
-          node.replaceWith(newEl);
-          return newEl as HTMLElement;
-        },
-      },
-      {
-        name: "Font size",
-        key: "fontSize",
-        cssProperty: "font-size",
-        inputType: "css-unit",
-        units: ["px", "rem", "em"],
-      },
-      {
         name: "Color",
         key: "color",
         cssProperty: "color",
         inputType: "color",
       },
       {
-        name: "Align",
-        key: "textAlign",
-        cssProperty: "text-align",
-        inputType: "select",
-        options: [
-          { value: "left", label: "Left" },
-          { value: "center", label: "Center" },
-          { value: "right", label: "Right" },
-        ],
+        name: "Size",
+        key: "fontSize",
+        cssProperty: "font-size",
+        inputType: "css-unit",
+        units: ["px", "rem", "em"],
       },
     ],
   },
   {
     type: "content/text",
-    name: "Text",
+    name: "Text Editor",
     category: "Content",
     icon: "T",
-    tags: ["p"],
-    html: `<p data-goke="text" style="font-size: 1rem; line-height: 1.6; margin: 0 0 16px; color: #374151;">
-  Write your paragraph text here. Click to edit.
-</p>`,
+    html: `<p data-goke="text" style="font-size: 1rem; line-height: 1.6; color: #4b5563; margin: 0 0 12px;">Write your text here. Keep it clear and useful for your visitors.</p>`,
+    attributes: ["data-goke"],
     properties: [
       {
         name: "Text",
@@ -184,13 +205,6 @@ const components: ComponentDefinition[] = [
         },
       },
       {
-        name: "Font size",
-        key: "fontSize",
-        cssProperty: "font-size",
-        inputType: "css-unit",
-        units: ["px", "rem"],
-      },
-      {
         name: "Color",
         key: "color",
         cssProperty: "color",
@@ -199,47 +213,16 @@ const components: ComponentDefinition[] = [
     ],
   },
   {
-    type: "content/image",
-    name: "Image",
-    category: "Content",
-    icon: "▣",
-    tags: ["img"],
-    html: `<img data-goke="image" src="https://picsum.photos/800/450" alt="Image" style="width: 100%; height: auto; border-radius: 8px;" />`,
-    properties: [
-      {
-        name: "Source",
-        key: "src",
-        htmlAttr: "src",
-        inputType: "image",
-      },
-      {
-        name: "Alt text",
-        key: "alt",
-        htmlAttr: "alt",
-        inputType: "text",
-      },
-      {
-        name: "Border radius",
-        key: "borderRadius",
-        cssProperty: "border-radius",
-        inputType: "css-unit",
-        units: ["px", "%"],
-      },
-    ],
-  },
-  {
     type: "content/button",
     name: "Button",
     category: "Content",
     icon: "▢",
-    html: `<a data-goke="button" href="#" style="display: inline-block; padding: 12px 24px; background: #111827; color: #fff; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 15px;">
-  Click me
-</a>`,
+    html: `<a data-goke="button" href="#contact" style="display: inline-block; padding: 12px 24px; background: var(--goke-primary, #3b82f6); color: #fff; border-radius: 8px; text-decoration: none; font-weight: 600;">Click here</a>`,
     attributes: ["data-goke"],
     properties: [
       {
         name: "Label",
-        key: "label",
+        key: "text",
         inputType: "text",
         onChange(node, value) {
           node.textContent = String(value);
@@ -264,146 +247,123 @@ const components: ComponentDefinition[] = [
         cssProperty: "color",
         inputType: "color",
       },
-      {
-        name: "Border radius",
-        key: "borderRadius",
-        cssProperty: "border-radius",
-        inputType: "css-unit",
-        units: ["px", "%"],
-      },
-      {
-        name: "Padding",
-        key: "padding",
-        cssProperty: "padding",
-        inputType: "css-unit",
-        units: ["px", "rem"],
-      },
     ],
   },
   {
-    type: "content/video",
-    name: "Video",
+    type: "content/link",
+    name: "Link",
     category: "Content",
-    icon: "▶",
-    html: `<div data-goke="video" style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 8px;">
-  <iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;" allowfullscreen></iframe>
-</div>`,
+    icon: "↗",
+    html: `<a data-goke="link" href="https://example.com" style="color: var(--goke-primary, #3b82f6); text-decoration: underline;">Link text</a>`,
     attributes: ["data-goke"],
     properties: [
       {
-        name: "YouTube / Vimeo URL",
-        key: "src",
-        child: "iframe",
-        htmlAttr: "src",
+        name: "Text",
+        key: "text",
+        inputType: "text",
+        onChange(node, value) {
+          node.textContent = String(value);
+          return node;
+        },
+      },
+      {
+        name: "URL",
+        key: "href",
+        htmlAttr: "href",
         inputType: "link",
       },
     ],
   },
-
-  // ── Business ───────────────────────────────────
   {
-    type: "business/hero",
-    name: "Hero",
-    category: "Business",
-    icon: "★",
-    html: `<section data-goke="hero" style="padding: 96px 24px; text-align: center; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: #fff;">
-  <div style="max-width: 720px; margin: 0 auto;">
-    <h1 style="font-size: 3rem; font-weight: 800; line-height: 1.1; margin: 0 0 16px;">Build something amazing</h1>
-    <p style="font-size: 1.25rem; opacity: 0.85; margin: 0 0 32px;">The modern visual website builder for the next generation of creators.</p>
-    <a href="#" style="display: inline-block; padding: 14px 28px; background: #3b82f6; color: #fff; border-radius: 8px; text-decoration: none; font-weight: 600;">Get started</a>
-  </div>
-</section>`,
+    type: "content/list",
+    name: "List",
+    category: "Content",
+    icon: "≡",
+    html: `<ul data-goke="list" style="margin: 0 0 16px; padding-left: 1.25rem; color: #374151; line-height: 1.7;">
+  <li>First list item</li>
+  <li>Second list item</li>
+  <li>Third list item</li>
+</ul>`,
     attributes: ["data-goke"],
     properties: [
       {
-        name: "Background",
-        key: "background",
-        cssProperty: "background",
-        inputType: "text",
+        name: "Items (one per line)",
+        key: "items",
+        inputType: "textarea",
+        onChange(node, value) {
+          const items = String(value)
+            .split("\n")
+            .map((s) => s.trim())
+            .filter(Boolean);
+          node.innerHTML = items.map((t) => "<li>" + t + "</li>").join("");
+          return node;
+        },
       },
     ],
   },
   {
-    type: "business/feature",
-    name: "Feature card",
-    category: "Business",
-    icon: "◆",
-    html: `<div data-goke="feature" style="padding: 32px; border: 1px solid #e5e7eb; border-radius: 12px; background: #fff;">
-  <div style="width: 48px; height: 48px; background: #eff6ff; border-radius: 10px; display: flex; align-items: center; justify-content: center; margin-bottom: 16px; font-size: 24px;">✦</div>
-  <h3 style="font-size: 1.25rem; font-weight: 700; margin: 0 0 8px;">Feature title</h3>
-  <p style="font-size: 0.95rem; color: #6b7280; margin: 0; line-height: 1.5;">Describe the benefit of this feature in one or two sentences.</p>
-</div>`,
-    attributes: ["data-goke"],
-  },
-  {
-    type: "business/pricing",
-    name: "Pricing card",
-    category: "Business",
-    icon: "$",
-    html: `<div data-goke="pricing" style="padding: 32px; border: 1px solid #e5e7eb; border-radius: 16px; background: #fff; text-align: center;">
-  <h3 style="font-size: 1.125rem; font-weight: 600; margin: 0 0 8px;">Pro</h3>
-  <div style="font-size: 2.5rem; font-weight: 800; margin: 0 0 4px;">$29</div>
-  <p style="color: #6b7280; margin: 0 0 24px; font-size: 0.875rem;">per month</p>
-  <ul style="list-style: none; padding: 0; margin: 0 0 24px; text-align: left; font-size: 0.95rem; color: #374151;">
-    <li style="padding: 6px 0;">✓ Unlimited projects</li>
-    <li style="padding: 6px 0;">✓ Custom domains</li>
-    <li style="padding: 6px 0;">✓ Priority support</li>
-  </ul>
-  <a href="#" style="display: block; padding: 12px; background: #111827; color: #fff; border-radius: 8px; text-decoration: none; font-weight: 600;">Choose plan</a>
-</div>`,
-    attributes: ["data-goke"],
-  },
-  {
-    type: "business/testimonial",
-    name: "Testimonial",
-    category: "Business",
+    type: "content/quote",
+    name: "Blockquote",
+    category: "Content",
     icon: "❝",
-    html: `<blockquote data-goke="testimonial" style="padding: 32px; background: #f9fafb; border-radius: 12px; margin: 0;">
-  <p style="font-size: 1.125rem; line-height: 1.6; margin: 0 0 20px; color: #111827;">“This tool completely changed how we ship websites. Our team is 3× faster.”</p>
-  <footer style="display: flex; align-items: center; gap: 12px;">
-    <img src="https://i.pravatar.cc/48" alt="" style="width: 48px; height: 48px; border-radius: 50%;" />
-    <div>
-      <div style="font-weight: 600; font-size: 0.95rem;">Alex Rivera</div>
-      <div style="font-size: 0.8rem; color: #6b7280;">CEO, Northwind</div>
-    </div>
-  </footer>
+    html: `<blockquote data-goke="quote" style="margin: 0 0 16px; padding: 16px 20px; border-left: 4px solid var(--goke-primary, #3b82f6); background: #f8fafc; color: #374151; font-style: italic;">
+  "A short quote that builds trust."
+  <footer style="margin-top: 8px; font-style: normal; font-weight: 600; font-size: 0.875rem;">— Author</footer>
 </blockquote>`,
     attributes: ["data-goke"],
   },
   {
-    type: "business/cta",
-    name: "Call to action",
-    category: "Business",
-    icon: "→",
-    html: `<section data-goke="cta" style="padding: 64px 24px; text-align: center; background: #111827; color: #fff; border-radius: 16px;">
-  <h2 style="font-size: 2rem; font-weight: 700; margin: 0 0 12px;">Ready to get started?</h2>
-  <p style="opacity: 0.8; margin: 0 0 24px;">Join thousands of teams already building with Goke.</p>
-  <a href="#" style="display: inline-block; padding: 14px 28px; background: #3b82f6; color: #fff; border-radius: 8px; text-decoration: none; font-weight: 600;">Start free trial</a>
-</section>`,
+    type: "content/badge",
+    name: "Badge",
+    category: "Content",
+    icon: "●",
+    html: `<span data-goke="badge" style="display: inline-block; padding: 4px 10px; border-radius: 999px; background: #eff6ff; color: #1d4ed8; font-size: 0.75rem; font-weight: 600;">New</span>`,
     attributes: ["data-goke"],
+    properties: [
+      {
+        name: "Text",
+        key: "text",
+        inputType: "text",
+        onChange(node, value) {
+          node.textContent = String(value);
+          return node;
+        },
+      },
+      {
+        name: "Background",
+        key: "background",
+        cssProperty: "background-color",
+        inputType: "color",
+      },
+      {
+        name: "Color",
+        key: "color",
+        cssProperty: "color",
+        inputType: "color",
+      },
+    ],
   },
-
-  // ── Commerce ───────────────────────────────────
   {
-    type: "commerce/product",
-    name: "Product card",
-    category: "Commerce",
-    icon: "🛒",
-    html: `<div data-goke="product" style="border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden; background: #fff;">
-  <img src="https://picsum.photos/400/300" alt="Product" style="width: 100%; height: 200px; object-fit: cover;" />
-  <div style="padding: 20px;">
-    <h3 style="font-size: 1.125rem; font-weight: 600; margin: 0 0 4px;">Product name</h3>
-    <p style="color: #6b7280; font-size: 0.875rem; margin: 0 0 12px;">Short description of the product.</p>
-    <div style="display: flex; align-items: center; justify-content: space-between;">
-      <span style="font-size: 1.25rem; font-weight: 700;">$49</span>
-      <a href="#" style="padding: 8px 16px; background: #111827; color: #fff; border-radius: 6px; text-decoration: none; font-size: 0.875rem; font-weight: 600;">Add to cart</a>
-    </div>
-  </div>
+    type: "content/alert",
+    name: "Alert / Notice",
+    category: "Content",
+    icon: "!",
+    html: `<div data-goke="alert" role="status" style="padding: 12px 16px; border-radius: 8px; background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0;">
+  Success — your message goes here.
 </div>`,
     attributes: ["data-goke"],
+    properties: [
+      {
+        name: "Message",
+        key: "text",
+        inputType: "textarea",
+        onChange(node, value) {
+          node.textContent = String(value);
+          return node;
+        },
+      },
+    ],
   },
-
-  // ── Icons ──────────────────────────────────────
   {
     type: "content/icon",
     name: "Icon",
@@ -453,9 +413,361 @@ const components: ComponentDefinition[] = [
       },
     ],
   },
+  {
+    type: "content/icon-box",
+    name: "Icon box",
+    category: "Content",
+    icon: "◆",
+    html: `<div data-goke="icon-box" style="text-align: center; padding: 24px;">
+  <div data-goke="icon" data-icon="zap" style="display:inline-flex;margin-bottom:12px;color:var(--goke-primary,#3b82f6);">${iconSvgMarkup("zap", 36)}</div>
+  <h3 data-goke="heading" style="margin: 0 0 8px; font-size: 1.125rem;">Feature title</h3>
+  <p data-goke="text" style="margin: 0; color: #6b7280; font-size: 0.9375rem;">Short description of this feature or benefit.</p>
+</div>`,
+    attributes: ["data-goke"],
+  },
+
+  // ═══════════════════════════════════════════════
+  // Media
+  // ═══════════════════════════════════════════════
+  {
+    type: "content/image",
+    name: "Image",
+    category: "Media",
+    icon: "▣",
+    html: `<img data-goke="image" src="https://picsum.photos/800/450" alt="Image" style="width: 100%; height: auto; border-radius: 8px; display: block;" />`,
+    attributes: ["data-goke"],
+    properties: [
+      {
+        name: "Image",
+        key: "src",
+        htmlAttr: "src",
+        inputType: "image",
+      },
+      {
+        name: "Alt text",
+        key: "alt",
+        htmlAttr: "alt",
+        inputType: "text",
+      },
+      {
+        name: "Border radius",
+        key: "radius",
+        cssProperty: "border-radius",
+        inputType: "css-unit",
+        units: ["px", "%"],
+      },
+    ],
+  },
+  {
+    type: "content/video",
+    name: "Video",
+    category: "Media",
+    icon: "▶",
+    html: `<div data-goke="video" style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 8px;">
+  <iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ" title="Video" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;" allowfullscreen loading="lazy"></iframe>
+</div>`,
+    attributes: ["data-goke"],
+    properties: [
+      {
+        name: "Embed URL",
+        key: "src",
+        child: "iframe",
+        htmlAttr: "src",
+        inputType: "link",
+        placeholder: "https://www.youtube.com/embed/…",
+      },
+    ],
+  },
+  {
+    type: "content/map",
+    name: "Google Maps",
+    category: "Media",
+    icon: "⌖",
+    html: `<div data-goke="map" style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 8px;">
+  <iframe src="https://maps.google.com/maps?q=Lagos&t=&z=13&ie=UTF8&iwloc=&output=embed" title="Map" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;" loading="lazy"></iframe>
+</div>`,
+    attributes: ["data-goke"],
+    properties: [
+      {
+        name: "Map embed URL",
+        key: "src",
+        child: "iframe",
+        htmlAttr: "src",
+        inputType: "link",
+      },
+    ],
+  },
+  {
+    type: "content/gallery",
+    name: "Image gallery",
+    category: "Media",
+    icon: "▦",
+    html: `<div data-goke="gallery" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;">
+  <img data-goke="image" src="https://picsum.photos/seed/g1/400/300" alt="" style="width: 100%; border-radius: 8px; object-fit: cover; aspect-ratio: 4/3;" />
+  <img data-goke="image" src="https://picsum.photos/seed/g2/400/300" alt="" style="width: 100%; border-radius: 8px; object-fit: cover; aspect-ratio: 4/3;" />
+  <img data-goke="image" src="https://picsum.photos/seed/g3/400/300" alt="" style="width: 100%; border-radius: 8px; object-fit: cover; aspect-ratio: 4/3;" />
+</div>`,
+    attributes: ["data-goke"],
+  },
+
+  // ═══════════════════════════════════════════════
+  // Forms
+  // ═══════════════════════════════════════════════
+  {
+    type: "form/form",
+    name: "Form",
+    category: "Forms",
+    icon: "▤",
+    html: `<form data-goke="form" style="display: flex; flex-direction: column; gap: 12px; max-width: 480px;">
+  <label style="display: flex; flex-direction: column; gap: 4px; font-size: 0.875rem; color: #374151;">
+    Name
+    <input data-goke="input" type="text" name="name" placeholder="Your name" style="padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 8px;" />
+  </label>
+  <label style="display: flex; flex-direction: column; gap: 4px; font-size: 0.875rem; color: #374151;">
+    Email
+    <input data-goke="input" type="email" name="email" placeholder="you@example.com" style="padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 8px;" />
+  </label>
+  <label style="display: flex; flex-direction: column; gap: 4px; font-size: 0.875rem; color: #374151;">
+    Message
+    <textarea data-goke="textarea" name="message" rows="4" placeholder="How can we help?" style="padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 8px; resize: vertical;"></textarea>
+  </label>
+  <button data-goke="button" type="submit" style="padding: 12px 20px; background: var(--goke-primary, #3b82f6); color: #fff; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">Send message</button>
+</form>`,
+    attributes: ["data-goke"],
+  },
+  {
+    type: "form/input",
+    name: "Input",
+    category: "Forms",
+    icon: "▭",
+    html: `<input data-goke="input" type="text" placeholder="Enter text" style="width: 100%; max-width: 400px; padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 8px; box-sizing: border-box;" />`,
+    attributes: ["data-goke"],
+    properties: [
+      {
+        name: "Placeholder",
+        key: "placeholder",
+        htmlAttr: "placeholder",
+        inputType: "text",
+      },
+      {
+        name: "Type",
+        key: "type",
+        htmlAttr: "type",
+        inputType: "select",
+        options: [
+          { value: "text", label: "Text" },
+          { value: "email", label: "Email" },
+          { value: "tel", label: "Phone" },
+          { value: "number", label: "Number" },
+          { value: "url", label: "URL" },
+          { value: "password", label: "Password" },
+        ],
+      },
+    ],
+  },
+  {
+    type: "form/textarea",
+    name: "Textarea",
+    category: "Forms",
+    icon: "☰",
+    html: `<textarea data-goke="textarea" rows="4" placeholder="Your message" style="width: 100%; max-width: 480px; padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 8px; box-sizing: border-box; resize: vertical;"></textarea>`,
+    attributes: ["data-goke"],
+    properties: [
+      {
+        name: "Placeholder",
+        key: "placeholder",
+        htmlAttr: "placeholder",
+        inputType: "text",
+      },
+    ],
+  },
+  {
+    type: "form/select",
+    name: "Select",
+    category: "Forms",
+    icon: "▽",
+    html: `<select data-goke="select" style="width: 100%; max-width: 400px; padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 8px; background: #fff;">
+  <option value="">Choose…</option>
+  <option value="a">Option A</option>
+  <option value="b">Option B</option>
+  <option value="c">Option C</option>
+</select>`,
+    attributes: ["data-goke"],
+  },
+  {
+    type: "form/checkbox",
+    name: "Checkbox",
+    category: "Forms",
+    icon: "☑",
+    html: `<label data-goke="checkbox" style="display: flex; align-items: center; gap: 8px; font-size: 0.9375rem; color: #374151; cursor: pointer;">
+  <input type="checkbox" name="agree" />
+  I agree to the terms
+</label>`,
+    attributes: ["data-goke"],
+  },
+  {
+    type: "form/submit",
+    name: "Submit button",
+    category: "Forms",
+    icon: "➤",
+    html: `<button data-goke="button" type="submit" style="padding: 12px 24px; background: var(--goke-primary, #3b82f6); color: #fff; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">Submit</button>`,
+    attributes: ["data-goke"],
+    properties: [
+      {
+        name: "Label",
+        key: "text",
+        inputType: "text",
+        onChange(node, value) {
+          node.textContent = String(value);
+          return node;
+        },
+      },
+    ],
+  },
+
+  // ═══════════════════════════════════════════════
+  // Business
+  // ═══════════════════════════════════════════════
+  {
+    type: "business/hero",
+    name: "Hero",
+    category: "Business",
+    icon: "▣",
+    html: `<section data-goke="section" class="site-section" data-section-name="Hero" style="padding: 80px 24px; text-align: center; background: #0f172a; color: #fff;">
+  <div data-goke="container" style="max-width: 720px; margin: 0 auto;">
+    <h1 id="hero-headline" data-goke="heading" style="font-size: 2.75rem; font-weight: 800; line-height: 1.15; margin: 0 0 16px;">Your headline goes here</h1>
+    <p id="hero-subheadline" data-goke="text" style="font-size: 1.125rem; opacity: 0.9; margin: 0 0 28px;">A short supporting line that explains what you offer.</p>
+    <a id="cta-button" data-goke="button" href="#contact" class="cta-button" style="display: inline-block; background: var(--goke-primary, #3b82f6); color: #fff; padding: 14px 28px; border-radius: 10px; font-weight: 600; text-decoration: none;">Get started</a>
+  </div>
+</section>`,
+    attributes: ["data-goke"],
+  },
+  {
+    type: "business/feature",
+    name: "Feature card",
+    category: "Business",
+    icon: "★",
+    html: `<div data-goke="feature" style="padding: 24px; border-radius: 12px; background: #fff; border: 1px solid #e5e7eb;">
+  <h3 data-goke="heading" style="margin: 0 0 8px; font-size: 1.125rem;">Feature title</h3>
+  <p data-goke="text" style="margin: 0; color: #6b7280;">Describe this feature in one or two sentences.</p>
+</div>`,
+    attributes: ["data-goke"],
+  },
+  {
+    type: "business/pricing",
+    name: "Pricing card",
+    category: "Business",
+    icon: "$",
+    html: `<div data-goke="pricing" style="padding: 32px; border-radius: 16px; border: 2px solid var(--goke-primary, #3b82f6); text-align: center; background: #fff;">
+  <h3 data-goke="heading" style="margin: 0 0 8px;">Pro</h3>
+  <p data-goke="text" style="font-size: 2rem; font-weight: 800; margin: 0 0 8px;">₦75,000</p>
+  <p data-goke="text" style="color: #6b7280; margin: 0 0 20px;">Full site + edits + support</p>
+  <a data-goke="button" href="#contact" style="display: inline-block; background: var(--goke-primary, #3b82f6); color: #fff; padding: 12px 24px; border-radius: 8px; font-weight: 600; text-decoration: none;">Choose plan</a>
+</div>`,
+    attributes: ["data-goke"],
+  },
+  {
+    type: "business/testimonial",
+    name: "Testimonial",
+    category: "Business",
+    icon: "❝",
+    html: `<blockquote data-goke="testimonial" style="margin: 0; padding: 24px; background: #f8fafc; border-radius: 12px; border-left: 4px solid var(--goke-primary, #3b82f6);">
+  <p data-goke="text" style="margin: 0 0 12px; font-style: italic;">"Outstanding work — delivered exactly what we needed."</p>
+  <footer style="display: flex; align-items: center; gap: 12px;">
+    <img src="https://i.pravatar.cc/48" alt="" style="width: 48px; height: 48px; border-radius: 50%;" />
+    <span data-goke="text" style="font-weight: 600;">Ada, Founder</span>
+  </footer>
+</blockquote>`,
+    attributes: ["data-goke"],
+  },
+  {
+    type: "business/cta",
+    name: "Call to action",
+    category: "Business",
+    icon: "→",
+    html: `<section data-goke="section" class="site-section" data-section-name="CTA" style="padding: 56px 24px; text-align: center; background: var(--goke-primary, #3b82f6); color: #fff;">
+  <div data-goke="container" style="max-width: 640px; margin: 0 auto;">
+    <h2 data-goke="heading" style="margin: 0 0 12px; font-size: 1.75rem;">Ready to get started?</h2>
+    <p data-goke="text" style="opacity: 0.9; margin: 0 0 24px;">Join thousands of teams already building with us.</p>
+    <a data-goke="button" href="#contact" style="display: inline-block; padding: 14px 28px; background: #fff; color: #0f172a; border-radius: 8px; text-decoration: none; font-weight: 600;">Start free trial</a>
+  </div>
+</section>`,
+    attributes: ["data-goke"],
+  },
+  {
+    type: "business/faq",
+    name: "FAQ item",
+    category: "Business",
+    icon: "?",
+    html: `<details data-goke="faq" style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px 16px; margin-bottom: 8px; background: #fff;">
+  <summary data-goke="heading" style="font-weight: 600; cursor: pointer;">Frequently asked question?</summary>
+  <p data-goke="text" style="margin: 12px 0 0; color: #6b7280;">Clear answer that helps the visitor decide.</p>
+</details>`,
+    attributes: ["data-goke"],
+  },
+  {
+    type: "business/stats",
+    name: "Stats row",
+    category: "Business",
+    icon: "#",
+    html: `<div data-goke="stats" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; text-align: center;">
+  <div><div style="font-size: 2rem; font-weight: 800; color: var(--goke-primary, #3b82f6);">120+</div><div style="color: #6b7280; font-size: 0.875rem;">Clients</div></div>
+  <div><div style="font-size: 2rem; font-weight: 800; color: var(--goke-primary, #3b82f6);">98%</div><div style="color: #6b7280; font-size: 0.875rem;">Satisfaction</div></div>
+  <div><div style="font-size: 2rem; font-weight: 800; color: var(--goke-primary, #3b82f6);">24/7</div><div style="color: #6b7280; font-size: 0.875rem;">Support</div></div>
+</div>`,
+    attributes: ["data-goke"],
+  },
+  {
+    type: "business/social",
+    name: "Social links",
+    category: "Business",
+    icon: "◎",
+    html: `<div data-goke="social" style="display: flex; gap: 12px; align-items: center;">
+  <a href="https://instagram.com" aria-label="Instagram" style="color: var(--goke-primary, #3b82f6);">${iconSvgMarkup("instagram", 24)}</a>
+  <a href="https://twitter.com" aria-label="Twitter" style="color: var(--goke-primary, #3b82f6);">${iconSvgMarkup("twitter", 24)}</a>
+  <a href="https://facebook.com" aria-label="Facebook" style="color: var(--goke-primary, #3b82f6);">${iconSvgMarkup("facebook", 24)}</a>
+  <a href="https://youtube.com" aria-label="YouTube" style="color: var(--goke-primary, #3b82f6);">${iconSvgMarkup("youtube", 24)}</a>
+</div>`,
+    attributes: ["data-goke"],
+  },
+  {
+    type: "business/contact",
+    name: "Contact block",
+    category: "Business",
+    icon: "✉",
+    html: `<section data-goke="section" class="site-section" data-section-name="Contact" id="contact" style="padding: 64px 24px; background: #0f172a; color: #fff;">
+  <div data-goke="container" style="max-width: 560px; margin: 0 auto; text-align: center;">
+    <h2 data-goke="heading" style="font-size: 2rem; margin: 0 0 12px;">Get in touch</h2>
+    <p data-goke="text" style="color: #94a3b8; margin: 0 0 28px;">Tell us about your project. We will reply within 24 hours.</p>
+    <a data-goke="button" href="mailto:hello@example.com" style="display: inline-block; background: var(--goke-primary, #3b82f6); color: #fff; padding: 14px 28px; border-radius: 10px; font-weight: 600; text-decoration: none;">Email us</a>
+  </div>
+</section>`,
+    attributes: ["data-goke"],
+  },
+
+  // ═══════════════════════════════════════════════
+  // Commerce
+  // ═══════════════════════════════════════════════
+  {
+    type: "commerce/product",
+    name: "Product card",
+    category: "Commerce",
+    icon: "🛒",
+    html: `<div data-goke="product" style="border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden; background: #fff;">
+  <img data-goke="image" src="https://picsum.photos/400/300" alt="Product" style="width: 100%; height: 200px; object-fit: cover;" />
+  <div style="padding: 20px;">
+    <h3 data-goke="heading" style="font-size: 1.125rem; font-weight: 600; margin: 0 0 4px;">Product name</h3>
+    <p data-goke="text" style="color: #6b7280; font-size: 0.875rem; margin: 0 0 12px;">Short description of the product.</p>
+    <div style="display: flex; align-items: center; justify-content: space-between;">
+      <span style="font-size: 1.25rem; font-weight: 700;">₦49,000</span>
+      <a data-goke="button" href="#" style="padding: 8px 16px; background: #111827; color: #fff; border-radius: 6px; text-decoration: none; font-size: 0.875rem; font-weight: 600;">Add to cart</a>
+    </div>
+  </div>
+</div>`,
+    attributes: ["data-goke"],
+  },
 ];
 
-// Register everything
 registry.registerMany(components);
 
 export default components;
