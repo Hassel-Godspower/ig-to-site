@@ -402,8 +402,6 @@ const components: ComponentDefinition[] = [
 </div>`,
     attributes: ["data-goke"],
   },
-];
-
 
   // ── Icons ──────────────────────────────────────
   {
@@ -455,6 +453,7 @@ const components: ComponentDefinition[] = [
       },
     ],
   },
+];
 
 // Register everything
 registry.registerMany(components);
