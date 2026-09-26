@@ -1,0 +1,18 @@
+{
+  "id": "goke-auto",
+  "name": "Gòke Auto",
+  "category": "automobile",
+  "type": "html",
+  "version": "1.0.0",
+  "pages": [
+    "index.html",
+    "inventory.html",
+    "vehicle.html",
+    "services.html",
+    "financing.html",
+    "contact.html"
+  ],
+  "responsive": true,
+  "editable": true,
+  "license": "MIT"
+}

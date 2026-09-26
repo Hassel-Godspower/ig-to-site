@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Trade-in & Auto Loans — Gòke Auto</title>
+  <link rel="stylesheet" href="assets/css/auto.css">
+  <link rel="stylesheet" href="assets/css/responsive.css">
+</head>
+<body>
+  <header class="container">
+    <nav class="navbar">
+      <a href="index.html" class="brand">Gòke Auto</a>
+      <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="inventory.html">Inventory</a></li>
+        <li><a href="services.html">Services</a></li>
+        <li><a href="financing.html" class="active">Financing</a></li>
+        <li><a href="contact.html">Contact</a></li>
+      </ul>
+      <a href="financing.html" class="btn btn-primary">Apply Now</a>
+    </nav>
+  </header>
+
+  <main class="container section" style="max-width: 700px;">
+    <div class="section-title">
+      <h2>Trade-In & Vehicle Valuation</h2>
+      <p>Swap your current car or calculate flexible payment structures.</p>
+    </div>
+
+    <div class="card">
+      <form id="tradeInForm">
+        <div class="form-group">
+          <label>Current Vehicle (Make, Model, Year)</label>
+          <input type="text" class="form-control" placeholder="e.g. 2018 Honda Accord" required>
+        </div>
+        <div class="form-group">
+          <label>Estimated Mileage (km)</label>
+          <input type="number" class="form-control" placeholder="e.g. 65000" required>
+        </div>
+        <div class="form-group">
+          <label>Desired Vehicle from Inventory</label>
+          <input type="text" class="form-control" placeholder="e.g. 2023 Mercedes GLE 450">
+        </div>
+        <button type="submit" class="btn btn-primary" style="width: 100%;">Submit Valuation Request</button>
+      </form>
+    </div>
+  </main>
+
+  <footer>
+    <div class="container footer-bottom">&copy; 2026 Gòke Auto. All rights reserved.</div>
+  </footer>
+  <script src="assets/js/main.js"></script>
+</body>
+</html>
