@@ -160,6 +160,7 @@ const components: ComponentDefinition[] = [
     name: "Heading",
     category: "Content",
     icon: "H",
+    tags: ["h1", "h2", "h3", "h4", "h5", "h6"],
     html: `<h2 data-goke="heading" style="font-size: 2rem; font-weight: 700; line-height: 1.2; margin: 0 0 12px; color: #111827;">Add your heading here</h2>`,
     attributes: ["data-goke"],
     properties: [
@@ -192,6 +193,7 @@ const components: ComponentDefinition[] = [
     name: "Text Editor",
     category: "Content",
     icon: "T",
+    tags: ["p"],
     html: `<p data-goke="text" style="font-size: 1rem; line-height: 1.6; color: #4b5563; margin: 0 0 12px;">Write your text here. Keep it clear and useful for your visitors.</p>`,
     attributes: ["data-goke"],
     properties: [
@@ -217,6 +219,7 @@ const components: ComponentDefinition[] = [
     name: "Button",
     category: "Content",
     icon: "▢",
+    tags: ["button"],
     html: `<a data-goke="button" href="#contact" style="display: inline-block; padding: 12px 24px; background: var(--goke-primary, #3b82f6); color: #fff; border-radius: 8px; text-decoration: none; font-weight: 600;">Click here</a>`,
     attributes: ["data-goke"],
     properties: [
@@ -434,6 +437,7 @@ const components: ComponentDefinition[] = [
     name: "Image",
     category: "Media",
     icon: "▣",
+    tags: ["img"],
     html: `<img data-goke="image" src="https://picsum.photos/800/450" alt="Image" style="width: 100%; height: auto; border-radius: 8px; display: block;" />`,
     attributes: ["data-goke"],
     properties: [
