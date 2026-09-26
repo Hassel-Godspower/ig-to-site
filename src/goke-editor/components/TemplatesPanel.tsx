@@ -1,6 +1,8 @@
 /**
- * Templates panel — user-saved sections + full-page starters
- * Starters can MERGE Instagram/current content or fully replace the page.
+ * Templates panel
+ * - Gòke: first-party packs in /public/goke-templates
+ * - Starters: external CDN HTML starters
+ * - Saved: user-captured sections
  */
 
 "use client";
@@ -16,6 +18,11 @@ import {
   starterCategories,
   type StarterTemplate,
 } from "../data/starter-templates";
+import {
+  GOKE_MAIN_TEMPLATES,
+  gokeMainCategories,
+  type GokeMainTemplate,
+} from "../data/goke-main-templates";
 
 export type StarterApplyMode = "merge" | "replace";
 
@@ -25,16 +32,21 @@ interface TemplatesPanelProps {
     starter: StarterTemplate,
     mode: StarterApplyMode
   ) => void | Promise<void>;
+  onApplyGokeMain?: (
+    template: GokeMainTemplate,
+    mode: StarterApplyMode
+  ) => void | Promise<void>;
   refreshKey?: number;
 }
 
 export function TemplatesPanel({
   onInsert,
   onApplyStarter,
+  onApplyGokeMain,
   refreshKey,
 }: TemplatesPanelProps) {
   const [items, setItems] = useState<StoredTemplate[]>([]);
-  const [tab, setTab] = useState<"starters" | "saved">("starters");
+  const [tab, setTab] = useState<"goke" | "starters" | "saved">("goke");
   const [category, setCategory] = useState<string>("All");
   const [query, setQuery] = useState("");
   const [mode, setMode] = useState<StarterApplyMode>("merge");
@@ -45,7 +57,30 @@ export function TemplatesPanel({
     setItems(listTemplates());
   }, [refreshKey]);
 
-  const categories = useMemo(() => ["All", ...starterCategories()], []);
+  useEffect(() => {
+    setCategory("All");
+    setQuery("");
+  }, [tab]);
+
+  const gokeCategories = useMemo(() => ["All", ...gokeMainCategories()], []);
+  const starterCats = useMemo(() => ["All", ...starterCategories()], []);
+
+  const gokeList = useMemo(() => {
+    let list =
+      category === "All"
+        ? GOKE_MAIN_TEMPLATES
+        : GOKE_MAIN_TEMPLATES.filter((t) => t.category === category);
+    const q = query.trim().toLowerCase();
+    if (q) {
+      list = list.filter(
+        (t) =>
+          t.name.toLowerCase().includes(q) ||
+          t.id.toLowerCase().includes(q) ||
+          t.category.toLowerCase().includes(q)
+      );
+    }
+    return list;
+  }, [category, query]);
 
   const starters = useMemo(() => {
     let list =
@@ -77,9 +112,31 @@ export function TemplatesPanel({
     }
   }
 
+  async function applyGoke(tpl: GokeMainTemplate) {
+    if (!onApplyGokeMain) return;
+    setError(null);
+    setLoadingId(tpl.id);
+    try {
+      await onApplyGokeMain(tpl, mode);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to load Gòke template");
+    } finally {
+      setLoadingId(null);
+    }
+  }
+
+  const categories = tab === "goke" ? gokeCategories : starterCats;
+
   return (
     <div className="goke-templates-panel">
       <div className="goke-tpl-tabs">
+        <button
+          type="button"
+          className={tab === "goke" ? "active" : ""}
+          onClick={() => setTab("goke")}
+        >
+          Gòke ({GOKE_MAIN_TEMPLATES.length})
+        </button>
         <button
           type="button"
           className={tab === "starters" ? "active" : ""}
@@ -96,106 +153,161 @@ export function TemplatesPanel({
         </button>
       </div>
 
-      {tab === "starters" && (
+      {(tab === "goke" || tab === "starters") && (
         <>
-          <p className="goke-properties-empty" style={{ marginBottom: 8 }}>
-            Apply a design from{" "}
-            <a
-              href="https://github.com/dawidolko/Website-Templates"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              open templates
-            </a>
-            . Prefer <strong>Keep content</strong> so Instagram text/images
-            stay when the layout changes.
+          <p className="goke-properties-empty" style={{ margin: "8px 10px" }}>
+            {tab === "goke" ? (
+              <>
+                Official Gòke packs. Prefer <strong>Keep content</strong> to
+                sync Instagram text into the design.
+              </>
+            ) : (
+              <>
+                Community HTML starters (CDN). Prefer{" "}
+                <strong>Keep content</strong> so Instagram data survives.
+              </>
+            )}
           </p>
 
-          <div className="goke-tpl-mode">
-            <label>
+          <div className="goke-tpl-mode" style={{ padding: "0 10px 8px" }}>
+            <label style={{ marginRight: 12, fontSize: 12 }}>
               <input
                 type="radio"
-                name="starter-mode"
+                name="tpl-mode"
                 checked={mode === "merge"}
                 onChange={() => setMode("merge")}
-              />
+              />{" "}
               Keep content (sync)
             </label>
-            <label>
+            <label style={{ fontSize: 12 }}>
               <input
                 type="radio"
-                name="starter-mode"
+                name="tpl-mode"
                 checked={mode === "replace"}
                 onChange={() => setMode("replace")}
-              />
-              Replace whole page
+              />{" "}
+              Replace page
             </label>
           </div>
 
-          <input
-            type="search"
-            className="goke-tpl-search"
-            placeholder="Search starters…"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-          />
-          <select
-            className="goke-tpl-category"
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
+          <div className="goke-palette-search-wrap">
+            <input
+              type="search"
+              className="goke-palette-search"
+              placeholder={
+                tab === "goke" ? "Search Gòke templates…" : "Search starters…"
+              }
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+          </div>
+
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: 4,
+              padding: "6px 10px",
+            }}
           >
             {categories.map((c) => (
-              <option key={c} value={c}>
+              <button
+                key={c}
+                type="button"
+                onClick={() => setCategory(c)}
+                style={{
+                  fontSize: 11,
+                  padding: "2px 8px",
+                  borderRadius: 12,
+                  border:
+                    category === c
+                      ? "1px solid #3b82f6"
+                      : "1px solid #2a2f3c",
+                  background: category === c ? "#1e3a5f" : "transparent",
+                  color: "#e8eaed",
+                  cursor: "pointer",
+                }}
+              >
                 {c}
-              </option>
+              </button>
             ))}
-          </select>
+          </div>
+
           {error && (
-            <p className="goke-properties-empty" style={{ color: "#ef4444" }}>
+            <p
+              className="goke-properties-empty"
+              style={{ color: "#ef4444", padding: "0 10px" }}
+            >
               {error}
             </p>
           )}
-          <ul className="goke-palette-list goke-starter-list">
-            {starters.map((tpl) => (
-              <li key={tpl.id} className="goke-template-row">
-                <button
-                  type="button"
-                  className="goke-palette-item"
-                  style={{ flex: 1 }}
-                  disabled={!!loadingId || !onApplyStarter}
-                  onClick={() => applyStarter(tpl)}
-                  title={
-                    mode === "merge"
-                      ? "Apply design, keep current content"
-                      : "Replace entire page"
-                  }
-                >
-                  <span className="goke-palette-icon">
-                    {loadingId === tpl.id ? "…" : "▣"}
-                  </span>
-                  <span className="goke-palette-name">
-                    {tpl.name}
-                    <span className="goke-tpl-cat">{tpl.category}</span>
-                  </span>
-                </button>
-                <a
-                  className="goke-tpl-preview"
-                  href={tpl.previewUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  title="Live preview"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  ↗
-                </a>
-              </li>
-            ))}
-            {starters.length === 0 && (
-              <li>
-                <p className="goke-properties-empty">No starters match.</p>
-              </li>
-            )}
-          </ul>
+
+          {tab === "goke" && (
+            <ul className="goke-palette-list">
+              {gokeList.map((tpl) => (
+                <li key={tpl.id} className="goke-template-row">
+                  <button
+                    type="button"
+                    className="goke-palette-item"
+                    style={{ flex: 1 }}
+                    disabled={!onApplyGokeMain || loadingId === tpl.id}
+                    onClick={() => applyGoke(tpl)}
+                  >
+                    <span className="goke-palette-icon">
+                      {loadingId === tpl.id ? "…" : "◆"}
+                    </span>
+                    <span className="goke-palette-name">
+                      {tpl.name}
+                      <span className="goke-tpl-cat">{tpl.category}</span>
+                    </span>
+                  </button>
+                </li>
+              ))}
+              {gokeList.length === 0 && (
+                <li>
+                  <p className="goke-properties-empty">No Gòke templates match.</p>
+                </li>
+              )}
+            </ul>
+          )}
+
+          {tab === "starters" && (
+            <ul className="goke-palette-list">
+              {starters.map((tpl) => (
+                <li key={tpl.id} className="goke-template-row">
+                  <button
+                    type="button"
+                    className="goke-palette-item"
+                    style={{ flex: 1 }}
+                    disabled={!onApplyStarter || loadingId === tpl.id}
+                    onClick={() => applyStarter(tpl)}
+                  >
+                    <span className="goke-palette-icon">
+                      {loadingId === tpl.id ? "…" : "▣"}
+                    </span>
+                    <span className="goke-palette-name">
+                      {tpl.name}
+                      <span className="goke-tpl-cat">{tpl.category}</span>
+                    </span>
+                  </button>
+                  <a
+                    className="goke-tpl-preview"
+                    href={tpl.previewUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    ↗
+                  </a>
+                </li>
+              ))}
+              {starters.length === 0 && (
+                <li>
+                  <p className="goke-properties-empty">No starters match.</p>
+                </li>
+              )}
+            </ul>
+          )}
         </>
       )}
 
@@ -215,7 +327,6 @@ export function TemplatesPanel({
                     className="goke-palette-item"
                     style={{ flex: 1 }}
                     onClick={() => onInsert(tpl.html)}
-                    title="Insert into page"
                   >
                     <span className="goke-palette-icon">⧉</span>
                     <span className="goke-palette-name">{tpl.name}</span>
@@ -223,7 +334,6 @@ export function TemplatesPanel({
                   <button
                     type="button"
                     className="goke-tpl-delete"
-                    title="Delete template"
                     onClick={() => setItems(deleteTemplate(tpl.id))}
                   >
                     ×
