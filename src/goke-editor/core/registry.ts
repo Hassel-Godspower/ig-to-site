@@ -48,9 +48,28 @@ export class ComponentRegistry {
   matchNode(node: HTMLElement): ComponentDefinition | null {
     const all = this.getAll();
 
+    // Prefer data-goke="heading|text|image|button|…" → component type
+    const goke = node.getAttribute("data-goke");
+    if (goke) {
+      const candidates = [
+        `content/${goke}`,
+        `layout/${goke}`,
+        `form/${goke}`,
+        `media/${goke}`,
+        `business/${goke}`,
+        goke,
+      ];
+      for (const type of candidates) {
+        const hit = this.components.get(type);
+        if (hit) return hit;
+      }
+    }
+
     for (const comp of all) {
       if (comp.attributes?.length) {
         for (const attr of comp.attributes) {
+          // Skip bare "data-goke" — handled above by value
+          if (attr === "data-goke") continue;
           if (node.hasAttribute(attr)) return comp;
         }
       }
