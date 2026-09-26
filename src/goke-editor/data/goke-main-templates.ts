@@ -1,18 +1,8 @@
-/**
- * Gòke main templates — first-party multi-page packs.
- * Static files: public/goke-templates/{folder}/
- * Separate from CDN starter-templates (dawidolko).
- */
+/** Gòke main templates — public/goke-templates/{folder}/ */
 
 export type GokeMainTemplate = {
-  id: string;
-  folder: string;
-  name: string;
-  category: string;
-  pages: string[];
-  version: string;
-  basePath: string;
-  indexUrl: string;
+  id: string; folder: string; name: string; category: string;
+  pages: string[]; version: string; basePath: string; indexUrl: string;
 };
 
 export const GOKE_MAIN_TEMPLATES: GokeMainTemplate[] = [
@@ -151,12 +141,10 @@ export const GOKE_MAIN_TEMPLATES: GokeMainTemplate[] = [
 export function gokeMainCategories(): string[] {
   return Array.from(new Set(GOKE_MAIN_TEMPLATES.map((t) => t.category))).sort();
 }
-
 export function gokeMainByCategory(category?: string): GokeMainTemplate[] {
   if (!category || category === "All") return GOKE_MAIN_TEMPLATES;
   return GOKE_MAIN_TEMPLATES.filter((t) => t.category === category);
 }
-
 export function findGokeMain(id: string): GokeMainTemplate | undefined {
   return GOKE_MAIN_TEMPLATES.find((t) => t.id === id || t.folder === id);
 }
