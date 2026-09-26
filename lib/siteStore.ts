@@ -162,33 +162,71 @@ export type PublishFile = {
  * - HTML/CSS/JS with /api/site/{jobId}/media/… rewritten to relative media/…
  * - Each media file as base64 binary
  */
+
+/** Recursively list all object paths under jobId/ (relative to job). */
+export async function listAllSiteFiles(jobId: string): Promise<string[]> {
+  const out: string[] = [];
+  await walkRecursive(jobId, "", out);
+  return out;
+}
+
+async function walkRecursive(
+  jobId: string,
+  rel: string,
+  out: string[]
+): Promise<void> {
+  const storagePath = rel ? `${jobId}/${rel}` : jobId;
+  const { data, error } = await getSupabase()
+    .storage.from(BUCKET)
+    .list(storagePath, { limit: 1000 });
+  if (error || !data) return;
+  for (const item of data) {
+    if (!item.name || item.name.startsWith(".")) continue;
+    const childRel = rel ? `${rel}/${item.name}` : item.name;
+    const looksLikeFile = /\.[a-z0-9]{1,8}$/i.test(item.name);
+    if (looksLikeFile) {
+      out.push(childRel);
+    } else {
+      await walkRecursive(jobId, childRel, out);
+    }
+  }
+}
+
 export async function getPublishFiles(jobId: string): Promise<PublishFile[]> {
-  const textFiles = await getAllSiteFiles(jobId);
+  const paths = await listAllSiteFiles(jobId);
+  // Always ensure classic names are attempted if list is empty/partial
+  const fallback = ["index.html", "styles.css", "script.js", "editor.json"];
+  const set = new Set([...paths, ...fallback]);
   const out: PublishFile[] = [];
 
   const rewrite = (s: string) =>
-    s.replaceAll(`/api/site/${jobId}/`, "").replaceAll(`/api/site/${jobId}`, "");
+    s
+      .replaceAll(`/api/site/${jobId}/`, "")
+      .replaceAll(`/api/site/${jobId}`, "");
 
-  for (const [path, content] of Object.entries(textFiles)) {
-    const body = path.endsWith(".html") || path.endsWith(".css") || path.endsWith(".js")
-      ? rewrite(content)
-      : content;
+  for (const path of set) {
+    if (path === "editor.json") continue; // internal only
+    if (isBinaryPath(path)) {
+      const blob = await getSiteBinary(jobId, path);
+      if (!blob) continue;
+      const ab = Buffer.from(await blob.arrayBuffer());
+      out.push({
+        path,
+        contentBase64: ab.toString("base64"),
+        isBinary: true,
+      });
+      continue;
+    }
+    const content = await getSiteFile(jobId, path);
+    if (content === null) continue;
+    const body =
+      path.endsWith(".html") || path.endsWith(".css") || path.endsWith(".js")
+        ? rewrite(content)
+        : content;
     out.push({
       path,
       contentBase64: Buffer.from(body, "utf-8").toString("base64"),
       isBinary: false,
-    });
-  }
-
-  const media = await listMediaFiles(jobId);
-  for (const path of media) {
-    const blob = await getSiteBinary(jobId, path);
-    if (!blob) continue;
-    const ab = Buffer.from(await blob.arrayBuffer());
-    out.push({
-      path,
-      contentBase64: ab.toString("base64"),
-      isBinary: true,
     });
   }
 
