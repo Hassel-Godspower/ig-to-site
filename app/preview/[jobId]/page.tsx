@@ -26,7 +26,9 @@ import { GlobalsPanel } from "@/src/goke-editor/components/GlobalsPanel";
 import { TemplatesPanel } from "@/src/goke-editor/components/TemplatesPanel";
 import { MediaPanel } from "@/src/goke-editor/components/MediaPanel";
 import { loadStarterHtml } from "@/src/goke-editor/core/load-starter";
+import { loadGokeMainHtml } from "@/src/goke-editor/core/load-goke-template";
 import type { StarterTemplate } from "@/src/goke-editor/data/starter-templates";
+import type { GokeMainTemplate } from "@/src/goke-editor/data/goke-main-templates";
 import { mergeCurrentDocIntoTemplate } from "@/src/goke-editor/core/merge-content";
 import type { StarterApplyMode } from "@/src/goke-editor/components/TemplatesPanel";
 import { MediaProvider } from "@/src/goke-editor/context/MediaContext";
@@ -505,6 +507,40 @@ export default function PreviewPage() {
   }
 
 
+  async function handleApplyGokeMain(
+    template: GokeMainTemplate,
+    mode: StarterApplyMode = "merge"
+  ) {
+    const builder = builderRef.current;
+    const iframe = iframeRef.current;
+    if (!builder || !iframe) throw new Error("Editor not ready");
+
+    const { html: templateHtml } = await loadGokeMainHtml(template);
+    let html = templateHtml;
+
+    if (mode === "merge") {
+      const doc = iframe.contentDocument;
+      if (doc?.body) {
+        html = mergeCurrentDocIntoTemplate(doc, templateHtml);
+      }
+    } else {
+      const ok = window.confirm(
+        `Replace the current page with "${template.name}"? Your current layout will be lost (content is not merged).`
+      );
+      if (!ok) return;
+    }
+
+    builder.setHtml(html);
+    const doc = iframe.contentDocument;
+    if (doc) applyTokensToDocument(doc, tokens);
+    setSaved(false);
+    refreshTree();
+    setSelectedElement(null);
+    setSelectedComponent(null);
+  }
+
+
+
   async function goLive() {
     setError(null);
     setPhase("modal");
@@ -698,6 +734,7 @@ export default function PreviewPage() {
             <TemplatesPanel
               onInsert={insertTemplateHtml}
               onApplyStarter={handleApplyStarter}
+              onApplyGokeMain={handleApplyGokeMain}
               refreshKey={tplRefresh}
             />
           )}
