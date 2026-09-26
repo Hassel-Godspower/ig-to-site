@@ -151,6 +151,8 @@ export class Builder {
     this.frameDoc
       .querySelectorAll("[data-goke-ui]")
       .forEach((n) => n.remove());
+    // Keep template CSS; drop editor chrome-only style tag
+    this.frameDoc.getElementById("goke-editor-chrome")?.remove();
     this.hideDropIndicator();
     // Bake responsive + hover CSS into the document before serialize
     applyResponsiveStylesToDocument(this.frameDoc);
