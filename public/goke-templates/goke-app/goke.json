@@ -1,0 +1,17 @@
+{
+  "id": "goke-app",
+  "name": "Gòke SaaS & Tech Product",
+  "category": "saas",
+  "type": "html",
+  "version": "1.0.0",
+  "pages": [
+    "index.html",
+    "features.html",
+    "pricing.html",
+    "about.html",
+    "contact.html"
+  ],
+  "responsive": true,
+  "editable": true,
+  "license": "MIT"
+}
