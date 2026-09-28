@@ -342,7 +342,7 @@ export async function generateSite(
         {
           role: "system",
           content:
-            "You are an award-winning web designer who builds unique static sites for real local businesses. Never produce generic Bootstrap-looking pages. Every site must feel custom-branded for the niche and copy provided.",
+            "You are a senior brand designer and conversion copywriter who ships production static websites (HTML + one CSS file + one JS file only). No React, no Next.js, no Tailwind CDN required, no Framer/GSAP. Your sites must look custom-built for THIS business — not a recycled Wix/Elementor starter. Prefer restraint, hierarchy, and real copy over gimmicks. Output ONLY the required file blocks — no markdown fences, no commentary.",
         },
         { role: "user", content: buildPrompt(profile, niche, waNumber) },
       ],
@@ -385,90 +385,101 @@ function buildPrompt(
       ?.slice(0, 12)
       .map((u, i) => `${i + 1}. ${u}`)
       .join("\n") ||
-    `(use https://picsum.photos/seed/${niche.id}-{n}/1400/900 — seeds must match niche)`;
+    `(no URLs — use https://picsum.photos/seed/${niche.id}-{n}/1400/900 with niche-matching seeds)`;
 
   const brand = profile.name || profile.username || "Business";
   const bio = profile.bio || "(none)";
+  const wa = waNumber || "NONE";
 
-  const waBlock = waNumber
-    ? `WhatsApp number (digits only): ${waNumber}
-Primary CTAs and contact form MUST use:
-  https://wa.me/${waNumber}?text=URL_ENCODED_MESSAGE
-Contact form: on submit, do NOT post to a server. Open WhatsApp with the form fields in the message body.
-Every important button that books/orders/contacts should prefer WhatsApp when a number exists.`
-    : `No phone found in Instagram data.
-Use href="contact.html" for contact CTAs.
-Contact form: still use JS to build a wa.me link IF the user typed a phone in a data-wa-fallback attribute on <body data-wa="">; otherwise show a friendly alert that WhatsApp is not configured.
-Put data-wa="" on <body> so the editor can fill it later.`;
+  const nicheBrief = [
+    `Mood: ${niche.mood}`,
+    `Palette: ${niche.palette}`,
+    `Typography: ${niche.typography}`,
+    `Imagery: ${niche.imagery}`,
+    `Home flow: ${niche.homepageSections}`,
+    `CTA language: ${niche.ctaStyle}`,
+  ].join("\n");
 
-  return `Build a BESPOKE multi-page static website for this real business.
-Plain HTML + styles.css + script.js only. No React, no frameworks.
+  return `Build a complete multi-page static website from the business data below.
 
-=== NICHE (mandatory design system) ===
-${niche.id} — ${niche.label}
-Mood: ${niche.mood}
-Palette: ${niche.palette}
-Type: ${niche.typography}
-Imagery: ${niche.imagery}
-Home flow: ${niche.homepageSections}
-CTA language: ${niche.ctaStyle}
-
-=== QUALITY BAR (bespoke, not template-y) ===
-- Unique layout rhythm for this niche (not the same hero-three-cards-footer every time)
-- Hero on index MUST have a large background or side image — never a huge empty white void
-- Distinct section backgrounds alternating surface/bg; generous but intentional whitespace
-- Buttons: consistent radius, hover states in CSS, data-goke="button" on every <a class="btn"> and submit control
-- Forms: labels, name, email, message fields; submit control labeled for the niche
-- Micro-copy pulled from captions (services, location, offers) — ban lorem ipsum
-- Footer with brand + nav + one line from bio
-- Mobile-first responsive CSS
-
-=== BUSINESS DATA ===
+=== BUSINESS DATA (source of truth — do not invent facts) ===
 Name: ${brand}
+Username: ${profile.username || "(unknown)"}
 Bio: ${bio}
-Captions:
+Detected niche: ${niche.id} — ${niche.label}
+Mood / palette / type / imagery direction:
+${nicheBrief}
+Captions (services, offers, location, tone):
 ${captions || "(none)"}
-Images:
+Image URLs (prefer these in <img src>; else niche-matched picsum seeds):
 ${mediaLines}
+WhatsApp digits (if any): ${wa}
 
-=== WHATSAPP / CONTACT ===
-${waBlock}
+=== HARD RULES ===
+1. Output ONLY the file blocks defined at the end. No markdown, no commentary.
+2. Exactly these pages (complete HTML5 documents each):
+   - index.html (Home)
+   - about.html
+   - services.html
+   - gallery.html
+   - contact.html
+3. Shared design system in styles.css only (do not put large <style> blocks in HTML).
+4. Shared script.js for: mobile nav toggle, smooth scroll, contact form → WhatsApp.
+5. IDENTICAL header + footer on every page:
+   - Logo/brand link id="site-title" → index.html
+   - Nav links (relative): index.html, about.html, services.html, gallery.html, contact.html
+   - Footer: brand, one short line from bio, same nav, WhatsApp/contact if available
+6. Every CTA/control: use <a class="btn"> or <button> with data-goke="button".
+7. Editor hooks: id="hero-headline", id="hero-subheadline", id="cta-button" on Home hero;
+   class="site-section" data-section-name="..." on major sections;
+   data-goke="heading|text|image|link|button" on key nodes.
+8. Put data-wa="${waNumber || ""}" on every <body>.
+9. NO lorem ipsum. Never invent awards, metrics, or press. Only claims supported by captions/bio.
+10. Mobile-first CSS; readable type; hero MUST include a real image — never an empty white hero.
 
-=== FILES ===
-index.html, about.html, services.html, gallery.html, contact.html
-styles.css (all visual design)
-script.js (mobile nav + contact form → WhatsApp + button hover helpers)
+=== QUALITY BAR (Elementor-grade, not Elementor-clone) ===
+- Distinct layout for this niche (spa ≠ auto dealer ≠ law firm ≠ shop).
+- Clear hierarchy: Google Fonts pair in each <head> matching the niche typography direction.
+- CSS variables on :root: --primary, --primary-hover, --bg, --surface, --text, --muted, --border, --radius, --shadow.
+- Alternating section surfaces; section padding ~4–6rem on desktop.
+- Buttons: solid primary + outline secondary; :hover states in CSS.
+- Cards with subtle shadow/border; gallery as responsive CSS grid.
+- Contact page: form#contact-form with name, email, message + submit data-goke="button".
+  In script.js: preventDefault on submit → open https://wa.me/NUMBER?text=encodeURIComponent(...) when data-wa is set; otherwise alert that WhatsApp is not configured.
+- Trust without lies: location, services, and tone from captions only.
 
-=== EDITOR HOOKS ===
-id="site-title" on brand
-id="hero-headline", id="hero-subheadline", id="cta-button" on index
-data-goke="button" on ALL buttons and CTA links
-data-goke="heading"|text|image on key content
-class="site-section" data-section-name="..." on sections
-Contact form: id="contact-form" and data-goke="button" on submit
+=== PAGE INTENT ===
+HOME: Hero (image + H1 + sub + dual CTAs) → optional trust strip → 3 service pillars from captions → about teaser → gallery teaser → final CTA.
+ABOUT: Story from bio/captions → values/method → soft CTA to contact.
+SERVICES: Outcome-led service cards inferred from captions → simple process steps → CTA.
+GALLERY: Image grid (real URLs or niche seeds) with meaningful alt text.
+CONTACT: Short pitch → form#contact-form → contact/WhatsApp details.
 
-=== OUTPUT (strict, no markdown) ===
+Link stylesheet as <link rel="stylesheet" href="styles.css">.
+Link script as <script src="script.js" defer></script> before </body>.
+
+=== OUTPUT FORMAT (strict) ===
 ===PAGE:index.html===
-...full html...
+<!DOCTYPE html>
+...full document...
 ===PAGE:about.html===
-...
+<!DOCTYPE html>
+...full document...
 ===PAGE:services.html===
-...
+<!DOCTYPE html>
+...full document...
 ===PAGE:gallery.html===
-...
+<!DOCTYPE html>
+...full document...
 ===PAGE:contact.html===
-...
+<!DOCTYPE html>
+...full document...
 ===CSS===
-...styles.css...
+...full styles.css...
 ===JS===
-...script.js must include:
-1) mobile nav toggle if needed
-2) document.querySelectorAll('#contact-form').forEach form submit handler:
-   preventDefault, read name/email/message, open
-   https://wa.me/NUMBER?text=encodeURIComponent(composed message)
-   use NUMBER from body[data-wa] or hardcoded ${waNumber || "NUMBER_PLACEHOLDER"}
-...`;
+...full script.js (nav toggle + WhatsApp form handler)...`;
 }
+
 
 function parseMultiPage(
   raw: string,
