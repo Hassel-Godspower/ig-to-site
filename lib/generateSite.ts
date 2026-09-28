@@ -424,7 +424,8 @@ WhatsApp digits (if any): ${wa}
    - gallery.html
    - contact.html
 3. Shared design system in styles.css only (do not put large <style> blocks in HTML).
-4. Shared script.js for: mobile nav toggle, smooth scroll, contact form → WhatsApp.
+4. Shared script.js for: mobile-only hamburger nav toggle, smooth scroll, contact form → WhatsApp.
+   Desktop = horizontal links only (hide .nav-toggle). Mobile = hamburger opens dropdown.
 5. IDENTICAL header + footer on every page:
    - Logo/brand link id="site-title" → index.html
    - Nav links (relative): index.html, about.html, services.html, gallery.html, contact.html
@@ -436,6 +437,46 @@ WhatsApp digits (if any): ${wa}
 8. Put data-wa="${waNumber || ""}" on every <body>.
 9. NO lorem ipsum. Never invent awards, metrics, or press. Only claims supported by captions/bio.
 10. Mobile-first CSS; readable type; hero MUST include a real image — never an empty white hero.
+
+
+=== NAVIGATION (mandatory pattern — every page) ===
+Use this structure in the header on EVERY page (same links, same order):
+
+<header class="site-header" data-goke="container">
+  <div class="nav-bar">
+    <a href="index.html" class="brand" id="site-title" data-goke="link">BRAND</a>
+    <button type="button" class="nav-toggle" data-goke="button" aria-label="Open menu" aria-expanded="false" aria-controls="site-nav">
+      <span class="nav-toggle-bar"></span>
+      <span class="nav-toggle-bar"></span>
+      <span class="nav-toggle-bar"></span>
+    </button>
+    <nav id="site-nav" class="site-nav" data-goke="nav" hidden>
+      <ul class="nav-list">
+        <li><a href="index.html" data-goke="link">Home</a></li>
+        <li><a href="about.html" data-goke="link">About</a></li>
+        <li><a href="services.html" data-goke="link">Services</a></li>
+        <li><a href="gallery.html" data-goke="link">Gallery</a></li>
+        <li><a href="contact.html" data-goke="link">Contact</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+CSS requirements:
+- Desktop (min-width: 768px): .nav-toggle { display: none !important; }
+  .site-nav { display: block !important; position: static; background: transparent; }
+  .nav-list { display: flex; flex-direction: row; gap: 1.25rem; list-style: none; }
+  Horizontal links only — NO hamburger on desktop.
+- Mobile (max-width: 767px): .nav-toggle { display: inline-flex; }
+  .site-nav[hidden] { display: none !important; }
+  .site-nav:not([hidden]) { display: block; position absolute/full-width dropdown under header; }
+  Stacked links in the dropdown.
+
+script.js MUST:
+- Toggle #site-nav hidden attribute when .nav-toggle is clicked
+- Set aria-expanded true/false
+- Close menu when a nav link is clicked (mobile)
+- Do NOT show the toggle on desktop (CSS handles visibility)
 
 === QUALITY BAR (Elementor-grade, not Elementor-clone) ===
 - Distinct layout for this niche (spa ≠ auto dealer ≠ law firm ≠ shop).
@@ -525,9 +566,8 @@ function parseMultiPage(
   }
 
   // Always ensure solid WhatsApp form handler
-  files["script.js"] = ensureWhatsAppScript(
-    files["script.js"] || "",
-    waNumber
+  files["script.js"] = ensureNavScript(
+    ensureWhatsAppScript(files["script.js"] || "", waNumber)
   );
 
   const brand = profile.name || profile.username || "Home";
@@ -572,6 +612,44 @@ function injectWaAttr(html: string, wa: string | null): string {
     return html.replace(/<body/i, `<body data-wa="${wa}"`);
   }
   return html;
+}
+
+
+function ensureNavScript(js: string): string {
+  if (js.includes("nav-toggle") && js.includes("site-nav")) return js;
+  const handler = `
+/* goke: mobile nav — hamburger only (CSS hides toggle on desktop) */
+(function () {
+  function bindNav() {
+    var toggle = document.querySelector(".nav-toggle, .navbar-toggler, .menu-toggle");
+    var nav = document.querySelector("#site-nav, .site-nav, nav[data-goke='nav']");
+    if (!toggle || !nav) return;
+    if (toggle.__gokeNav) return;
+    toggle.__gokeNav = true;
+    toggle.addEventListener("click", function () {
+      var open = nav.hasAttribute("hidden");
+      if (open) {
+        nav.removeAttribute("hidden");
+        toggle.setAttribute("aria-expanded", "true");
+      } else {
+        nav.setAttribute("hidden", "");
+        toggle.setAttribute("aria-expanded", "false");
+      }
+    });
+    nav.querySelectorAll("a").forEach(function (a) {
+      a.addEventListener("click", function () {
+        if (window.matchMedia("(max-width: 767px)").matches) {
+          nav.setAttribute("hidden", "");
+          toggle.setAttribute("aria-expanded", "false");
+        }
+      });
+    });
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", bindNav);
+  else bindNav();
+})();
+`;
+  return js.trim() + "\n" + handler;
 }
 
 function ensureWhatsAppScript(js: string, wa: string | null): string {
