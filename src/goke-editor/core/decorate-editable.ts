@@ -22,8 +22,14 @@ export function decorateEditableDocument(doc: Document): void {
   };
 
   doc.querySelectorAll("section").forEach((el) => mark(el, "section"));
-  doc.querySelectorAll("header, footer, main, nav").forEach((el) =>
+  doc.querySelectorAll("header, footer, main").forEach((el) =>
     mark(el, "container")
+  );
+  doc.querySelectorAll("nav, .site-nav, #site-nav").forEach((el) =>
+    mark(el, "nav", true)
+  );
+  doc.querySelectorAll(".nav-toggle, .navbar-toggler, .menu-toggle").forEach((el) =>
+    mark(el, "button", true)
   );
   doc.querySelectorAll("h1, h2, h3, h4, h5, h6").forEach((el) =>
     mark(el, "heading")
