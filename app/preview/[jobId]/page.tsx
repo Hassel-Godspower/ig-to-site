@@ -100,12 +100,62 @@ export default function PreviewPage() {
   const [device, setDevice] = useState<Breakpoint>("desktop");
   const [tree, setTree] = useState<NavNode[]>([]);
   const [rightTab, setRightTab] = useState<"content" | "design" | "globals">("content");
+  const [currentPage, setCurrentPage] = useState("index.html");
+  const [sitePages, setSitePages] = useState<{ file: string; title: string }[]>([
+    { file: "index.html", title: "Home" },
+  ]);
   const [leftTab, setLeftTab] = useState<"structure" | "components" | "templates" | "media">("components");
   const [tokens, setTokens] = useState<DesignTokens>(DEFAULT_TOKENS);
   const [tplRefresh, setTplRefresh] = useState(0);
   const [canPasteStyle, setCanPasteStyle] = useState(false);
 
-  const previewSrc = `/api/site/${jobId}/index.html`;
+  const previewSrc = `/api/site/${jobId}/${currentPage}`;
+
+
+  // Discover multi-page site files
+  useEffect(() => {
+    if (!jobId) return;
+    (async () => {
+      try {
+        const res = await fetch(`/api/site/${jobId}/pages.json`);
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data.pages) && data.pages.length) {
+            setSitePages(data.pages);
+            return;
+          }
+        }
+      } catch { /* ignore */ }
+      // Probe common pages if no manifest
+      const candidates = [
+        "index.html",
+        "about.html",
+        "services.html",
+        "gallery.html",
+        "contact.html",
+        "booking.html",
+        "menu.html",
+        "shop.html",
+      ];
+      const found: { file: string; title: string }[] = [];
+      for (const file of candidates) {
+        try {
+          const r = await fetch(`/api/site/${jobId}/${file}`, { method: "GET" });
+          if (r.ok) {
+            const title =
+              file === "index.html"
+                ? "Home"
+                : file
+                    .replace(/\.html$/i, "")
+                    .replace(/[-_]/g, " ")
+                    .replace(/\b\w/g, (c) => c.toUpperCase());
+            found.push({ file, title });
+          }
+        } catch { /* skip */ }
+      }
+      if (found.length) setSitePages(found);
+    })();
+  }, [jobId]);
 
   const refreshTree = useCallback(() => {
     const t = builderRef.current?.getTree() ?? [];
@@ -351,7 +401,7 @@ export default function PreviewPage() {
       builder?.getHtml() ||
       "<!DOCTYPE html>\n" + doc.documentElement.outerHTML;
 
-    await fetch(`/api/site/${jobId}/index.html`, {
+    await fetch(`/api/site/${jobId}/${currentPage}`, {
       method: "PUT",
       body: html,
     });
@@ -588,6 +638,24 @@ export default function PreviewPage() {
     }
   }
 
+
+  async function switchPage(nextFile: string) {
+    if (nextFile === currentPage) return;
+    // Save current page before switching
+    try {
+      if (!saved) await saveEdits();
+    } catch {
+      /* still allow switch */
+    }
+    setSelectedElement(null);
+    setSelectedComponent(null);
+    setBuilderReady(false);
+    builderRef.current?.destroy();
+    builderRef.current = null;
+    setCurrentPage(nextFile);
+    // iframe will reload via key/src change and onLoad → attachBuilder
+  }
+
   const deviceWidths: Record<string, string> = {
     desktop: "100%",
     tablet: "768px",
@@ -600,6 +668,30 @@ export default function PreviewPage() {
       <header className="goke-toolbar">
         <div className="goke-toolbar-left">
           <span className="goke-logo">gòke</span>
+          {sitePages.length > 1 && (
+            <label className="goke-page-switcher" style={{ display: "inline-flex", alignItems: "center", gap: 6, marginLeft: 12 }}>
+              <span style={{ fontSize: 11, opacity: 0.7 }}>Page</span>
+              <select
+                value={currentPage}
+                onChange={(e) => void switchPage(e.target.value)}
+                style={{
+                  background: "#1e222d",
+                  color: "#e8eaed",
+                  border: "1px solid #2a2f3c",
+                  borderRadius: 6,
+                  padding: "4px 8px",
+                  fontSize: 12,
+                }}
+              >
+                {sitePages.map((pg) => (
+                  <option key={pg.file} value={pg.file}>
+                    {pg.title}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+
           <button type="button" disabled={!canUndo} onClick={handleUndo}>
             ↶ Undo
           </button>
@@ -752,6 +844,7 @@ export default function PreviewPage() {
             }}
           >
             <iframe
+              key={currentPage}
               ref={iframeRef}
               title="Site preview"
               src={previewSrc}
