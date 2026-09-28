@@ -239,23 +239,18 @@ const components: ComponentDefinition[] = [
         inputType: "link",
         onChange(node, value) {
           const v = String(value || "");
-          if (node.tagName === "A") {
-            node.setAttribute("href", v);
-          } else if (node.tagName === "BUTTON") {
-            // Submit buttons: store target on data-href; click opens if set
+          if (node.tagName === "A") node.setAttribute("href", v);
+          else {
             node.setAttribute("data-href", v);
-            if (v.includes("wa.me") || v.startsWith("http")) {
+            if (v) {
               node.setAttribute("type", "button");
-              (node as HTMLButtonElement).onclick = () => {
-                window.open(v, "_blank", "noopener,noreferrer");
-              };
             }
           }
           return node;
         },
       },
       {
-        name: "Open in new tab",
+        name: "Open in",
         key: "target",
         inputType: "select",
         options: [
@@ -293,6 +288,7 @@ const components: ComponentDefinition[] = [
         inputType: "css-unit",
         units: ["px", "rem"],
       },
+
     ],
   },
   {
@@ -300,6 +296,7 @@ const components: ComponentDefinition[] = [
     name: "Link",
     category: "Content",
     icon: "↗",
+    tags: ["a"],
     html: `<a data-goke="link" href="https://example.com" style="color: var(--goke-primary, #3b82f6); text-decoration: underline;">Link text</a>`,
     attributes: ["data-goke"],
     properties: [
@@ -313,10 +310,36 @@ const components: ComponentDefinition[] = [
         },
       },
       {
-        name: "URL",
+        name: "URL / WhatsApp",
         key: "href",
         htmlAttr: "href",
         inputType: "link",
+      },
+      {
+        name: "Open in",
+        key: "target",
+        inputType: "select",
+        options: [
+          { value: "_self", label: "Same tab" },
+          { value: "_blank", label: "New tab" },
+        ],
+        onChange(node, value) {
+          node.setAttribute("target", String(value));
+          return node;
+        },
+      },
+      {
+        name: "Color",
+        key: "color",
+        cssProperty: "color",
+        inputType: "color",
+      },
+      {
+        name: "Font size",
+        key: "fontSize",
+        cssProperty: "font-size",
+        inputType: "css-unit",
+        units: ["px", "rem", "em"],
       },
     ],
   },

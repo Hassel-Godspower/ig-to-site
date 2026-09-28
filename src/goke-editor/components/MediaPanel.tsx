@@ -10,7 +10,6 @@ import { useMediaUpload } from "../context/MediaContext";
 type MediaItem = { filename: string; url: string };
 
 interface MediaPanelProps {
-  /** Apply URL to the currently selected <img> (or any handler) */
   onPick: (url: string) => void;
 }
 
@@ -47,6 +46,7 @@ export function MediaPanel({ onPick }: MediaPanelProps) {
       setErr(e instanceof Error ? e.message : "Upload failed");
     } finally {
       setBusy(false);
+      if (inputRef.current) inputRef.current.value = "";
     }
   }
 
@@ -65,13 +65,38 @@ export function MediaPanel({ onPick }: MediaPanelProps) {
     await refresh();
   }
 
+  function onDrop(e: React.DragEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    const file = e.dataTransfer.files?.[0];
+    if (file) void onUpload(file);
+  }
+
   return (
-    <div className="goke-media-panel">
-      <p className="goke-properties-empty" style={{ marginBottom: 8 }}>
-        Upload images/video first, then click a thumbnail to set the selected
-        image&apos;s source (or insert later from Properties).
+    <div className="goke-media-panel" style={{ padding: 10 }}>
+      <p style={{ fontSize: 12, color: "#9ca3af", marginBottom: 10, lineHeight: 1.45 }}>
+        Upload images or video here, then click a thumbnail to apply it to the
+        selected image — or insert a new image on the canvas.
       </p>
-      <div className="goke-image-actions" style={{ marginBottom: 10 }}>
+
+      {/* Always-visible upload zone */}
+      <div
+        onDragOver={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+        }}
+        onDrop={onDrop}
+        onClick={() => inputRef.current?.click()}
+        style={{
+          border: "1px dashed #3b82f6",
+          borderRadius: 10,
+          padding: "20px 12px",
+          textAlign: "center",
+          cursor: busy ? "wait" : "pointer",
+          background: "rgba(59,130,246,0.08)",
+          marginBottom: 12,
+        }}
+      >
         <input
           ref={inputRef}
           type="file"
@@ -79,46 +104,82 @@ export function MediaPanel({ onPick }: MediaPanelProps) {
           style={{ display: "none" }}
           onChange={(e) => onUpload(e.target.files?.[0] ?? null)}
         />
-        <button
-          type="button"
-          className="goke-btn-upload"
-          disabled={busy || !jobId}
-          onClick={() => inputRef.current?.click()}
-        >
-          {busy ? "Uploading…" : "Upload media"}
-        </button>
+        <div style={{ fontSize: 22, marginBottom: 6 }}>⬆</div>
+        <div style={{ fontSize: 13, color: "#e5e7eb", fontWeight: 600 }}>
+          {busy ? "Uploading…" : "Click or drop to upload"}
+        </div>
+        <div style={{ fontSize: 11, color: "#9ca3af", marginTop: 4 }}>
+          PNG, JPG, WebP, GIF, MP4 · max 12MB
+        </div>
       </div>
+
       {err && (
-        <p className="goke-properties-empty" style={{ color: "#ef4444" }}>
-          {err}
-        </p>
+        <p style={{ color: "#f87171", fontSize: 12, marginBottom: 8 }}>{err}</p>
       )}
+
       {items.length === 0 ? (
-        <p className="goke-properties-empty">No uploads yet.</p>
+        <p className="goke-properties-empty" style={{ fontSize: 12 }}>
+          No media yet. Upload above — files stay with this job and publish with
+          the site.
+        </p>
       ) : (
-        <div className="goke-media-grid">
+        <div
+          className="goke-media-grid"
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: 8,
+          }}
+        >
           {items.map((item) => {
             const isVideo = /\.(mp4|webm)$/i.test(item.filename);
             return (
-              <div key={item.filename} className="goke-media-cell">
+              <div key={item.filename} className="goke-media-cell" style={{ position: "relative" }}>
                 <button
                   type="button"
                   className="goke-media-thumb"
                   title="Use this media"
                   onClick={() => onPick(item.url)}
+                  style={{
+                    width: "100%",
+                    aspectRatio: "1",
+                    border: "1px solid #2a2f3c",
+                    borderRadius: 8,
+                    overflow: "hidden",
+                    background: "#0b0d12",
+                    padding: 0,
+                    cursor: "pointer",
+                  }}
                 >
                   {isVideo ? (
-                    <span className="goke-media-video-label">VIDEO</span>
+                    <span style={{ color: "#93c5fd", fontSize: 11 }}>VIDEO</span>
                   ) : (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={item.url} alt="" />
+                    <img
+                      src={item.url}
+                      alt=""
+                      style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                    />
                   )}
                 </button>
                 <button
                   type="button"
-                  className="goke-media-del"
                   title="Delete"
                   onClick={() => onDelete(item.filename)}
+                  style={{
+                    position: "absolute",
+                    top: 4,
+                    right: 4,
+                    width: 22,
+                    height: 22,
+                    borderRadius: 11,
+                    border: "none",
+                    background: "rgba(0,0,0,0.65)",
+                    color: "#fff",
+                    cursor: "pointer",
+                    fontSize: 14,
+                    lineHeight: "22px",
+                  }}
                 >
                   ×
                 </button>
