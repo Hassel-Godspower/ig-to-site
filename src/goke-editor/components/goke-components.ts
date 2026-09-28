@@ -155,6 +155,124 @@ const components: ComponentDefinition[] = [
   // ═══════════════════════════════════════════════
   // Content
   // ═══════════════════════════════════════════════
+
+  {
+    type: "content/nav",
+    name: "Navigation",
+    category: "Layout",
+    icon: "☰",
+    html: `<nav id="site-nav" class="site-nav" data-goke="nav">
+  <ul class="nav-list" style="list-style:none;display:flex;gap:1rem;margin:0;padding:0;">
+    <li><a data-goke="link" href="index.html">Home</a></li>
+    <li><a data-goke="link" href="about.html">About</a></li>
+    <li><a data-goke="link" href="services.html">Services</a></li>
+    <li><a data-goke="link" href="contact.html">Contact</a></li>
+  </ul>
+</nav>`,
+    attributes: ["data-goke"],
+    properties: [
+      {
+        name: "Link 1 label",
+        key: "l1",
+        inputType: "text",
+        onChange(node, value) {
+          const a = node.querySelectorAll("a")[0];
+          if (a) a.textContent = String(value);
+          return node;
+        },
+      },
+      {
+        name: "Link 1 page",
+        key: "h1",
+        inputType: "text",
+        onChange(node, value) {
+          const a = node.querySelectorAll("a")[0];
+          if (a) a.setAttribute("href", String(value));
+          return node;
+        },
+      },
+      {
+        name: "Link 2 label",
+        key: "l2",
+        inputType: "text",
+        onChange(node, value) {
+          const a = node.querySelectorAll("a")[1];
+          if (a) a.textContent = String(value);
+          return node;
+        },
+      },
+      {
+        name: "Link 2 page",
+        key: "h2",
+        inputType: "text",
+        onChange(node, value) {
+          const a = node.querySelectorAll("a")[1];
+          if (a) a.setAttribute("href", String(value));
+          return node;
+        },
+      },
+      {
+        name: "Link 3 label",
+        key: "l3",
+        inputType: "text",
+        onChange(node, value) {
+          const a = node.querySelectorAll("a")[2];
+          if (a) a.textContent = String(value);
+          return node;
+        },
+      },
+      {
+        name: "Link 3 page",
+        key: "h3",
+        inputType: "text",
+        onChange(node, value) {
+          const a = node.querySelectorAll("a")[2];
+          if (a) a.setAttribute("href", String(value));
+          return node;
+        },
+      },
+      {
+        name: "Link 4 label",
+        key: "l4",
+        inputType: "text",
+        onChange(node, value) {
+          const a = node.querySelectorAll("a")[3];
+          if (a) a.textContent = String(value);
+          return node;
+        },
+      },
+      {
+        name: "Link 4 page",
+        key: "h4",
+        inputType: "text",
+        onChange(node, value) {
+          const a = node.querySelectorAll("a")[3];
+          if (a) a.setAttribute("href", String(value));
+          return node;
+        },
+      },
+      {
+        name: "Link 5 label",
+        key: "l5",
+        inputType: "text",
+        onChange(node, value) {
+          const a = node.querySelectorAll("a")[4];
+          if (a) a.textContent = String(value);
+          return node;
+        },
+      },
+      {
+        name: "Link 5 page",
+        key: "h5",
+        inputType: "text",
+        onChange(node, value) {
+          const a = node.querySelectorAll("a")[4];
+          if (a) a.setAttribute("href", String(value));
+          return node;
+        },
+      },
+    ],
+  },
   {
     type: "content/heading",
     name: "Heading",
