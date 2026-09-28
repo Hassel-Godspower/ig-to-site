@@ -5,6 +5,7 @@
 
 import type { StarterTemplate } from "../data/starter-templates";
 import { findStarter } from "../data/starter-templates";
+import { decorateEditableHtml } from "./decorate-editable";
 
 export type LoadStarterResult = {
   html: string;
@@ -38,9 +39,11 @@ export async function loadStarterHtml(
   }
 
   let html = await res.text();
+  // will decorate after other transforms below
   html = injectBaseHref(html, template.cdnBase);
   html = stripScriptsThatBreakEditor(html);
 
+  html = decorateEditableHtml(html);
   return { html, template };
 }
 

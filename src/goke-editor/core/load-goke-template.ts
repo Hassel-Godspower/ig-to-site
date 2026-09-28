@@ -6,6 +6,7 @@
 
 import type { GokeMainTemplate } from "../data/goke-main-templates";
 import { findGokeMain } from "../data/goke-main-templates";
+import { decorateEditableHtml } from "./decorate-editable";
 
 export type LoadGokeResult = {
   html: string;
@@ -34,7 +35,7 @@ export async function loadGokeMainHtml(
   let html = await res.text();
   html = await inlineStylesheets(html, template.basePath);
   html = injectBaseHref(html, template.basePath);
-  html = decorateForEditor(html);
+  html = decorateEditableHtml(html);
   html = html.replace(/<!--\[if lt IE 9\]>[\s\S]*?<!\[endif\]-->/gi, "");
 
   return { html, template };
