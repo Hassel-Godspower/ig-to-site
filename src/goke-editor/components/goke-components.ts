@@ -233,10 +233,39 @@ const components: ComponentDefinition[] = [
         },
       },
       {
-        name: "Link",
+        name: "Link / WhatsApp URL",
         key: "href",
         htmlAttr: "href",
         inputType: "link",
+        onChange(node, value) {
+          const v = String(value || "");
+          if (node.tagName === "A") {
+            node.setAttribute("href", v);
+          } else if (node.tagName === "BUTTON") {
+            // Submit buttons: store target on data-href; click opens if set
+            node.setAttribute("data-href", v);
+            if (v.includes("wa.me") || v.startsWith("http")) {
+              node.setAttribute("type", "button");
+              (node as HTMLButtonElement).onclick = () => {
+                window.open(v, "_blank", "noopener,noreferrer");
+              };
+            }
+          }
+          return node;
+        },
+      },
+      {
+        name: "Open in new tab",
+        key: "target",
+        inputType: "select",
+        options: [
+          { value: "_self", label: "Same tab" },
+          { value: "_blank", label: "New tab" },
+        ],
+        onChange(node, value) {
+          if (node.tagName === "A") node.setAttribute("target", String(value));
+          return node;
+        },
       },
       {
         name: "Background",
@@ -249,6 +278,20 @@ const components: ComponentDefinition[] = [
         key: "color",
         cssProperty: "color",
         inputType: "color",
+      },
+      {
+        name: "Border radius",
+        key: "radius",
+        cssProperty: "border-radius",
+        inputType: "css-unit",
+        units: ["px", "rem"],
+      },
+      {
+        name: "Padding",
+        key: "padding",
+        cssProperty: "padding",
+        inputType: "css-unit",
+        units: ["px", "rem"],
       },
     ],
   },

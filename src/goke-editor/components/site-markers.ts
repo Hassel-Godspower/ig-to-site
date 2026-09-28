@@ -106,7 +106,7 @@ const markers: ComponentDefinition[] = [
         },
       },
       {
-        name: "Link",
+        name: "Link / WhatsApp URL",
         key: "href",
         htmlAttr: "href",
         inputType: "link",
