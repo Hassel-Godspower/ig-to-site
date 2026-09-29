@@ -27,8 +27,11 @@ export const metadata: Metadata = {
   },
   manifest: "/manifest.webmanifest",
   icons: {
-    icon: [{ url: "/icons/icon-192.svg", type: "image/svg+xml" }],
-    apple: [{ url: "/icons/icon-192.svg" }],
+    icon: [
+      { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [{ url: "/icons/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
   },
 };
 
@@ -36,6 +39,7 @@ export const viewport: Viewport = {
   themeColor: "#08090c",
   width: "device-width",
   initialScale: 1,
+  maximumScale: 5,
   viewportFit: "cover",
 };
 
@@ -49,7 +53,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
           rel="stylesheet"
         />
-        <link rel="apple-touch-icon" href="/icons/icon-192.svg" />
+        {/* iOS home screen */}
+        <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" sizes="180x180" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="apple-mobile-web-app-title" content="gòke" />
         <meta name="mobile-web-app-capable" content="yes" />
       </head>
       <body>
