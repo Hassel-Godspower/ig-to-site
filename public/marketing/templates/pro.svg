@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="480" viewBox="0 0 640 480" role="img" aria-label="Gòke Pro template preview">
+  <rect width="640" height="480" rx="16" fill="#1a1d24"/>
+  <rect x="12" y="12" width="616" height="456" rx="10" fill="#0b0d12"/>
+  <circle cx="32" cy="32" r="5" fill="#f87171"/>
+  <circle cx="50" cy="32" r="5" fill="#fbbf24"/>
+  <circle cx="68" cy="32" r="5" fill="#34d399"/>
+  <rect x="90" y="24" width="200" height="16" rx="4" fill="#27272a"/>
+  <g transform="translate(12,48)">
+    <svg width="616" height="408">
+  <rect width="616" height="408" fill="#f8fafc"/>
+  <rect width="616" height="52" fill="#0b1f3a"/>
+  <text x="24" y="32" fill="#0f172a" font-family="system-ui,sans-serif" font-size="14" font-weight="700">Gòke Pro</text>
+  <text x="480" y="32" fill="rgba(255,255,255,0.55)" font-family="system-ui,sans-serif" font-size="11">Home  About  Contact</text>
+
+
+  <rect x="0" y="52" width="616" height="120" fill="#0b1f3a"/>
+  <text x="40" y="110" fill="#fff" font-family="system-ui,sans-serif" font-size="22" font-weight="700">Clarity for operators</text>
+  <rect x="40" y="130" width="110" height="28" rx="6" fill="#3b82f6"/>
+  <rect x="40" y="200" width="170" height="140" rx="12" fill="#fff" stroke="#e2e8f0"/>
+  <rect x="55" y="220" width="36" height="36" rx="8" fill="#3b82f6" opacity="0.2"/>
+  <rect x="55" y="270" width="120" height="8" rx="2" fill="#0f172a" opacity="0.35"/>
+  <rect x="55" y="290" width="100" height="6" rx="2" fill="#0f172a" opacity="0.2"/>
+  <rect x="230" y="200" width="170" height="140" rx="12" fill="#fff" stroke="#e2e8f0"/>
+  <rect x="245" y="220" width="36" height="36" rx="8" fill="#3b82f6" opacity="0.2"/>
+  <rect x="245" y="270" width="120" height="8" rx="2" fill="#0f172a" opacity="0.35"/>
+  <rect x="420" y="200" width="170" height="140" rx="12" fill="#fff" stroke="#e2e8f0"/>
+  <rect x="435" y="220" width="36" height="36" rx="8" fill="#3b82f6" opacity="0.2"/>
+  <rect x="435" y="270" width="120" height="8" rx="2" fill="#0f172a" opacity="0.35"/>
+
+    </svg>
+  </g>
+</svg>
