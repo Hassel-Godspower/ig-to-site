@@ -342,7 +342,7 @@ export async function generateSite(
         {
           role: "system",
           content:
-            "You are a senior brand designer and conversion copywriter who ships production static websites (HTML + one CSS file + one JS file only). No React, no Next.js, no Tailwind CDN required, no Framer/GSAP. Your sites must look custom-built for THIS business — not a recycled Wix/Elementor starter. Prefer restraint, hierarchy, and real copy over gimmicks. Output ONLY the required file blocks — no markdown fences, no commentary.",
+            "You are a Principal Frontend Engineer and brand UI designer who ships production multi-page static sites (semantic HTML5 + one styles.css + one script.js only). No React, no Next.js, no Tailwind/Bootstrap CDNs. Sites must mirror the BUSINESS ESSENCE of the niche the way Apple, Stripe, Airbnb, or Oatly mirror theirs — not a generic Elementor/Wix template. Output ONLY the required file blocks. No markdown fences, no commentary, no TODO placeholders, no lorem ipsum.",
         },
         { role: "user", content: buildPrompt(profile, niche, waNumber) },
       ],
@@ -385,7 +385,7 @@ function buildPrompt(
       ?.slice(0, 12)
       .map((u, i) => `${i + 1}. ${u}`)
       .join("\n") ||
-    `(no URLs — use https://picsum.photos/seed/${niche.id}-{n}/1400/900 with niche-matching seeds)`;
+    `(no URLs — use https://picsum.photos/seed/${niche.id}-{n}/1400/900)`;
 
   const brand = profile.name || profile.username || "Business";
   const bio = profile.bio || "(none)";
@@ -393,64 +393,95 @@ function buildPrompt(
 
   const nicheBrief = [
     `Mood: ${niche.mood}`,
-    `Palette: ${niche.palette}`,
-    `Typography: ${niche.typography}`,
-    `Imagery: ${niche.imagery}`,
-    `Home flow: ${niche.homepageSections}`,
+    `Palette direction: ${niche.palette}`,
+    `Typography direction: ${niche.typography}`,
+    `Imagery direction: ${niche.imagery}`,
+    `Home section flow: ${niche.homepageSections}`,
     `CTA language: ${niche.ctaStyle}`,
   ].join("\n");
 
-  return `Build a complete multi-page static website from the business data below.
+  // Essence cues inspired by category leaders — applied as DESIGN INTENT, not clones
+  const essenceByNiche: Record<string, string> = {
+    spa_wellness:
+      "Essence like premium hospitality: calm space, soft light, generous whitespace, serif headlines, cream/sage surfaces — the site should FEEL restorative.",
+    beauty_salon:
+      "Essence like high-fashion editorial: confident type, strong portraits, polished contrast — product/service is the hero.",
+    restaurant_food:
+      "Essence like food media: appetite-led photography, warm palette, clear menu hierarchy, invitation to reserve/order.",
+    ecommerce_retail:
+      "Essence like modern commerce (SSENSE restraint or Gymshark energy by tone): product-first grid, clear price/CTA, minimal chrome.",
+    real_estate:
+      "Essence like premium property discovery: search-like clarity, large listing imagery, trustworthy navy/slate, inspection CTA.",
+    legal_professional:
+      "Essence like NYT authority + firm credibility: serif headlines, structured columns, restrained gold/navy, consultation CTA.",
+    healthcare_clinic:
+      "Essence like calm clinical trust: clean teal/white, clear services, booking-first, no clutter.",
+    auto_dealership:
+      "Essence like performance brand showroom: dark surfaces, bold type, vehicle imagery, inventory CTA.",
+    hotel_stay:
+      "Essence like Airbnb discovery + hotel luxury: large stay photography, flexible booking CTA, amenities clarity.",
+    fitness_gym:
+      "Essence like Gymshark energy: high-impact motion photography, bold CTAs, mobile-first punch.",
+    education:
+      "Essence like clear academic authority: structured programs, outcomes, enroll CTA.",
+    creative_portfolio:
+      "Essence like agency craft (Resn spirit without WebGL): work-first layout, distinctive type, play in CSS only.",
+    church_faith:
+      "Essence like welcoming community: warm hierarchy, service times, visit CTA.",
+    tech_saas:
+      "Essence like Stripe credibility: crisp type, subtle gradients, feature clarity, docs/demo dual CTA.",
+    general_business:
+      "Essence like a sharp local brand site: clear offer, trust, contact — no template sameness.",
+  };
+  const essence =
+    essenceByNiche[niche.id] || essenceByNiche.general_business;
 
-=== BUSINESS DATA (source of truth — do not invent facts) ===
+  return `Build a complete multi-page static website from the business data.
+
+=== LAYER 1 — BUSINESS DATA (do not invent facts) ===
 Name: ${brand}
 Username: ${profile.username || "(unknown)"}
 Bio: ${bio}
-Detected niche: ${niche.id} — ${niche.label}
-Mood / palette / type / imagery direction:
+Niche: ${niche.id} — ${niche.label}
 ${nicheBrief}
-Captions (services, offers, location, tone):
+Brand essence to mirror in design (NOT a visual clone of big brands):
+${essence}
+Captions:
 ${captions || "(none)"}
-Image URLs (prefer these in <img src>; else niche-matched picsum seeds):
+Images:
 ${mediaLines}
-WhatsApp digits (if any): ${wa}
+WhatsApp digits: ${wa}
 
-=== HARD RULES ===
-1. Output ONLY the file blocks defined at the end. No markdown, no commentary.
-2. Exactly these pages (complete HTML5 documents each):
-   - index.html (Home)
-   - about.html
-   - services.html
-   - gallery.html
-   - contact.html
-3. Shared design system in styles.css only (do not put large <style> blocks in HTML).
-4. Shared script.js for: mobile-only hamburger nav toggle, smooth scroll, contact form → WhatsApp.
-   Desktop = horizontal links only (hide .nav-toggle). Mobile = hamburger opens dropdown.
-5. IDENTICAL header + footer on every page:
-   - Logo/brand link id="site-title" → index.html
-   - Nav links (relative): index.html, about.html, services.html, gallery.html, contact.html
-   - Footer: brand, one short line from bio, same nav, WhatsApp/contact if available
-6. Every CTA/control: use <a class="btn"> or <button> with data-goke="button".
-7. Editor hooks: id="hero-headline", id="hero-subheadline", id="cta-button" on Home hero;
-   class="site-section" data-section-name="..." on major sections;
-   data-goke="heading|text|image|link|button" on key nodes.
-8. Put data-wa="${waNumber || ""}" on every <body>.
-9. NO lorem ipsum. Never invent awards, metrics, or press. Only claims supported by captions/bio.
-10. Mobile-first CSS; readable type; hero MUST include a real image — never an empty white hero.
+=== LAYER 2 — TECH CONSTRAINTS ===
+- Pure HTML5 + one styles.css + one script.js (Vanilla ES6).
+- No React, no Tailwind, no Bootstrap JS/CSS CDNs.
+- Google Fonts allowed (one display + one body pair matching niche).
+- Fully responsive: mobile-first; breakpoints 768px (tablet) and 1024px (desktop).
+- Output ONLY the file blocks at the end. No markdown. No // TODO. No lorem ipsum.
+- Never invent awards, metrics, press, or certifications not in the data.
 
+=== LAYER 3 — DESIGN SYSTEM (in styles.css :root) ===
+Define and USE:
+--primary, --primary-hover, --bg, --surface, --text, --muted, --border, --radius, --shadow, --header-h
+Pick HEX values that fit the niche psychology (e.g. spa = cream/sage; SaaS = deep slate + violet accent; fitness = black + hot accent).
+Typography scale with clamp() where useful: hero, h1–h3, body, small.
+Section padding: ~3rem mobile / ~5–6rem desktop.
+8px spacing rhythm.
+Button styles: .btn (solid) and .btn-outline; hover must change background or transform slightly (0.15–0.2s).
+Cards: border or soft shadow consistent with essence (luxury = soft; brutal/playful = harder edge if niche fits).
 
-=== NAVIGATION (mandatory pattern — every page) ===
-Use this structure in the header on EVERY page (same links, same order):
+=== LAYER 4 — NAVIGATION (same on every page) ===
+Desktop (≥768px): horizontal text links. HIDE hamburger (.nav-toggle { display: none !important; }).
+Mobile (<768px): show hamburger; dropdown/stack links; close on link click.
 
+Required markup pattern:
 <header class="site-header" data-goke="container">
   <div class="nav-bar">
-    <a href="index.html" class="brand" id="site-title" data-goke="link">BRAND</a>
+    <a href="index.html" class="brand" id="site-title" data-goke="link">${brand}</a>
     <button type="button" class="nav-toggle" data-goke="button" aria-label="Open menu" aria-expanded="false" aria-controls="site-nav">
-      <span class="nav-toggle-bar"></span>
-      <span class="nav-toggle-bar"></span>
-      <span class="nav-toggle-bar"></span>
+      <span class="nav-toggle-bar"></span><span class="nav-toggle-bar"></span><span class="nav-toggle-bar"></span>
     </button>
-    <nav id="site-nav" class="site-nav" data-goke="nav" hidden>
+    <nav id="site-nav" class="site-nav" data-goke="nav">
       <ul class="nav-list">
         <li><a href="index.html" data-goke="link">Home</a></li>
         <li><a href="about.html" data-goke="link">About</a></li>
@@ -462,63 +493,54 @@ Use this structure in the header on EVERY page (same links, same order):
   </div>
 </header>
 
-CSS requirements:
-- Desktop (min-width: 768px): .nav-toggle { display: none !important; }
-  .site-nav { display: block !important; position: static; background: transparent; }
-  .nav-list { display: flex; flex-direction: row; gap: 1.25rem; list-style: none; }
-  Horizontal links only — NO hamburger on desktop.
-- Mobile (max-width: 767px): .nav-toggle { display: inline-flex; }
-  .site-nav[hidden] { display: none !important; }
-  .site-nav:not([hidden]) { display: block; position absolute/full-width dropdown under header; }
-  Stacked links in the dropdown.
+On mobile you may start with nav hidden via [hidden] or CSS; JS toggles it.
+Optional: sticky header with backdrop-filter blur when it fits the essence (tech/luxury).
 
-script.js MUST:
-- Toggle #site-nav hidden attribute when .nav-toggle is clicked
-- Set aria-expanded true/false
-- Close menu when a nav link is clicked (mobile)
-- Do NOT show the toggle on desktop (CSS handles visibility)
+Footer on every page: brand, one bio line, same five links, WhatsApp if number exists.
 
-=== QUALITY BAR (Elementor-grade, not Elementor-clone) ===
-- Distinct layout for this niche (spa ≠ auto dealer ≠ law firm ≠ shop).
-- Clear hierarchy: Google Fonts pair in each <head> matching the niche typography direction.
-- CSS variables on :root: --primary, --primary-hover, --bg, --surface, --text, --muted, --border, --radius, --shadow.
-- Alternating section surfaces; section padding ~4–6rem on desktop.
-- Buttons: solid primary + outline secondary; :hover states in CSS.
-- Cards with subtle shadow/border; gallery as responsive CSS grid.
-- Contact page: form#contact-form with name, email, message + submit data-goke="button".
-  In script.js: preventDefault on submit → open https://wa.me/NUMBER?text=encodeURIComponent(...) when data-wa is set; otherwise alert that WhatsApp is not configured.
-- Trust without lies: location, services, and tone from captions only.
+=== LAYER 5 — PAGES & LAYOUT ===
+Files: index.html, about.html, services.html, gallery.html, contact.html
+Each page: full HTML5 document, <link rel="stylesheet" href="styles.css">, <script src="script.js" defer></script>
+Editor hooks: id="hero-headline" id="hero-subheadline" id="cta-button" on Home;
+class="site-section" data-section-name="..."; data-goke on heading|text|image|link|button.
 
-=== PAGE INTENT ===
-HOME: Hero (image + H1 + sub + dual CTAs) → optional trust strip → 3 service pillars from captions → about teaser → gallery teaser → final CTA.
-ABOUT: Story from bio/captions → values/method → soft CTA to contact.
-SERVICES: Outcome-led service cards inferred from captions → simple process steps → CTA.
-GALLERY: Image grid (real URLs or niche seeds) with meaningful alt text.
-CONTACT: Short pitch → form#contact-form → contact/WhatsApp details.
+HOME (match essence):
+- Hero with LARGE image (never empty white) + value H1 + sub + primary + secondary CTA
+- Trust/strip only if data supports it (else skip — do not fake numbers)
+- 3 service/value pillars from captions
+- About teaser + gallery teaser + final CTA band
 
-Link stylesheet as <link rel="stylesheet" href="styles.css">.
-Link script as <script src="script.js" defer></script> before </body>.
+ABOUT: origin/story from bio → method/values → CTA
+SERVICES: outcome cards from captions → simple process → CTA
+GALLERY: responsive image grid, good alt text
+CONTACT: short pitch → form#contact-form (name, email, message) + submit data-goke="button" → contact details
 
-=== OUTPUT FORMAT (strict) ===
+=== LAYER 6 — VANILLA JS (script.js) ===
+1) Mobile nav toggle on .nav-toggle ↔ #site-nav (aria-expanded); close on link click when width < 768px
+2) Contact form #contact-form submit: preventDefault; open https://wa.me/${waNumber || "NUMBER"}?text=... when body[data-wa] has digits; else alert
+3) Scroll reveal: IntersectionObserver adds .is-visible to .site-section (CSS: fade + translateY)
+4) Optional: subtle header border/elevation after scrollY > 40
+No memory-leaking listeners; no external animation libraries.
+
+=== LAYER 7 — BODY ATTRIBUTE ===
+Every <body data-wa="${waNumber || ""}">
+
+=== OUTPUT (strict order) ===
 ===PAGE:index.html===
 <!DOCTYPE html>
-...full document...
+...
 ===PAGE:about.html===
-<!DOCTYPE html>
-...full document...
+...
 ===PAGE:services.html===
-<!DOCTYPE html>
-...full document...
+...
 ===PAGE:gallery.html===
-<!DOCTYPE html>
-...full document...
+...
 ===PAGE:contact.html===
-<!DOCTYPE html>
-...full document...
+...
 ===CSS===
-...full styles.css...
+...entire styles.css including design tokens, responsive nav, .is-visible, buttons, grid...
 ===JS===
-...full script.js (nav toggle + WhatsApp form handler)...`;
+...entire script.js...`;
 }
 
 
@@ -566,8 +588,9 @@ function parseMultiPage(
   }
 
   // Always ensure solid WhatsApp form handler
-  files["script.js"] = ensureNavScript(
-    ensureWhatsAppScript(files["script.js"] || "", waNumber)
+  files["script.js"] = ensureWhatsAppScript(
+    files["script.js"] || "",
+    waNumber
   );
 
   const brand = profile.name || profile.username || "Home";
@@ -612,44 +635,6 @@ function injectWaAttr(html: string, wa: string | null): string {
     return html.replace(/<body/i, `<body data-wa="${wa}"`);
   }
   return html;
-}
-
-
-function ensureNavScript(js: string): string {
-  if (js.includes("nav-toggle") && js.includes("site-nav")) return js;
-  const handler = `
-/* goke: mobile nav — hamburger only (CSS hides toggle on desktop) */
-(function () {
-  function bindNav() {
-    var toggle = document.querySelector(".nav-toggle, .navbar-toggler, .menu-toggle");
-    var nav = document.querySelector("#site-nav, .site-nav, nav[data-goke='nav']");
-    if (!toggle || !nav) return;
-    if (toggle.__gokeNav) return;
-    toggle.__gokeNav = true;
-    toggle.addEventListener("click", function () {
-      var open = nav.hasAttribute("hidden");
-      if (open) {
-        nav.removeAttribute("hidden");
-        toggle.setAttribute("aria-expanded", "true");
-      } else {
-        nav.setAttribute("hidden", "");
-        toggle.setAttribute("aria-expanded", "false");
-      }
-    });
-    nav.querySelectorAll("a").forEach(function (a) {
-      a.addEventListener("click", function () {
-        if (window.matchMedia("(max-width: 767px)").matches) {
-          nav.setAttribute("hidden", "");
-          toggle.setAttribute("aria-expanded", "false");
-        }
-      });
-    });
-  }
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", bindNav);
-  else bindNav();
-})();
-`;
-  return js.trim() + "\n" + handler;
 }
 
 function ensureWhatsAppScript(js: string, wa: string | null): string {
