@@ -3,19 +3,19 @@ const examples = [
     label: "Spa · Lagos",
     title: "Bodywork & wellness",
     desc: "Hero, services, gallery, and booking CTA from an Instagram presence.",
-    tone: "linear-gradient(145deg, #1e3a5f, #0f2744)",
+    slug: "spa",
   },
   {
     label: "Fashion · Boutique",
     title: "Premium retail",
     desc: "Catalogue-style sections with brand story — beyond a link-in-bio.",
-    tone: "linear-gradient(145deg, #2a2118, #1a1510)",
+    slug: "fashion",
   },
   {
     label: "Services · Firm",
     title: "Professional practice",
     desc: "Trust, services, and contact — ready for clients who found you on IG.",
-    tone: "linear-gradient(145deg, #1a2332, #0b1f3a)",
+    slug: "services",
   },
 ];
 
@@ -27,15 +27,21 @@ export function ProofStrip() {
           <h2>Built for real Instagram businesses</h2>
           <p>
             Spas, boutiques, clinics, consultants — anyone with a following who needs a
-            proper site, not another bio link.
+            proper site, not another link list.
           </p>
         </div>
         <div className="gk-proof-grid">
           {examples.map((ex) => (
-            <article key={ex.title} className="gk-proof-card">
-              <div className="gk-proof-visual" style={{ background: ex.tone }}>
-                <span>{ex.label}</span>
-                Site preview
+            <article key={ex.slug} className="gk-proof-card">
+              <div className="gk-proof-visual">
+                <img
+                  src={`/marketing/proof/${ex.slug}.svg`}
+                  alt={`${ex.title} website preview`}
+                  width={640}
+                  height={400}
+                  loading="lazy"
+                />
+                <span className="gk-proof-badge">{ex.label}</span>
               </div>
               <div className="gk-proof-body">
                 <h3>{ex.title}</h3>
