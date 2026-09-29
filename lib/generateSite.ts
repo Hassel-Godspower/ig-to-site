@@ -342,7 +342,7 @@ export async function generateSite(
         {
           role: "system",
           content:
-            "You are a Principal Frontend Engineer and brand UI designer who ships production multi-page static sites (semantic HTML5 + one styles.css + one script.js only). No React, no Next.js, no Tailwind/Bootstrap CDNs. Sites must mirror the BUSINESS ESSENCE of the niche the way Apple, Stripe, Airbnb, or Oatly mirror theirs — not a generic Elementor/Wix template. Output ONLY the required file blocks. No markdown fences, no commentary, no TODO placeholders, no lorem ipsum.",
+            "You are a Principal Frontend Engineer who builds production multi-page static sites (semantic HTML5 + one styles.css + one script.js). No React, no Tailwind, no Bootstrap. Match the DESIGN DISCIPLINE of category leaders (Apple product focus, Airbnb clarity, Stripe credibility, Porsche immersion, Gymshark energy, Netflix content-first) WITHOUT cloning their logos or layouts. Output ONLY the required file blocks — no markdown, no commentary, no lorem, no TODO.",
         },
         { role: "user", content: buildPrompt(profile, niche, waNumber) },
       ],
@@ -385,7 +385,7 @@ function buildPrompt(
       ?.slice(0, 12)
       .map((u, i) => `${i + 1}. ${u}`)
       .join("\n") ||
-    `(no URLs — use https://picsum.photos/seed/${niche.id}-{n}/1400/900)`;
+    `(no URLs — use https://picsum.photos/seed/${niche.id}-{n}/1600/1000)`;
 
   const brand = profile.name || profile.username || "Business";
   const bio = profile.bio || "(none)";
@@ -396,85 +396,98 @@ function buildPrompt(
     `Palette direction: ${niche.palette}`,
     `Typography direction: ${niche.typography}`,
     `Imagery direction: ${niche.imagery}`,
-    `Home section flow: ${niche.homepageSections}`,
+    `Home flow: ${niche.homepageSections}`,
     `CTA language: ${niche.ctaStyle}`,
   ].join("\n");
 
-  // Essence cues inspired by category leaders — applied as DESIGN INTENT, not clones
-  const essenceByNiche: Record<string, string> = {
+  // Design discipline mapped from real category leaders (intent, not clones)
+  const discipline: Record<string, string> = {
     spa_wellness:
-      "Essence like premium hospitality: calm space, soft light, generous whitespace, serif headlines, cream/sage surfaces — the site should FEEL restorative.",
+      "APPLE calm + hospitality: vast whitespace OR soft full-bleed treatment photo, huge quiet headline, dual CTAs (filled + outline), product/service as gallery art.",
     beauty_salon:
-      "Essence like high-fashion editorial: confident type, strong portraits, polished contrast — product/service is the hero.",
+      "SSENSE editorial restraint + Gymshark confidence: strong portraits, minimal chrome, product/service grid, bold type.",
     restaurant_food:
-      "Essence like food media: appetite-led photography, warm palette, clear menu hierarchy, invitation to reserve/order.",
+      "Appetite-first photography like premium F&B brands: large food hero, warm surfaces, clear reserve/order CTAs, simple menu cards.",
     ecommerce_retail:
-      "Essence like modern commerce (SSENSE restraint or Gymshark energy by tone): product-first grid, clear price/CTA, minimal chrome.",
+      "GYMSHARK commerce energy: bold color blocks or full product hero, dual shop CTAs, tight product image grid, price/offer clarity.",
     real_estate:
-      "Essence like premium property discovery: search-like clarity, large listing imagery, trustworthy navy/slate, inspection CTA.",
+      "AIRBNB discovery clarity: search-like simplicity, large property imagery, category chips or listing cards, light UI, strong contact CTA.",
     legal_professional:
-      "Essence like NYT authority + firm credibility: serif headlines, structured columns, restrained gold/navy, consultation CTA.",
+      "STRIPE credibility + authority type: large value headline, dual CTAs, trust logos/strip only if real, structured service columns, restrained navy/slate.",
     healthcare_clinic:
-      "Essence like calm clinical trust: clean teal/white, clear services, booking-first, no clutter.",
+      "Clean clinical trust: soft teal/white, clear service cards, booking-first CTA, no clutter.",
     auto_dealership:
-      "Essence like performance brand showroom: dark surfaces, bold type, vehicle imagery, inventory CTA.",
+      "PORSCHE immersion: full-bleed vehicle photo hero, large model name, minimal frosted CTA, dark cinematic feel.",
     hotel_stay:
-      "Essence like Airbnb discovery + hotel luxury: large stay photography, flexible booking CTA, amenities clarity.",
+      "AIRBNB + luxury stay: giant stay photography, flexible booking CTA, amenity clarity, airy layout.",
     fitness_gym:
-      "Essence like Gymshark energy: high-impact motion photography, bold CTAs, mobile-first punch.",
+      "GYMSHARK energy: bold solid hero or athlete motion, oversized type, dual CTAs, high-contrast buttons, mobile-first punch.",
     education:
-      "Essence like clear academic authority: structured programs, outcomes, enroll CTA.",
+      "STRIPE clarity for programs: big outcome headline, structured course cards, enroll CTA.",
     creative_portfolio:
-      "Essence like agency craft (Resn spirit without WebGL): work-first layout, distinctive type, play in CSS only.",
+      "Work-first gallery like a design studio: oversized projects, restrained type, case-study cards.",
     church_faith:
-      "Essence like welcoming community: warm hierarchy, service times, visit CTA.",
+      "Welcoming community: warm hero image, clear service times, visit CTA, soft hierarchy.",
     tech_saas:
-      "Essence like Stripe credibility: crisp type, subtle gradients, feature clarity, docs/demo dual CTA.",
+      "STRIPE: large benefit headline, gradient or soft mesh accent allowed, dual CTAs, logo trust bar, feature grid with crisp borders.",
     general_business:
-      "Essence like a sharp local brand site: clear offer, trust, contact — no template sameness.",
+      "APPLE product focus + STRIPE clarity: one hero message, dual CTAs, 3 value cards, no template fluff.",
   };
-  const essence =
-    essenceByNiche[niche.id] || essenceByNiche.general_business;
+  const designDiscipline =
+    discipline[niche.id] || discipline.general_business;
 
-  return `Build a complete multi-page static website from the business data.
+  return `Build a complete multi-page static website.
 
-=== LAYER 1 — BUSINESS DATA (do not invent facts) ===
+=== LAYER 1 — BUSINESS DATA (facts only) ===
 Name: ${brand}
 Username: ${profile.username || "(unknown)"}
 Bio: ${bio}
 Niche: ${niche.id} — ${niche.label}
 ${nicheBrief}
-Brand essence to mirror in design (NOT a visual clone of big brands):
-${essence}
+DESIGN DISCIPLINE FOR THIS NICHE (mirror the *feel*, never copy logos/layouts of big brands):
+${designDiscipline}
 Captions:
 ${captions || "(none)"}
 Images:
 ${mediaLines}
 WhatsApp digits: ${wa}
 
-=== LAYER 2 — TECH CONSTRAINTS ===
-- Pure HTML5 + one styles.css + one script.js (Vanilla ES6).
-- No React, no Tailwind, no Bootstrap JS/CSS CDNs.
-- Google Fonts allowed (one display + one body pair matching niche).
-- Fully responsive: mobile-first; breakpoints 768px (tablet) and 1024px (desktop).
-- Output ONLY the file blocks at the end. No markdown. No // TODO. No lorem ipsum.
-- Never invent awards, metrics, press, or certifications not in the data.
+=== LAYER 2 — TECH (non-negotiable) ===
+- Semantic HTML5 + single styles.css + single script.js (Vanilla ES6)
+- No React, Tailwind, Bootstrap, or animation libraries
+- Google Fonts: one display + one body pair matching niche
+- Mobile-first CSS; breakpoints 768px and 1024px
+- No lorem ipsum, no invented awards/metrics/press, no empty white heroes, no TODO
 
-=== LAYER 3 — DESIGN SYSTEM (in styles.css :root) ===
-Define and USE:
+=== LAYER 3 — VISUAL RULES FROM CATEGORY LEADERS (implement in CSS) ===
+These are RULES, not brand clones:
+
+A. HERO (critical)
+- Must fill viewport height ~70–100vh on desktop
+- Must include a large real image (img or CSS background-image) — never a blank white field
+- Headline: short, bold, clamp(2.2rem, 5vw, 3.75rem); max ~8 words when possible
+- Subhead: one clear sentence
+- Dual CTAs always: .btn (solid primary) + .btn-outline (transparent/border)
+- Reference patterns by niche:
+  • Product/hardware/auto/fitness: dark or solid-color full-bleed + centered or left type (Apple/Porsche/Gymshark)
+  • SaaS/professional: light surface + huge value sentence + accent gradient optional (Stripe)
+  • Stay/discovery: light UI + large photo cards (Airbnb)
+  • Media: dark + content collage allowed (Netflix-like density only if gallery-heavy)
+
+B. DESIGN TOKENS (:root in styles.css)
 --primary, --primary-hover, --bg, --surface, --text, --muted, --border, --radius, --shadow, --header-h
-Pick HEX values that fit the niche psychology (e.g. spa = cream/sage; SaaS = deep slate + violet accent; fitness = black + hot accent).
-Typography scale with clamp() where useful: hero, h1–h3, body, small.
-Section padding: ~3rem mobile / ~5–6rem desktop.
-8px spacing rhythm.
-Button styles: .btn (solid) and .btn-outline; hover must change background or transform slightly (0.15–0.2s).
-Cards: border or soft shadow consistent with essence (luxury = soft; brutal/playful = harder edge if niche fits).
+Pick HEX that fits niche psychology. Use them everywhere.
 
-=== LAYER 4 — NAVIGATION (same on every page) ===
-Desktop (≥768px): horizontal text links. HIDE hamburger (.nav-toggle { display: none !important; }).
-Mobile (<768px): show hamburger; dropdown/stack links; close on link click.
+C. TYPE & SPACE
+- Tight letter-spacing on large headlines when dark/luxury
+- Section padding: 3rem mobile / 5–6rem desktop
+- Max content width ~1120–1200px centered
+- Cards: consistent radius; soft shadow OR 1px border (Stripe-like), not both heavy
 
-Required markup pattern:
+D. NAV (same every page)
+Desktop ≥768px: horizontal links only; .nav-toggle { display:none !important }
+Mobile: hamburger toggles #site-nav; close on link click
+Markup:
 <header class="site-header" data-goke="container">
   <div class="nav-bar">
     <a href="index.html" class="brand" id="site-title" data-goke="link">${brand}</a>
@@ -492,40 +505,40 @@ Required markup pattern:
     </nav>
   </div>
 </header>
+Optional sticky header with backdrop-filter blur (Apple/Stripe feel) when it fits.
 
-On mobile you may start with nav hidden via [hidden] or CSS; JS toggles it.
-Optional: sticky header with backdrop-filter blur when it fits the essence (tech/luxury).
+E. FOOTER (every page)
+Brand, one bio line, same 5 links, WhatsApp link if number exists. Multi-column on desktop.
 
-Footer on every page: brand, one bio line, same five links, WhatsApp if number exists.
+=== LAYER 4 — PAGES ===
+index.html, about.html, services.html, gallery.html, contact.html
+Each: full HTML5, link styles.css, script.js defer
+Hooks: id="hero-headline" id="hero-subheadline" id="cta-button" on Home;
+class="site-section" data-section-name="..."; data-goke=heading|text|image|link|button
 
-=== LAYER 5 — PAGES & LAYOUT ===
-Files: index.html, about.html, services.html, gallery.html, contact.html
-Each page: full HTML5 document, <link rel="stylesheet" href="styles.css">, <script src="script.js" defer></script>
-Editor hooks: id="hero-headline" id="hero-subheadline" id="cta-button" on Home;
-class="site-section" data-section-name="..."; data-goke on heading|text|image|link|button.
+HOME structure (order):
+1) Immersive hero (image + H1 + sub + dual CTAs)
+2) Optional trust strip ONLY if data supports (else skip)
+3) Three value/service pillars from captions
+4) About teaser
+5) Gallery teaser grid (2–4 images)
+6) Final CTA band (full-width primary)
 
-HOME (match essence):
-- Hero with LARGE image (never empty white) + value H1 + sub + primary + secondary CTA
-- Trust/strip only if data supports it (else skip — do not fake numbers)
-- 3 service/value pillars from captions
-- About teaser + gallery teaser + final CTA band
+ABOUT: story from bio → values → CTA
+SERVICES: outcome cards from captions → 3-step process → CTA
+GALLERY: responsive CSS grid of images
+CONTACT: short pitch → form#contact-form (name, email, message) + submit data-goke="button" → details
 
-ABOUT: origin/story from bio → method/values → CTA
-SERVICES: outcome cards from captions → simple process → CTA
-GALLERY: responsive image grid, good alt text
-CONTACT: short pitch → form#contact-form (name, email, message) + submit data-goke="button" → contact details
+=== LAYER 5 — JS (script.js) ===
+1) Mobile nav toggle .nav-toggle ↔ #site-nav + aria-expanded; close links under 768px
+2) #contact-form → preventDefault → wa.me/NUMBER?text=... when body[data-wa] set
+3) IntersectionObserver: .site-section gets .is-visible (CSS fade-up)
+4) Optional: header elevation after scrollY > 40
 
-=== LAYER 6 — VANILLA JS (script.js) ===
-1) Mobile nav toggle on .nav-toggle ↔ #site-nav (aria-expanded); close on link click when width < 768px
-2) Contact form #contact-form submit: preventDefault; open https://wa.me/${waNumber || "NUMBER"}?text=... when body[data-wa] has digits; else alert
-3) Scroll reveal: IntersectionObserver adds .is-visible to .site-section (CSS: fade + translateY)
-4) Optional: subtle header border/elevation after scrollY > 40
-No memory-leaking listeners; no external animation libraries.
+=== LAYER 6 — BODY ===
+<body data-wa="${waNumber || ""}">
 
-=== LAYER 7 — BODY ATTRIBUTE ===
-Every <body data-wa="${waNumber || ""}">
-
-=== OUTPUT (strict order) ===
+=== OUTPUT (strict) ===
 ===PAGE:index.html===
 <!DOCTYPE html>
 ...
@@ -538,9 +551,9 @@ Every <body data-wa="${waNumber || ""}">
 ===PAGE:contact.html===
 ...
 ===CSS===
-...entire styles.css including design tokens, responsive nav, .is-visible, buttons, grid...
+...full styles.css...
 ===JS===
-...entire script.js...`;
+...full script.js...`;
 }
 
 
