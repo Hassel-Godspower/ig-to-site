@@ -1,12 +1,52 @@
 const templates = [
-  { name: "Commerce", cat: "Store", color: "linear-gradient(145deg,#1e3a5f,#0f172a)" },
-  { name: "Luxe", cat: "Fashion", color: "linear-gradient(145deg,#1a1510,#0a0a0a)" },
-  { name: "Estate", cat: "Property", color: "linear-gradient(145deg,#0f2744,#1a3a5c)" },
-  { name: "Stay", cat: "Hotel", color: "linear-gradient(145deg,#1a3a3a,#2d5555)" },
-  { name: "Pro", cat: "Services", color: "linear-gradient(145deg,#0b1f3a,#1e4a7a)" },
-  { name: "Clinic", cat: "Health", color: "linear-gradient(145deg,#134e4a,#0f766e)" },
-  { name: "Auto", cat: "Motors", color: "linear-gradient(145deg,#1c1917,#44403c)" },
-  { name: "Creative", cat: "Portfolio", color: "linear-gradient(145deg,#4c1d95,#6d28d9)" },
+  {
+    name: "Commerce",
+    cat: "Store",
+    slug: "commerce",
+    desc: "Product grid, cart, checkout",
+  },
+  {
+    name: "Luxe",
+    cat: "Fashion",
+    slug: "luxe",
+    desc: "Black, white, gold editorial",
+  },
+  {
+    name: "Estate",
+    cat: "Property",
+    slug: "estate",
+    desc: "Listings, agents, mortgage",
+  },
+  {
+    name: "Stay",
+    cat: "Hotel",
+    slug: "stay",
+    desc: "Rooms, booking, offers",
+  },
+  {
+    name: "Pro",
+    cat: "Services",
+    slug: "pro",
+    desc: "Team, cases, appointments",
+  },
+  {
+    name: "Clinic",
+    cat: "Health",
+    slug: "clinic",
+    desc: "Services, doctors, booking",
+  },
+  {
+    name: "Auto",
+    cat: "Motors",
+    slug: "auto",
+    desc: "Inventory, financing",
+  },
+  {
+    name: "Creative",
+    cat: "Portfolio",
+    slug: "creative",
+    desc: "Projects and case studies",
+  },
 ];
 
 export function TemplatesStrip() {
@@ -22,13 +62,20 @@ export function TemplatesStrip() {
         </div>
         <div className="gk-template-grid">
           {templates.map((t) => (
-            <article key={t.name} className="gk-template-card">
-              <div className="gk-template-thumb" style={{ background: t.color }}>
-                {t.cat}
+            <article key={t.slug} className="gk-template-card">
+              <div className="gk-template-thumb">
+                <img
+                  src={`/marketing/templates/${t.slug}.svg`}
+                  alt={`Gòke ${t.name} template preview`}
+                  width={640}
+                  height={480}
+                  loading="lazy"
+                />
+                <span className="gk-template-badge">{t.cat}</span>
               </div>
               <div className="meta">
                 <h3>Gòke {t.name}</h3>
-                <p>{t.cat}</p>
+                <p>{t.desc}</p>
               </div>
             </article>
           ))}
