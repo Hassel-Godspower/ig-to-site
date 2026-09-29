@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="gòke">
+  <rect width="512" height="512" rx="96" fill="#0a0a0a"/>
+  <circle cx="256" cy="256" r="220" fill="#111111"/>
+  <!-- geometric lowercase g -->
+  <g fill="none" stroke="#ffffff" stroke-width="36" stroke-linecap="round" stroke-linejoin="round">
+    <!-- bowl -->
+    <path d="M292 168c-62 0-112 46-112 108s50 108 112 108c28 0 54-10 74-28"/>
+    <!-- stem -->
+    <path d="M328 140v248"/>
+    <!-- top ear -->
+    <path d="M328 148h72"/>
+    <!-- crossbar -->
+    <path d="M250 248h78"/>
+  </g>
+  <!-- accent: go live -->
+  <circle cx="380" cy="380" r="18" fill="#5b8def"/>
+</svg>

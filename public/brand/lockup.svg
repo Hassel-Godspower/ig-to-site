@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 96" width="480" height="96" role="img" aria-label="gòke">
+  <rect x="0" y="8" width="80" height="80" rx="18" fill="#0a0a0a"/>
+  <circle cx="40" cy="48" r="30" fill="#111111"/>
+  <text x="40" y="52" text-anchor="middle" dominant-baseline="middle"
+    font-family="Georgia, Times, serif" font-size="48" fill="#ffffff">g</text>
+  <circle cx="54" cy="66" r="4" fill="#5b8def"/>
+  <text x="100" y="58" font-family="Inter, system-ui, sans-serif" font-size="44" font-weight="650" fill="#f3f4f6" letter-spacing="-0.03em">gòke</text>
+</svg>
