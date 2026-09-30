@@ -37,7 +37,7 @@ export default function TermsPage() {
           <h2>Limitation</h2>
           <p>
             To the extent permitted by law, gòke is not liable for indirect or consequential
-            losses arising from use of the preview or published sites.
+            losses arising from the use of the preview or published sites.
           </p>
           <p>
             <Link href="/">← Home</Link>
