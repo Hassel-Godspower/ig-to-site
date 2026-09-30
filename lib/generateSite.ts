@@ -261,6 +261,123 @@ const NICHE_GUIDES: NicheGuide[] = [
   },
 ];
 
+
+/** High-quality Unsplash fallbacks when IG export has few/no image URLs */
+const NICHE_CURATED_IMAGES: Record<string, string[]> = {
+  spa_wellness: [
+    "https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=1600&q=80",
+    "https://images.unsplash.com/photo-1544161515-4ab6ce6db874?auto=format&fit=crop&w=1600&q=80",
+    "https://images.unsplash.com/photo-1519823551278-64ac92734fb1?auto=format&fit=crop&w=1600&q=80",
+    "https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1515377905703-c4788e51af15?auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1591343393572-35858e46f35e?auto=format&fit=crop&w=1200&q=80",
+  ],
+  beauty_salon: [
+    "https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=1600&q=80",
+    "https://images.unsplash.com/photo-1516975080664-ed2fc6a32937?auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1487412947147-5cebf100ffc2?auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1522337660859-02fbefca4702?auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1512496015851-a90fb38ba796?auto=format&fit=crop&w=1200&q=80",
+  ],
+  restaurant_food: [
+    "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=1600&q=80",
+    "https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1559339352-11d035aa65de?auto=format&fit=crop&w=1200&q=80",
+  ],
+  ecommerce_retail: [
+    "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=1600&q=80",
+    "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1445205170230-053b83016050?auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=1200&q=80",
+  ],
+  real_estate: [
+    "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1600&q=80",
+    "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1200&q=80",
+  ],
+  legal_professional: [
+    "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1600&q=80",
+    "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1200&q=80",
+  ],
+  healthcare_clinic: [
+    "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&w=1600&q=80",
+    "https://images.unsplash.com/photo-1579684385127-1ef15d508118?auto=format&fit=crop&w=1200&q=80",
+  ],
+  auto_dealership: [
+    "https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&w=1600&q=80",
+    "https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1542362567-b07e54358753?auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1552519507-da3b142c6e3d?auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1617531653332-bd46c24f2068?auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?auto=format&fit=crop&w=1200&q=80",
+  ],
+  hotel_stay: [
+    "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1600&q=80",
+    "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1578683010236-d716f9a3f461?auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?auto=format&fit=crop&w=1200&q=80",
+  ],
+  fitness_gym: [
+    "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=1600&q=80",
+    "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1540497077202-7c8a3999166f?auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1574680096145-d05b474e2155?auto=format&fit=crop&w=1200&q=80",
+  ],
+  education: [
+    "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&w=1600&q=80",
+    "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&w=1200&q=80",
+  ],
+  creative_portfolio: [
+    "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1600&q=80",
+    "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1613977257363-707ba9348227?auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1200&q=80",
+  ],
+  church_faith: [
+    "https://images.unsplash.com/photo-1438031186810-cba1dc2a2c07?auto=format&fit=crop&w=1600&q=80",
+  ],
+  tech_saas: [
+    "https://images.unsplash.com/photo-1551434678-e076c223a692?auto=format&fit=crop&w=1600&q=80",
+    "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=1200&q=80",
+  ],
+  general_business: [
+    "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1600&q=80",
+    "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1497215728101-856f4ea42174?auto=format&fit=crop&w=1200&q=80",
+  ],
+};
+
+function resolveGalleryUrls(profile: InstagramProfile, nicheId: string): string[] {
+  const fromIg = (profile.mediaUrls || []).filter(
+    (u) =>
+      typeof u === "string" &&
+      /^https?:\/\//i.test(u) &&
+      !u.includes("example.com") &&
+      !u.includes("picsum.photos")
+  );
+  const curated =
+    NICHE_CURATED_IMAGES[nicheId] || NICHE_CURATED_IMAGES.general_business;
+  const out = [...fromIg];
+  let i = 0;
+  while (out.length < 8) {
+    out.push(curated[i % curated.length]);
+    i++;
+  }
+  return out.slice(0, 12);
+}
+
+function captionTitles(profile: InstagramProfile): string[] {
+  return profile.posts
+    .map((p) => (p.caption || "").split("\n")[0].trim())
+    .filter((s) => s.length > 2)
+    .slice(0, 12);
+}
+
+
 export function detectNiche(profile: InstagramProfile): NicheGuide {
   const text = [
     profile.name || "",
@@ -327,6 +444,8 @@ export async function generateSite(
 ): Promise<Record<string, string>> {
   const niche = detectNiche(profile);
   const waNumber = extractWhatsAppNumber(profile);
+  const galleryUrls = resolveGalleryUrls(profile, niche.id);
+  const titles = captionTitles(profile);
 
   const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
     method: "POST",
@@ -344,7 +463,7 @@ export async function generateSite(
           content:
             "You are a Principal Frontend Engineer and brand designer. Convert Instagram business data into a PREMIUM multi-page static website (semantic HTML5 + one styles.css + one script.js only). No React, no Tailwind CDN, no Bootstrap. The design must unmistakably match the detected niche the way a high-end agency would: hotel = cinematic luxury; fitness = dark high-energy; architecture = editorial white serif; auto = performance hero + inventory grid; beauty/hair = product-forward gallery; cosmetics = soft light beauty. Output ONLY the required file blocks. No markdown, no lorem, no TODO, no invented awards.",
         },
-        { role: "user", content: buildPrompt(profile, niche, waNumber) },
+        { role: "user", content: buildPrompt(profile, niche, waNumber, galleryUrls, titles) },
       ],
     }),
   });
@@ -373,19 +492,20 @@ export async function generateSite(
 function buildPrompt(
   profile: InstagramProfile,
   niche: NicheGuide,
-  waNumber: string | null
+  waNumber: string | null,
+  galleryUrls: string[],
+  titles: string[]
 ): string {
   const captions = profile.posts
     .map((p) => `- ${p.caption}`)
     .filter((c) => c.length > 3)
     .slice(0, 28)
     .join("\n");
-  const mediaLines =
-    (profile as { mediaUrls?: string[] }).mediaUrls
-      ?.slice(0, 14)
-      .map((u, i) => `${i + 1}. ${u}`)
-      .join("\n") ||
-    `(no URLs — use https://picsum.photos/seed/${niche.id}-{n}/1600/1000 with niche-matching subjects)`;
+  const mediaLines = galleryUrls
+    .map((u, i) => `${i + 1}. ${u}${i === 0 ? " (prefer as HERO)" : ""}`)
+    .join("\n");
+  const titleLines =
+    titles.map((x, i) => `${i + 1}. ${x}`).join("\n") || "(derive from bio)";
 
   const brand = profile.name || profile.username || "Business";
   const bio = profile.bio || "(none)";
@@ -525,6 +645,16 @@ ${captions || "(none)"}
 Media URLs (prefer as <img src>; otherwise niche-matched picsum seeds):
 ${mediaLines}
 WhatsApp: ${wa}
+Profile / logo image (use in header brand if present): ${(profile as { profilePicUrl?: string }).profilePicUrl || profile.mediaUrls?.[0] || galleryUrls[0] || ""}
+Card / project titles from captions (first line → gallery card labels):
+${titleLines}
+
+IMAGE RULES:
+- Prefer Instagram media URLs when listed above.
+- If an IG URL is missing/broken, use the curated Unsplash URLs provided (already niche-matched).
+- Hero MUST use image #1 (or best matching niche photo). Never a blank white hero.
+- Gallery cards: image + title from caption titles list + niche action button.
+- Do NOT invent fake like counts or metrics.
 
 === LAYER 2 — NICHE BLUEPRINT (mandatory) ===
 Look & feel: ${bp.look}
@@ -562,6 +692,7 @@ Shared header on every page:
 <header class="site-header" data-goke="container">
   <div class="nav-bar">
     <a href="index.html" class="brand" id="site-title" data-goke="link">${brand}</a>
+    <!-- If profile image URL is provided in data, optionally show a small circular logo img beside brand text -->
     <button type="button" class="nav-toggle" data-goke="button" aria-label="Open menu" aria-expanded="false" aria-controls="site-nav"><span class="nav-toggle-bar"></span><span class="nav-toggle-bar"></span><span class="nav-toggle-bar"></span></button>
     <nav id="site-nav" class="site-nav" data-goke="nav">
       <ul class="nav-list">
@@ -575,7 +706,12 @@ Shared header on every page:
     <!-- optional desktop-only header CTA links matching blueprint -->
   </div>
 </header>
-Identical footer: brand, bio line, same links, wa.me if number exists.
+PREMIUM FOOTER (identical on every page, multi-column on desktop):
+- Col1: brand name/logo text + first bio line + location if in bio
+- Col2: Quick links (same 5 pages)
+- Col3: Connect — Instagram @username link + WhatsApp if number exists
+- Bottom bar: © year brand · All rights reserved
+No "Built with …" marketing clutter unless asked.
 <link rel="stylesheet" href="styles.css"> and <script src="script.js" defer></script> on every page.
 
 === LAYER 6 — script.js ===
