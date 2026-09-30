@@ -1,35 +1,101 @@
 import Link from "next/link";
+import { SiteHeader } from "../components/marketing/SiteHeader";
+import { SiteFooter } from "../components/marketing/SiteFooter";
+
+const steps = [
+  {
+    n: 1,
+    t: "Open your profile",
+    d: "Open Instagram and go to your profile.",
+  },
+  {
+    n: 2,
+    t: "Accounts Center",
+    d: "Tap the menu (three lines) top right, then Accounts Center.",
+  },
+  {
+    n: 3,
+    t: "Export your information",
+    d: "Tap Your information and permissions → Export your information.",
+  },
+  {
+    n: 4,
+    t: "Create export",
+    d: "Tap Create export, select your Instagram profile, then Next.",
+  },
+  {
+    n: 5,
+    t: "Profile + Posts only",
+    d: "Tap Deselect all, then check only Profile information and Posts. Leave Messages, Stories, Reels, Saved, and Followers unchecked — keeps the file small.",
+  },
+  {
+    n: 6,
+    t: "Export to device",
+    d: "Choose Export to device.",
+  },
+  {
+    n: 7,
+    t: "JSON format",
+    d: "Set format to JSON (not HTML) — required for gòke to read the export.",
+  },
+  {
+    n: 8,
+    t: "Low media quality",
+    d: "Set media quality to Low if asked — we use text and structure, not full-res media.",
+  },
+  {
+    n: 9,
+    t: "Start export",
+    d: "Tap Start export and enter your password when prompted.",
+  },
+  {
+    n: 10,
+    t: "Download the ZIP",
+    d: "When Instagram notifies you, download the ZIP and upload it here — no need to unzip.",
+  },
+];
 
 export default function HowToExportPage() {
   return (
-    <main style={{ minHeight: "100vh", background: "#0d0d0d", color: "#f5f5f5", fontFamily: "system-ui, sans-serif", padding: 24, display: "flex", justifyContent: "center" }}>
-      <div style={{ maxWidth: 560 }}>
-        <h1 style={{ fontSize: 22, fontWeight: 500 }}>Download your Instagram data</h1>
-        <ol style={{ color: "#d4d4d4", fontSize: 14, lineHeight: 1.8 }}>
-          <li>Open Instagram and go to your profile.</li>
-          <li>Tap the menu (three lines) top right, then <strong>Accounts Center</strong>.</li>
-          <li>Tap <strong>Your information and permissions</strong> → <strong>Export your information</strong>.</li>
-          <li>Tap <strong>Create export</strong>, select your Instagram profile, then <strong>Next</strong>.</li>
-          <li>
-            On the "Select information" screen, tap <strong>Deselect all</strong>, then
-            check only <strong>Profile information</strong> and <strong>Posts</strong>.
-            Leave everything else (Messages, Stories, Reels, Saved, Followers and
-            following) unchecked — we don&apos;t use it, and including it can make
-            the file too large to upload.
-          </li>
-          <li>Choose <strong>Export to device</strong>.</li>
-          <li>Set format to <strong>JSON</strong> (not HTML) — this is required for our site builder to read it.</li>
-          <li>Set media quality to <strong>Low</strong> if asked — we only read text, not images.</li>
-          <li>Tap <strong>Start export</strong> and enter your password when prompted.</li>
-          <li>You&apos;ll get a notification when it&apos;s ready (often within a few minutes for a profile-only export). Download the ZIP file.</li>
-        </ol>
-        <p style={{ color: "#a3a3a3", fontSize: 13 }}>
-          Once downloaded, come back here and upload the ZIP file directly — no need to unzip it.
-          Keeping the export to just Profile information and Posts (step 5 above) also keeps the
-          file well under our 4 MB upload limit.
-        </p>
-        <Link href="/" style={{ color: "#60a5fa", fontSize: 14 }}>← Back</Link>
-      </div>
-    </main>
+    <>
+      <SiteHeader />
+      <main className="gk-export-page">
+        <div className="gk-container gk-export-wrap">
+          <p className="gk-kicker">Export guide</p>
+          <h1>Download your Instagram data</h1>
+          <p className="gk-export-lead">
+            Follow these steps so your file stays under 4 MB and gòke can read it. JSON only —
+            profile and posts are enough.
+          </p>
+
+          <ol className="gk-export-steps">
+            {steps.map((s) => (
+              <li key={s.n}>
+                <span className="gk-export-num">{s.n}</span>
+                <div>
+                  <strong>{s.t}</strong>
+                  <p>{s.d}</p>
+                </div>
+              </li>
+            ))}
+          </ol>
+
+          <div className="gk-export-callout">
+            <strong>Tip:</strong> Keeping the export to Profile + Posts (step 5) is the main way
+            to stay under the 4 MB upload limit.
+          </div>
+
+          <div className="gk-demo-actions">
+            <Link href="/#start" className="gk-btn gk-btn-primary">
+              Back to upload
+            </Link>
+            <Link href="/" className="gk-btn gk-btn-ghost">
+              Home
+            </Link>
+          </div>
+        </div>
+      </main>
+      <SiteFooter />
+    </>
   );
 }
