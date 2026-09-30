@@ -3,14 +3,16 @@
    ═══════════════════════════════════════════════ */
 
 :root {
-  --goke-bg: #0f1117;
-  --goke-surface: #181b23;
-  --goke-surface-2: #1e222d;
-  --goke-border: #2a2f3c;
-  --goke-text: #e8eaed;
-  --goke-text-muted: #9aa0a6;
-  --goke-accent: #3b82f6;
-  --goke-accent-hover: #2563eb;
+  --goke-bg: #0b0d12;
+  --goke-surface: #12151c;
+  --goke-surface-2: #1a1e28;
+  --goke-border: rgba(255, 255, 255, 0.08);
+  --goke-text: #f3f4f6;
+  --goke-text-muted: #9ca3af;
+  /* Light purple accent (editor chrome) */
+  --goke-accent: #a78bfa;
+  --goke-accent-hover: #c4b5fd;
+  --goke-accent-soft: rgba(167, 139, 250, 0.18);
   --goke-danger: #ef4444;
   --goke-radius: 8px;
   --goke-font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
@@ -61,6 +63,9 @@
 }
 
 .goke-toolbar button {
+  color: var(--goke-text);
+  border: 1px solid transparent;
+  /* hardened toolbar buttons */
   background: transparent;
   border: 1px solid transparent;
   color: var(--goke-text);
@@ -791,4 +796,104 @@
 }
 .goke-media-del:hover {
   background: #ef4444;
+}
+
+
+/* ── Context toolbar (floating over canvas selection) ─
+   Was unstyled → browser default = white buttons.
+   Dark chrome + light purple accent. */
+.goke-context-toolbar {
+  position: fixed;
+  z-index: 10050;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 8px;
+  border-radius: 10px;
+  background: #12151c;
+  border: 1px solid rgba(167, 139, 250, 0.35);
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.4),
+    0 12px 32px rgba(0, 0, 0, 0.55);
+  max-width: min(92vw, 520px);
+}
+
+.goke-context-toolbar button {
+  appearance: none;
+  -webkit-appearance: none;
+  margin: 0;
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #1a1e28;
+  color: #f3f4f6;
+  font-size: 12px;
+  font-weight: 500;
+  font-family: inherit;
+  line-height: 1.2;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.goke-context-toolbar button:hover:not(:disabled) {
+  background: rgba(167, 139, 250, 0.22);
+  border-color: #a78bfa;
+  color: #ede9fe;
+}
+
+.goke-context-toolbar button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.goke-context-toolbar button[title="Delete"],
+.goke-context-toolbar button:last-child {
+  /* delete tends to be last */
+}
+
+.goke-context-toolbar button[title="Delete"] {
+  border-color: rgba(239, 68, 68, 0.35);
+  color: #fca5a5;
+}
+
+.goke-context-toolbar button[title="Delete"]:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: #ef4444;
+  color: #fecaca;
+}
+
+/* Primary-ish actions in context bar */
+.goke-context-toolbar button[title="Paste styles"]:not(:disabled),
+.goke-context-toolbar button[title="Copy styles"] {
+  border-color: rgba(167, 139, 250, 0.4);
+}
+
+/* Device switch + left tabs — never white */
+.goke-device-switch button,
+.goke-left-tabs button,
+.goke-tpl-tabs button {
+  background: transparent;
+  color: var(--goke-text-muted);
+  border: 1px solid transparent;
+}
+
+.goke-device-switch button.active,
+.goke-left-tabs button.active,
+.goke-tpl-tabs button.active {
+  background: var(--goke-accent-soft, rgba(167, 139, 250, 0.18));
+  color: var(--goke-accent, #a78bfa);
+  border-color: rgba(167, 139, 250, 0.35);
+}
+
+.goke-btn-primary {
+  background: var(--goke-accent, #a78bfa) !important;
+  color: #0b0d12 !important;
+  border: none !important;
+  font-weight: 600;
+}
+
+.goke-btn-primary:hover {
+  background: var(--goke-accent-hover, #c4b5fd) !important;
 }
