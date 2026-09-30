@@ -32,6 +32,11 @@ import type { GokeMainTemplate } from "@/src/goke-editor/data/goke-main-template
 import { mergeCurrentDocIntoTemplate } from "@/src/goke-editor/core/merge-content";
 import type { StarterApplyMode } from "@/src/goke-editor/components/TemplatesPanel";
 import { MediaProvider } from "@/src/goke-editor/context/MediaContext";
+import {
+  EditorTour,
+  shouldAutoStartTour,
+  markTourDone,
+} from "@/src/goke-editor/components/EditorTour";
 import { matchSiteElement } from "@/src/goke-editor/components/site-markers";
 import {
   applyBreakpointPreview,
@@ -106,6 +111,7 @@ export default function PreviewPage() {
   const [canPasteStyle, setCanPasteStyle] = useState(false);
   /** Timed guidance: 'regen' at 1min, 'publish' at 3min */
   const [helpPrompt, setHelpPrompt] = useState<null | "regen" | "publish">(null);
+  const [tourOpen, setTourOpen] = useState(false);
 
 
   const previewSrc = `/api/site/${jobId}/index.html`;
@@ -235,6 +241,9 @@ export default function PreviewPage() {
     }
 
     setBuilderReady(true);
+      if (jobId && shouldAutoStartTour(jobId)) {
+        window.setTimeout(() => setTourOpen(true), 800);
+      }
     refreshTree();
   }, [refreshTree, jobId]);
 
@@ -742,12 +751,20 @@ export default function PreviewPage() {
             </button>
           ) : (
             <>
+              <button
+                type="button"
+                title="Editor tour"
+                onClick={() => setTourOpen(true)}
+              >
+                Guide
+              </button>
               <button type="button" onClick={saveEdits} disabled={saved}>
                 {saved ? "Saved" : "Save changes"}
               </button>
               <button
                 type="button"
                 className="goke-btn-primary"
+                data-tour="tour-go-live"
                 onClick={goLive}
               >
                 Go live
@@ -776,6 +793,7 @@ export default function PreviewPage() {
           <div className="goke-left-tabs">
             <button
               type="button"
+              data-tour="tour-structure-tab"
               className={leftTab === "structure" ? "active" : ""}
               onClick={() => setLeftTab("structure")}
             >
@@ -783,6 +801,7 @@ export default function PreviewPage() {
             </button>
             <button
               type="button"
+              data-tour="tour-components-tab"
               className={leftTab === "components" ? "active" : ""}
               onClick={() => setLeftTab("components")}
             >
@@ -790,6 +809,7 @@ export default function PreviewPage() {
             </button>
             <button
               type="button"
+              data-tour="tour-templates-tab"
               className={leftTab === "templates" ? "active" : ""}
               onClick={() => setLeftTab("templates")}
             >
@@ -797,6 +817,7 @@ export default function PreviewPage() {
             </button>
             <button
               type="button"
+              data-tour="tour-media-tab"
               className={leftTab === "media" ? "active" : ""}
               onClick={() => setLeftTab("media")}
             >
@@ -811,15 +832,19 @@ export default function PreviewPage() {
             />
           )}
           {leftTab === "components" && (
-            <ComponentPalette onDragStart={startDrag} />
+            <div data-tour="tour-components-panel" style={{ flex: 1, minHeight: 0, overflow: "auto" }}>
+              <ComponentPalette onDragStart={startDrag} />
+            </div>
           )}
           {leftTab === "templates" && (
+            <div data-tour="tour-templates-panel" style={{ flex: 1, minHeight: 0, overflow: "auto" }}>
             <TemplatesPanel
               onInsert={insertTemplateHtml}
               onApplyStarter={handleApplyStarter}
               onApplyGokeMain={handleApplyGokeMain}
               refreshKey={tplRefresh}
             />
+            </div>
           )}
           {leftTab === "media" && (
             <MediaPanel
@@ -855,7 +880,7 @@ export default function PreviewPage() {
         </div>
 
         {/* Center: canvas */}
-        <main className="goke-canvas-wrap" style={{ position: "relative" }}>
+        <main className="goke-canvas-wrap" data-tour="tour-canvas" style={{ position: "relative" }}>
           <div
             className="goke-canvas-frame"
             style={{
@@ -892,7 +917,7 @@ export default function PreviewPage() {
         </main>
 
         {/* Right: content props + design panel */}
-        <aside className="goke-properties">
+        <aside className="goke-properties" data-tour="tour-properties">
           <div className="goke-properties-header">
             <h2>{selectedComponent?.name || "Properties"}</h2>
             <div className="goke-device-switch" style={{ marginTop: 8 }}>
@@ -1076,6 +1101,17 @@ export default function PreviewPage() {
           </div>
         </div>
       )}
+
+      <EditorTour
+        open={tourOpen && phase === "editing"}
+        onClose={() => {
+          setTourOpen(false);
+          if (jobId) markTourDone(jobId);
+        }}
+        onLeftTab={(tab) => {
+          if (tab) setLeftTab(tab);
+        }}
+      />
 
     </MediaProvider>
   );
