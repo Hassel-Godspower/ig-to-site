@@ -28,7 +28,7 @@ export default function HomePage() {
               <ul className="gk-hero-points">
                 <li>Free to generate &amp; edit</li>
                 <li>Visual drag-and-drop editor</li>
-                <li>Pay only to publish · ₦9,900 once</li>
+                <li>Pay only to publish · ₦10,000 once</li>
               </ul>
               <p className="gk-hero-demo">
                 No export yet?{" "}
