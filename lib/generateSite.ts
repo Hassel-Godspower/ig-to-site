@@ -342,7 +342,7 @@ export async function generateSite(
         {
           role: "system",
           content:
-            "You are a Principal Frontend Engineer who builds production multi-page static sites (semantic HTML5 + one styles.css + one script.js). No React, no Tailwind, no Bootstrap. Match the DESIGN DISCIPLINE of category leaders (Apple product focus, Airbnb clarity, Stripe credibility, Porsche immersion, Gymshark energy, Netflix content-first) WITHOUT cloning their logos or layouts. Output ONLY the required file blocks — no markdown, no commentary, no lorem, no TODO.",
+            "You are a Principal Frontend Engineer and brand designer. Convert Instagram business data into a PREMIUM multi-page static website (semantic HTML5 + one styles.css + one script.js only). No React, no Tailwind CDN, no Bootstrap. The design must unmistakably match the detected niche the way a high-end agency would: hotel = cinematic luxury; fitness = dark high-energy; architecture = editorial white serif; auto = performance hero + inventory grid; beauty/hair = product-forward gallery; cosmetics = soft light beauty. Output ONLY the required file blocks. No markdown, no lorem, no TODO, no invented awards.",
         },
         { role: "user", content: buildPrompt(profile, niche, waNumber) },
       ],
@@ -378,14 +378,14 @@ function buildPrompt(
   const captions = profile.posts
     .map((p) => `- ${p.caption}`)
     .filter((c) => c.length > 3)
-    .slice(0, 24)
+    .slice(0, 28)
     .join("\n");
   const mediaLines =
     (profile as { mediaUrls?: string[] }).mediaUrls
-      ?.slice(0, 12)
+      ?.slice(0, 14)
       .map((u, i) => `${i + 1}. ${u}`)
       .join("\n") ||
-    `(no URLs — use https://picsum.photos/seed/${niche.id}-{n}/1600/1000)`;
+    `(no URLs — use https://picsum.photos/seed/${niche.id}-{n}/1600/1000 with niche-matching subjects)`;
 
   const brand = profile.name || profile.username || "Business";
   const bio = profile.bio || "(none)";
@@ -393,107 +393,176 @@ function buildPrompt(
 
   const nicheBrief = [
     `Mood: ${niche.mood}`,
-    `Palette direction: ${niche.palette}`,
-    `Typography direction: ${niche.typography}`,
-    `Imagery direction: ${niche.imagery}`,
+    `Palette: ${niche.palette}`,
+    `Typography: ${niche.typography}`,
+    `Imagery: ${niche.imagery}`,
     `Home flow: ${niche.homepageSections}`,
     `CTA language: ${niche.ctaStyle}`,
   ].join("\n");
 
-  // Design discipline mapped from real category leaders (intent, not clones)
-  const discipline: Record<string, string> = {
-    spa_wellness:
-      "APPLE calm + hospitality: vast whitespace OR soft full-bleed treatment photo, huge quiet headline, dual CTAs (filled + outline), product/service as gallery art.",
-    beauty_salon:
-      "SSENSE editorial restraint + Gymshark confidence: strong portraits, minimal chrome, product/service grid, bold type.",
-    restaurant_food:
-      "Appetite-first photography like premium F&B brands: large food hero, warm surfaces, clear reserve/order CTAs, simple menu cards.",
-    ecommerce_retail:
-      "GYMSHARK commerce energy: bold color blocks or full product hero, dual shop CTAs, tight product image grid, price/offer clarity.",
-    real_estate:
-      "AIRBNB discovery clarity: search-like simplicity, large property imagery, category chips or listing cards, light UI, strong contact CTA.",
-    legal_professional:
-      "STRIPE credibility + authority type: large value headline, dual CTAs, trust logos/strip only if real, structured service columns, restrained navy/slate.",
-    healthcare_clinic:
-      "Clean clinical trust: soft teal/white, clear service cards, booking-first CTA, no clutter.",
-    auto_dealership:
-      "PORSCHE immersion: full-bleed vehicle photo hero, large model name, minimal frosted CTA, dark cinematic feel.",
-    hotel_stay:
-      "AIRBNB + luxury stay: giant stay photography, flexible booking CTA, amenity clarity, airy layout.",
-    fitness_gym:
-      "GYMSHARK energy: bold solid hero or athlete motion, oversized type, dual CTAs, high-contrast buttons, mobile-first punch.",
-    education:
-      "STRIPE clarity for programs: big outcome headline, structured course cards, enroll CTA.",
-    creative_portfolio:
-      "Work-first gallery like a design studio: oversized projects, restrained type, case-study cards.",
-    church_faith:
-      "Welcoming community: warm hero image, clear service times, visit CTA, soft hierarchy.",
-    tech_saas:
-      "STRIPE: large benefit headline, gradient or soft mesh accent allowed, dual CTAs, logo trust bar, feature grid with crisp borders.",
-    general_business:
-      "APPLE product focus + STRIPE clarity: one hero message, dual CTAs, 3 value cards, no template fluff.",
+  /**
+   * Blueprint taken from production-quality IG→site mockups:
+   * hotel, fitness, architecture, auto, hair/beauty, cosmetics.
+   * Pages, nav labels, gallery titles, and CTA copy must follow the blueprint for the detected niche.
+   */
+  const blueprints: Record<
+    string,
+    { nav: string; pagesExtra: string; hero: string; gallery: string; headerCtas: string; look: string }
+  > = {
+    hotel_stay: {
+      nav: "Home · About · Accommodation · Dining · Gallery · Contact",
+      pagesExtra: "Prefer services.html titled as Accommodation/Dining content; gallery = room types with labels (Suite, Deluxe, Pool Villa…).",
+      hero: "Full-bleed room/view photo, large brand name, elegant tagline about hospitality, dual CTAs BOOK NOW + VIEW SPECIALS. Dark gradient overlay on photo.",
+      gallery: "Labeled room cards in a horizontal/grid strip under a bold GALLERY heading on dark band.",
+      headerCtas: "VIEW SPECIALS + BOOK NOW / RESERVATIONS",
+      look: "Luxury hotel: navy/charcoal + gold accents, serif or refined sans, cinematic photography.",
+    },
+    fitness_gym: {
+      nav: "Home · About · Training · Results · Gallery · Contact",
+      pagesExtra: "services.html = Training programs; gallery = gym/athletes/meals if in captions.",
+      hero: "Dark gym interior full-bleed, huge brand name, strength/community tagline, dual CTAs BOOK A FREE SESSION + MEMBERSHIP / EXPLORE TRAINING.",
+      gallery: "High-energy training + community photos; bold GALLERY on dark section.",
+      headerCtas: "EXPLORE TRAINING + BOOK A FREE SESSION",
+      look: "Gymshark energy: dark surfaces, bold condensed type, high-contrast buttons, motion photography.",
+    },
+    creative_portfolio: {
+      nav: "Home · About · Projects · Experience · Gallery · Contact",
+      pagesExtra: "services.html can be Projects hub; gallery = selected works with View Case Study buttons.",
+      hero: "Full-bleed architecture/design photo, large serif headline (name + craft statement), sub Explore the vision…, dual CTAs HIRE ME + VIEW CV/WORK.",
+      gallery: "SELECTED PROJECTS: 3-col cards — image, project title from caption first line, VIEW CASE STUDY button.",
+      headerCtas: "HIRE ME + VIEW CV",
+      look: "Editorial white, high-contrast serif headlines, minimal chrome, museum-like project grid.",
+    },
+    auto_dealership: {
+      nav: "Home · Vehicles · Financing · About · Gallery · Contact",
+      pagesExtra: "services.html = Vehicles/Financing; gallery = vehicle showcase grid.",
+      hero: "Full-bleed car-on-road photo, huge performance headline, sub about discovering the next vehicle, optional filter bar (Body/Make/Year) + FIND VEHICLE CTA + SCHEDULE SERVICE.",
+      gallery: "VEHICLE SHOWCASE: cards with image, model name, VEHICLE DETAILS / VIEW SPECS buttons.",
+      headerCtas: "BROWSE INVENTORY + SCHEDULE SERVICE",
+      look: "Porsche immersion + clean inventory: cinematic hero, white content band, product cards.",
+    },
+    beauty_salon: {
+      nav: "Home · About · Collections · Services · Gallery · Contact",
+      pagesExtra: "services = installs/services; gallery = styles, wigs, before/after, product packs.",
+      hero: "Salon/product full-bleed, elegant brand wordmark, premium hair tagline, dual CTAs BOOK APPOINTMENT + SHOP / COLLECTIONS.",
+      gallery: "Style grid (mannequin/model hair) with clean labels; GALLERY section title.",
+      headerCtas: "BOOK APPOINTMENT + SHOP",
+      look: "Luxury beauty: dark or soft neutrals, refined serif/sans, product photography first.",
+    },
+    spa_wellness: {
+      nav: "Home · About · Services · Gallery · Contact",
+      pagesExtra: "Calm treatment imagery; booking CTAs.",
+      hero: "Soft full-bleed treatment/room photo, serene headline, dual CTAs BOOK EXPERIENCE + VIEW SERVICES.",
+      gallery: "Treatments and space photos in soft rounded cards.",
+      headerCtas: "BOOK NOW + VIEW SERVICES",
+      look: "Cream/sage, generous whitespace, soft radius, restorative mood.",
+    },
+    ecommerce_retail: {
+      nav: "Home · Shop · About · Gallery · Contact",
+      pagesExtra: "Product-forward; gallery = collection grid with shop CTAs.",
+      hero: "Lifestyle or product hero, brand + explore line, dual CTAs SHOP NOW + VIEW COLLECTION.",
+      gallery: "Shoppable-style grid: image, short title from caption, SHOP LOOK / VIEW DETAILS.",
+      headerCtas: "SHOP NOW + VIEW COLLECTION",
+      look: "Clean commerce: product is hero, tight grid, clear price-free CTAs (no fake prices).",
+    },
+    tech_saas: {
+      nav: "Home · Product · Solutions · About · Contact",
+      pagesExtra: "Feature grid; light Stripe-like credibility.",
+      hero: "Large value headline, dual CTAs GET STARTED + CONTACT SALES, optional soft gradient accent.",
+      gallery: "Optional product UI / team imagery if present.",
+      headerCtas: "GET STARTED + CONTACT",
+      look: "Stripe: crisp type, light surface, violet/indigo accent, trust clarity.",
+    },
+    restaurant_food: {
+      nav: "Home · Menu · About · Gallery · Contact",
+      pagesExtra: "Menu cards from captions; food photography hero.",
+      hero: "Appetite-led food photo, dual CTAs RESERVE + VIEW MENU.",
+      gallery: "Plates and dining room grid.",
+      headerCtas: "RESERVE A TABLE + VIEW MENU",
+      look: "Warm terracotta/charcoal, large food imagery.",
+    },
+    real_estate: {
+      nav: "Home · Listings · About · Gallery · Contact",
+      pagesExtra: "Listing cards; discovery clarity.",
+      hero: "Property photo hero, dual CTAs VIEW LISTINGS + CONTACT AGENT.",
+      gallery: "Property photo grid with labels.",
+      headerCtas: "VIEW LISTINGS + CONTACT AGENT",
+      look: "Airbnb clarity: airy UI, large photos, navy/slate accents.",
+    },
+    general_business: {
+      nav: "Home · About · Services · Gallery · Contact",
+      pagesExtra: "Standard service business structure.",
+      hero: "Strong photo hero, dual CTAs matching bio goal.",
+      gallery: "Work/team/product grid from posts.",
+      headerCtas: "GET STARTED + CONTACT",
+      look: "Premium local brand: clear offer, dual CTAs, no template fluff.",
+    },
   };
-  const designDiscipline =
-    discipline[niche.id] || discipline.general_business;
 
-  return `Build a complete multi-page static website.
+  // Map related niches
+  const bpKey =
+    niche.id === "healthcare_clinic"
+      ? "spa_wellness"
+      : niche.id === "legal_professional" || niche.id === "education"
+        ? "tech_saas"
+        : niche.id === "church_faith"
+          ? "general_business"
+          : blueprints[niche.id]
+            ? niche.id
+            : "general_business";
+  const bp = blueprints[bpKey];
 
-=== LAYER 1 — BUSINESS DATA (facts only) ===
-Name: ${brand}
+  return `Convert this Instagram business into a PREMIUM multi-page website that looks like a custom agency build for this niche (see blueprints inspired by hotel, gym, architect, auto dealer, hair boutique, clean-beauty brands).
+
+=== LAYER 1 — INSTAGRAM DATA (source of truth) ===
+Brand name: ${brand}
 Username: ${profile.username || "(unknown)"}
 Bio: ${bio}
-Niche: ${niche.id} — ${niche.label}
+Detected niche: ${niche.id} — ${niche.label}
 ${nicheBrief}
-DESIGN DISCIPLINE FOR THIS NICHE (mirror the *feel*, never copy logos/layouts of big brands):
-${designDiscipline}
-Captions:
+Captions (use for services, project titles, gallery labels — first line of caption = card title when possible):
 ${captions || "(none)"}
-Images:
+Media URLs (prefer as <img src>; otherwise niche-matched picsum seeds):
 ${mediaLines}
-WhatsApp digits: ${wa}
+WhatsApp: ${wa}
 
-=== LAYER 2 — TECH (non-negotiable) ===
-- Semantic HTML5 + single styles.css + single script.js (Vanilla ES6)
-- No React, Tailwind, Bootstrap, or animation libraries
-- Google Fonts: one display + one body pair matching niche
-- Mobile-first CSS; breakpoints 768px and 1024px
-- No lorem ipsum, no invented awards/metrics/press, no empty white heroes, no TODO
+=== LAYER 2 — NICHE BLUEPRINT (mandatory) ===
+Look & feel: ${bp.look}
+Nav labels (adapt hrefs to existing html files): ${bp.nav}
+Header CTAs: ${bp.headerCtas}
+Hero direction: ${bp.hero}
+Gallery direction: ${bp.gallery}
+Notes: ${bp.pagesExtra}
 
-=== LAYER 3 — VISUAL RULES FROM CATEGORY LEADERS (implement in CSS) ===
-These are RULES, not brand clones:
+=== LAYER 3 — TECH CONSTRAINTS ===
+- HTML5 + ONE styles.css + ONE script.js only (no Tailwind CDN, no Bootstrap, no React)
+- Google Fonts allowed (display + body pair for the niche)
+- Mobile-first; breakpoints 768px / 1024px
+- Desktop nav = horizontal links; HIDE hamburger (.nav-toggle { display:none !important })
+- Mobile = hamburger toggles #site-nav; close on link click
+- body data-wa="${waNumber || ""}" on every page
+- Editor hooks: id="site-title", id="hero-headline", id="hero-subheadline", id="cta-button" on Home; data-goke on heading|text|image|link|button; class="site-section" data-section-name="..."
+- NO lorem ipsum, NO fake metrics/awards/prices, NO empty white heroes
 
-A. HERO (critical)
-- Must fill viewport height ~70–100vh on desktop
-- Must include a large real image (img or CSS background-image) — never a blank white field
-- Headline: short, bold, clamp(2.2rem, 5vw, 3.75rem); max ~8 words when possible
-- Subhead: one clear sentence
-- Dual CTAs always: .btn (solid primary) + .btn-outline (transparent/border)
-- Reference patterns by niche:
-  • Product/hardware/auto/fitness: dark or solid-color full-bleed + centered or left type (Apple/Porsche/Gymshark)
-  • SaaS/professional: light surface + huge value sentence + accent gradient optional (Stripe)
-  • Stay/discovery: light UI + large photo cards (Airbnb)
-  • Media: dark + content collage allowed (Netflix-like density only if gallery-heavy)
+=== LAYER 4 — DESIGN SYSTEM (styles.css :root) ===
+Define --primary --primary-hover --bg --surface --text --muted --border --radius --shadow --header-h with HEX for THIS niche.
+Hero ~70–100vh with real image + readable overlay.
+Dual CTAs everywhere important: .btn solid + .btn-outline.
+Gallery cards: image + title + small action button.
+Section padding 3rem mobile / 5–6rem desktop; max width ~1200px.
 
-B. DESIGN TOKENS (:root in styles.css)
---primary, --primary-hover, --bg, --surface, --text, --muted, --border, --radius, --shadow, --header-h
-Pick HEX that fits niche psychology. Use them everywhere.
+=== LAYER 5 — REQUIRED PAGES (full HTML documents each) ===
+1) index.html — Hero (blueprint) → optional trust only if data supports → 3 service/value pillars from captions → about teaser → gallery teaser (2–6 images with labels) → final CTA band
+2) about.html — Story from bio → values/method → CTA
+3) services.html — Outcome cards from captions (or Vehicles/Training/Collections per blueprint) → process → CTA
+4) gallery.html — Full responsive grid; card title from caption first line; button View details / Case study / Shop look per niche
+5) contact.html — Pitch → form#contact-form (name, email, message) + submit data-goke="button" → WhatsApp/contact
 
-C. TYPE & SPACE
-- Tight letter-spacing on large headlines when dark/luxury
-- Section padding: 3rem mobile / 5–6rem desktop
-- Max content width ~1120–1200px centered
-- Cards: consistent radius; soft shadow OR 1px border (Stripe-like), not both heavy
-
-D. NAV (same every page)
-Desktop ≥768px: horizontal links only; .nav-toggle { display:none !important }
-Mobile: hamburger toggles #site-nav; close on link click
-Markup:
+Shared header on every page:
 <header class="site-header" data-goke="container">
   <div class="nav-bar">
     <a href="index.html" class="brand" id="site-title" data-goke="link">${brand}</a>
-    <button type="button" class="nav-toggle" data-goke="button" aria-label="Open menu" aria-expanded="false" aria-controls="site-nav">
-      <span class="nav-toggle-bar"></span><span class="nav-toggle-bar"></span><span class="nav-toggle-bar"></span>
-    </button>
+    <button type="button" class="nav-toggle" data-goke="button" aria-label="Open menu" aria-expanded="false" aria-controls="site-nav"><span class="nav-toggle-bar"></span><span class="nav-toggle-bar"></span><span class="nav-toggle-bar"></span></button>
     <nav id="site-nav" class="site-nav" data-goke="nav">
       <ul class="nav-list">
         <li><a href="index.html" data-goke="link">Home</a></li>
@@ -503,44 +572,20 @@ Markup:
         <li><a href="contact.html" data-goke="link">Contact</a></li>
       </ul>
     </nav>
+    <!-- optional desktop-only header CTA links matching blueprint -->
   </div>
 </header>
-Optional sticky header with backdrop-filter blur (Apple/Stripe feel) when it fits.
+Identical footer: brand, bio line, same links, wa.me if number exists.
+<link rel="stylesheet" href="styles.css"> and <script src="script.js" defer></script> on every page.
 
-E. FOOTER (every page)
-Brand, one bio line, same 5 links, WhatsApp link if number exists. Multi-column on desktop.
+=== LAYER 6 — script.js ===
+1) Mobile nav toggle + aria-expanded
+2) #contact-form → preventDefault → https://wa.me/NUMBER?text=... when data-wa set
+3) IntersectionObserver .site-section → .is-visible fade-up
+4) Optional header elevation on scroll
 
-=== LAYER 4 — PAGES ===
-index.html, about.html, services.html, gallery.html, contact.html
-Each: full HTML5, link styles.css, script.js defer
-Hooks: id="hero-headline" id="hero-subheadline" id="cta-button" on Home;
-class="site-section" data-section-name="..."; data-goke=heading|text|image|link|button
-
-HOME structure (order):
-1) Immersive hero (image + H1 + sub + dual CTAs)
-2) Optional trust strip ONLY if data supports (else skip)
-3) Three value/service pillars from captions
-4) About teaser
-5) Gallery teaser grid (2–4 images)
-6) Final CTA band (full-width primary)
-
-ABOUT: story from bio → values → CTA
-SERVICES: outcome cards from captions → 3-step process → CTA
-GALLERY: responsive CSS grid of images
-CONTACT: short pitch → form#contact-form (name, email, message) + submit data-goke="button" → details
-
-=== LAYER 5 — JS (script.js) ===
-1) Mobile nav toggle .nav-toggle ↔ #site-nav + aria-expanded; close links under 768px
-2) #contact-form → preventDefault → wa.me/NUMBER?text=... when body[data-wa] set
-3) IntersectionObserver: .site-section gets .is-visible (CSS fade-up)
-4) Optional: header elevation after scrollY > 40
-
-=== LAYER 6 — BODY ===
-<body data-wa="${waNumber || ""}">
-
-=== OUTPUT (strict) ===
+=== OUTPUT (strict, no markdown) ===
 ===PAGE:index.html===
-<!DOCTYPE html>
 ...
 ===PAGE:about.html===
 ...
@@ -551,9 +596,9 @@ CONTACT: short pitch → form#contact-form (name, email, message) + submit data-
 ===PAGE:contact.html===
 ...
 ===CSS===
-...full styles.css...
+...
 ===JS===
-...full script.js...`;
+...`;
 }
 
 
