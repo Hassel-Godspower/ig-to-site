@@ -461,7 +461,7 @@ export async function generateSite(
         {
           role: "system",
           content:
-            "You are a Principal Frontend Engineer and brand designer. Convert Instagram business data into a PREMIUM multi-page static website (semantic HTML5 + one styles.css + one script.js only). No React, no Tailwind CDN, no Bootstrap. The design must unmistakably match the detected niche the way a high-end agency would: hotel = cinematic luxury; fitness = dark high-energy; architecture = editorial white serif; auto = performance hero + inventory grid; beauty/hair = product-forward gallery; cosmetics = soft light beauty. Output ONLY the required file blocks. No markdown, no lorem, no TODO, no invented awards.",
+            "You are a Principal Frontend Engineer shipping production static multi-page sites at the quality of Club One Africa and Pax & Pearl Body Works: real logo in header, CSS design tokens, sticky horizontal nav, mobile hamburger panel, multi-column footer, mobile app-style bottom tab bar, scroll-reveal sections, dual CTAs, and niche-accurate photography. Output ONLY HTML5 pages + one styles.css + one script.js. No React, no Tailwind CDN, no Bootstrap. No markdown, no lorem, no TODO.",
         },
         { role: "user", content: buildPrompt(profile, niche, waNumber, galleryUrls, titles) },
       ],
@@ -645,7 +645,18 @@ ${captions || "(none)"}
 Media URLs (prefer as <img src>; otherwise niche-matched picsum seeds):
 ${mediaLines}
 WhatsApp: ${wa}
-Profile / logo image (use in header brand if present): ${(profile as { profilePicUrl?: string }).profilePicUrl || profile.mediaUrls?.[0] || galleryUrls[0] || ""}
+Brand logo / avatar URL (REQUIRED in header when available):
+${(profile as { profilePicUrl?: string; logoUrl?: string }).logoUrl || (profile as { profilePicUrl?: string }).profilePicUrl || profile.mediaUrls?.[0] || galleryUrls[0] || ""}
+HEADER LOGO RULES:
+- If a logo/avatar URL is provided above, the header brand MUST show:
+  <a href="index.html" class="brand" id="site-title" data-goke="link">
+    <img class="brand-logo site-logo" src="LOGO_URL" alt="${brand}" width="40" height="40" />
+    <span class="brand-text">${brand}</span>
+  </a>
+- .brand { display:inline-flex; align-items:center; gap:0.65rem; text-decoration:none; }
+- .brand-logo { width:40px; height:40px; border-radius:50%; object-fit:cover; flex-shrink:0; }
+- If URL looks like a wide logo (not a face avatar), use border-radius:8px; height:36px; width:auto; max-width:140px; object-fit:contain;
+- If no URL, text-only brand is OK.
 Card / project titles from captions (first line → gallery card labels):
 ${titleLines}
 
@@ -689,24 +700,42 @@ Include CSS for mobile floating footer tab bar (position:fixed; bottom:0) and bo
 4) gallery.html — Full responsive grid; card title from caption first line; button View details / Case study / Shop look per niche
 5) contact.html — Pitch → form#contact-form (name, email, message) + submit data-goke="button" → WhatsApp/contact
 
+
+=== PRODUCTION QUALITY BAR (match real agency static sites) ===
+Reference quality (structure only — do not copy their content/branding):
+1) Club One Africa style: sticky header with IMAGE logo + horizontal desktop links + primary nav-cta + hamburger; separate mobile-nav panel; hero as TWO-COLUMN grid (copy + large photo); section-label + section-heading; card grids with .reveal; multi-column footer with logo again; WhatsApp CTAs; CSS :root tokens; IntersectionObserver adds .active on .reveal.
+2) Pax & Pearl style: brand logo image; immersive hero (image/overlay, dual primary/secondary buttons); fixed bottom mobile-nav tab bar (icon or short label + text) on small screens; body padding-bottom so content clears the bar; calm spa or high-energy fitness tokens depending on niche.
+
+Your output must feel like those sites: polished spacing, real logo, alive scroll motion — not a bare Bootstrap skeleton.
+
 === PREMIUM HEADER (identical every page, horizontally aligned) ===
 Structure — single row flex, space-between, vertically centered:
 
 <header class="site-header" data-goke="container">
   <div class="nav-bar">
-    <a href="index.html" class="brand" id="site-title" data-goke="link">${brand}</a>
-    <button type="button" class="nav-toggle" data-goke="button" aria-label="Open menu" aria-expanded="false" aria-controls="site-nav">
+    <a href="index.html" class="brand" id="site-title" data-goke="link">
+      <img class="brand-logo site-logo" src="LOGO_OR_AVATAR_URL" alt="${brand}" width="40" height="40" data-goke="image" />
+      <span class="brand-text">${brand}</span>
+    </a>
+    <button type="button" class="nav-toggle menu-toggle" data-goke="button" aria-label="Open menu" aria-expanded="false" aria-controls="site-nav">
       <span class="nav-toggle-bar"></span><span class="nav-toggle-bar"></span><span class="nav-toggle-bar"></span>
     </button>
-    <nav id="site-nav" class="site-nav" data-goke="nav">
-      <ul class="nav-list">
-        <li><a href="index.html" data-goke="link">Home</a></li>
-        <li><a href="about.html" data-goke="link">About</a></li>
-        <li><a href="services.html" data-goke="link">Services</a></li>
-        <li><a href="gallery.html" data-goke="link">Gallery</a></li>
-        <li><a href="contact.html" data-goke="link">Contact</a></li>
-      </ul>
+    <nav class="desktop-nav site-nav" id="site-nav" data-goke="nav" aria-label="Main">
+      <a href="index.html" data-goke="link">Home</a>
+      <a href="about.html" data-goke="link">About</a>
+      <a href="services.html" data-goke="link">Services</a>
+      <a href="gallery.html" data-goke="link">Gallery</a>
+      <a href="contact.html" data-goke="link">Contact</a>
     </nav>
+    <!-- Mobile slide panel (Club One pattern): same links, toggled by .menu-toggle -->
+    <div class="mobile-nav" id="mobileNav" data-goke="nav" hidden>
+      <a href="index.html" data-goke="link">Home</a>
+      <a href="about.html" data-goke="link">About</a>
+      <a href="services.html" data-goke="link">Services</a>
+      <a href="gallery.html" data-goke="link">Gallery</a>
+      <a href="contact.html" data-goke="link">Contact</a>
+      <a href="contact.html" class="mobile-nav-cta" data-goke="button">Contact</a>
+    </div>
     <div class="header-ctas">
       <!-- primary CTA button matching niche; data-goke="button" -->
     </div>
@@ -714,6 +743,7 @@ Structure — single row flex, space-between, vertically centered:
 </header>
 
 Header CSS:
+- .brand { display:inline-flex; align-items:center; gap:0.65rem; } .brand-logo, .site-logo { height:40px; width:auto; max-height:48px; max-width:160px; object-fit:contain; display:block; } /* wide logos: contain; circular avatars may use border-radius:50% + fixed 40px */
 - position:sticky; top:0; z-index:100; backdrop-filter:blur(16px); border-bottom subtle
 - .nav-bar { display:flex; align-items:center; justify-content:space-between; gap:1rem; max-width:1200px; margin:0 auto; padding:0.85rem 1.25rem; width:100%; }
 - Desktop ≥768px: .nav-toggle { display:none !important; } .nav-list { display:flex; flex-direction:row; align-items:center; gap:1.5rem; list-style:none; margin:0; padding:0; }
@@ -748,7 +778,7 @@ Mobile <768px — APP-STYLE FLOATING TAB FOOTER:
 2) #contact-form preventDefault → wa.me when data-wa set
 3) SCROLL REVEAL required on ALL major sections:
    IntersectionObserver on .site-section, .reveal, main > section
-   CSS: opacity 0 + translateY(28px) → .is-visible { opacity 1; transform none } transition 0.7s ease
+   CSS: .reveal { opacity:0; transform:translateY(28px); transition:0.7s ease; } .reveal.active, .reveal.is-visible, .site-section.is-visible { opacity:1; transform:none; } (Club One uses .reveal.active via IntersectionObserver)
    threshold ~0.12; unobserve after show
 4) Header: toggle .is-scrolled when scrollY > 24 (stronger shadow)
 5) html { scroll-behavior: smooth; }
@@ -871,7 +901,7 @@ function ensureLiveScript(js: string, waNumber: string | null): string {
 (function(){
   function bindNav(){
     var toggle=document.querySelector(".nav-toggle");
-    var nav=document.querySelector("#site-nav,.site-nav");
+    var nav=document.querySelector("#mobileNav,.mobile-nav,#site-nav,.site-nav");
     if(!toggle||!nav||toggle.__gokeNav) return;
     toggle.__gokeNav=true;
     toggle.addEventListener("click",function(){
@@ -904,12 +934,12 @@ function ensureLiveScript(js: string, waNumber: string | null): string {
   function reveal(){
     var nodes=document.querySelectorAll(".site-section,.reveal,main section, .footer-inner");
     if(!nodes.length||!("IntersectionObserver" in window)){
-      nodes.forEach(function(n){ n.classList.add("is-visible"); });
+      nodes.forEach(function(n){ n.classList.add("is-visible"); n.classList.add("active"); });
       return;
     }
     var io=new IntersectionObserver(function(entries){
       entries.forEach(function(en){
-        if(en.isIntersecting){ en.target.classList.add("is-visible"); io.unobserve(en.target); }
+        if(en.isIntersecting){ en.target.classList.add("is-visible"); en.target.classList.add("active"); io.unobserve(en.target); }
       });
     },{ threshold:0.12, rootMargin:"0px 0px -40px 0px" });
     nodes.forEach(function(n){ io.observe(n); });
