@@ -668,11 +668,10 @@ Notes: ${bp.pagesExtra}
 - HTML5 + ONE styles.css + ONE script.js only (no Tailwind CDN, no Bootstrap, no React)
 - Google Fonts allowed (display + body pair for the niche)
 - Mobile-first; breakpoints 768px / 1024px
-- Desktop nav = horizontal links; HIDE hamburger (.nav-toggle { display:none !important })
-- Mobile = hamburger toggles #site-nav; close on link click
 - body data-wa="${waNumber || ""}" on every page
-- Editor hooks: id="site-title", id="hero-headline", id="hero-subheadline", id="cta-button" on Home; data-goke on heading|text|image|link|button; class="site-section" data-section-name="..."
+- Editor hooks: id="site-title", id="hero-headline", id="hero-subheadline", id="cta-button" on Home; data-goke on heading|text|image|link|button; class="site-section reveal" data-section-name="..."
 - NO lorem ipsum, NO fake metrics/awards/prices, NO empty white heroes
+- Site must feel ALIVE: scroll-reveal on sections, smooth hover on buttons/cards, sticky premium header
 
 === LAYER 4 — DESIGN SYSTEM (styles.css :root) ===
 Define --primary --primary-hover --bg --surface --text --muted --border --radius --shadow --header-h with HEX for THIS niche.
@@ -680,6 +679,8 @@ Hero ~70–100vh with real image + readable overlay.
 Dual CTAs everywhere important: .btn solid + .btn-outline.
 Gallery cards: image + title + small action button.
 Section padding 3rem mobile / 5–6rem desktop; max width ~1200px.
+Include CSS for .reveal/.site-section opacity transform and .is-visible.
+Include CSS for mobile floating footer tab bar (position:fixed; bottom:0) and body padding-bottom.
 
 === LAYER 5 — REQUIRED PAGES (full HTML documents each) ===
 1) index.html — Hero (blueprint) → optional trust only if data supports → 3 service/value pillars from captions → about teaser → gallery teaser (2–6 images with labels) → final CTA band
@@ -688,12 +689,15 @@ Section padding 3rem mobile / 5–6rem desktop; max width ~1200px.
 4) gallery.html — Full responsive grid; card title from caption first line; button View details / Case study / Shop look per niche
 5) contact.html — Pitch → form#contact-form (name, email, message) + submit data-goke="button" → WhatsApp/contact
 
-Shared header on every page:
+=== PREMIUM HEADER (identical every page, horizontally aligned) ===
+Structure — single row flex, space-between, vertically centered:
+
 <header class="site-header" data-goke="container">
   <div class="nav-bar">
     <a href="index.html" class="brand" id="site-title" data-goke="link">${brand}</a>
-    <!-- If profile image URL is provided in data, optionally show a small circular logo img beside brand text -->
-    <button type="button" class="nav-toggle" data-goke="button" aria-label="Open menu" aria-expanded="false" aria-controls="site-nav"><span class="nav-toggle-bar"></span><span class="nav-toggle-bar"></span><span class="nav-toggle-bar"></span></button>
+    <button type="button" class="nav-toggle" data-goke="button" aria-label="Open menu" aria-expanded="false" aria-controls="site-nav">
+      <span class="nav-toggle-bar"></span><span class="nav-toggle-bar"></span><span class="nav-toggle-bar"></span>
+    </button>
     <nav id="site-nav" class="site-nav" data-goke="nav">
       <ul class="nav-list">
         <li><a href="index.html" data-goke="link">Home</a></li>
@@ -703,22 +707,52 @@ Shared header on every page:
         <li><a href="contact.html" data-goke="link">Contact</a></li>
       </ul>
     </nav>
-    <!-- optional desktop-only header CTA links matching blueprint -->
+    <div class="header-ctas">
+      <!-- primary CTA button matching niche; data-goke="button" -->
+    </div>
   </div>
 </header>
-PREMIUM FOOTER (identical on every page, multi-column on desktop):
-- Col1: brand name/logo text + first bio line + location if in bio
-- Col2: Quick links (same 5 pages)
-- Col3: Connect — Instagram @username link + WhatsApp if number exists
-- Bottom bar: © year brand · All rights reserved
-No "Built with …" marketing clutter unless asked.
+
+Header CSS:
+- position:sticky; top:0; z-index:100; backdrop-filter:blur(16px); border-bottom subtle
+- .nav-bar { display:flex; align-items:center; justify-content:space-between; gap:1rem; max-width:1200px; margin:0 auto; padding:0.85rem 1.25rem; width:100%; }
+- Desktop ≥768px: .nav-toggle { display:none !important; } .nav-list { display:flex; flex-direction:row; align-items:center; gap:1.5rem; list-style:none; margin:0; padding:0; }
+- Mobile <768px: show hamburger; #site-nav is a full-width DROPDOWN under the bar (absolute or block); use [hidden] or .is-open; .nav-list { flex-direction:column; }
+- Every nav link has data-goke="link" so the site editor can change labels and hrefs (point to about.html, services.html, gallery.html, contact.html — add/remove items by editing these links)
+- .header-ctas on desktop; may hide on smallest screens
+
+=== PREMIUM FOOTER ===
+Desktop ≥768px — horizontal multi-column (not a vertical mess):
+<footer class="site-footer" data-goke="container">
+  <div class="footer-inner">
+    <div class="footer-brand">brand + bio line + location</div>
+    <div class="footer-links">same 5 page links</div>
+    <div class="footer-connect">Instagram @user + WhatsApp if available</div>
+  </div>
+  <div class="footer-bottom">© year brand · All rights reserved</div>
+</footer>
+.footer-inner { display:grid; grid-template-columns:2fr 1fr 1fr; gap:2rem; align-items:start; max-width:1200px; margin:0 auto; padding:3rem 1.25rem; }
+
+Mobile <768px — APP-STYLE FLOATING TAB FOOTER:
+- .site-footer { position:fixed; bottom:0; left:0; right:0; z-index:90; padding:0; }
+- Show a compact horizontal bar of 4–5 destinations (Home, Services, Gallery, Contact) with short labels — like iOS/Android tab bar
+- backdrop-filter:blur(12px); border-top; box-shadow upward
+- Hide .footer-brand long text / multi-column on mobile; use .footer-mobile-tabs row only
+- body { padding-bottom: 4.5rem; } on mobile so content clears the bar
+- Desktop footer stays static multi-column at document end (NOT fixed)
+
 <link rel="stylesheet" href="styles.css"> and <script src="script.js" defer></script> on every page.
 
-=== LAYER 6 — script.js ===
-1) Mobile nav toggle + aria-expanded
-2) #contact-form → preventDefault → https://wa.me/NUMBER?text=... when data-wa set
-3) IntersectionObserver .site-section → .is-visible fade-up
-4) Optional header elevation on scroll
+=== LAYER 6 — script.js (site must feel ALIVE, not static) ===
+1) Mobile nav dropdown: .nav-toggle toggles #site-nav hidden/is-open + aria-expanded; close on link click when width < 768px
+2) #contact-form preventDefault → wa.me when data-wa set
+3) SCROLL REVEAL required on ALL major sections:
+   IntersectionObserver on .site-section, .reveal, main > section
+   CSS: opacity 0 + translateY(28px) → .is-visible { opacity 1; transform none } transition 0.7s ease
+   threshold ~0.12; unobserve after show
+4) Header: toggle .is-scrolled when scrollY > 24 (stronger shadow)
+5) html { scroll-behavior: smooth; }
+6) Buttons/cards: CSS hover transitions 0.2s (lift or shadow)
 
 === OUTPUT (strict, no markdown) ===
 ===PAGE:index.html===
@@ -782,10 +816,7 @@ function parseMultiPage(
   }
 
   // Always ensure solid WhatsApp form handler
-  files["script.js"] = ensureWhatsAppScript(
-    files["script.js"] || "",
-    waNumber
-  );
+  files["script.js"] = ensureLiveScript(files["script.js"] || "", waNumber);
 
   const brand = profile.name || profile.username || "Home";
   for (const page of [
@@ -829,6 +860,73 @@ function injectWaAttr(html: string, wa: string | null): string {
     return html.replace(/<body/i, `<body data-wa="${wa}"`);
   }
   return html;
+}
+
+
+function ensureLiveScript(js: string, waNumber: string | null): string {
+  let out = ensureWhatsAppScript(js, waNumber);
+  if (!out.includes("nav-toggle") || !out.includes("site-nav")) {
+    out += `
+/* goke: mobile nav dropdown */
+(function(){
+  function bindNav(){
+    var toggle=document.querySelector(".nav-toggle");
+    var nav=document.querySelector("#site-nav,.site-nav");
+    if(!toggle||!nav||toggle.__gokeNav) return;
+    toggle.__gokeNav=true;
+    toggle.addEventListener("click",function(){
+      var open=nav.hasAttribute("hidden")||!nav.classList.contains("is-open");
+      if(nav.hasAttribute("hidden")||!nav.classList.contains("is-open")){
+        nav.removeAttribute("hidden"); nav.classList.add("is-open");
+        toggle.setAttribute("aria-expanded","true");
+      } else {
+        nav.setAttribute("hidden",""); nav.classList.remove("is-open");
+        toggle.setAttribute("aria-expanded","false");
+      }
+    });
+    nav.querySelectorAll("a").forEach(function(a){
+      a.addEventListener("click",function(){
+        if(window.matchMedia("(max-width:767px)").matches){
+          nav.setAttribute("hidden",""); nav.classList.remove("is-open");
+          toggle.setAttribute("aria-expanded","false");
+        }
+      });
+    });
+  }
+  if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",bindNav); else bindNav();
+})();
+`;
+  }
+  if (!out.includes("IntersectionObserver") && !out.includes("is-visible")) {
+    out += `
+/* goke: scroll reveal — sections feel alive */
+(function(){
+  function reveal(){
+    var nodes=document.querySelectorAll(".site-section,.reveal,main section, .footer-inner");
+    if(!nodes.length||!("IntersectionObserver" in window)){
+      nodes.forEach(function(n){ n.classList.add("is-visible"); });
+      return;
+    }
+    var io=new IntersectionObserver(function(entries){
+      entries.forEach(function(en){
+        if(en.isIntersecting){ en.target.classList.add("is-visible"); io.unobserve(en.target); }
+      });
+    },{ threshold:0.12, rootMargin:"0px 0px -40px 0px" });
+    nodes.forEach(function(n){ io.observe(n); });
+  }
+  if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",reveal); else reveal();
+})();
+/* goke: header scroll state */
+(function(){
+  var h=document.querySelector(".site-header");
+  if(!h) return;
+  var onScroll=function(){ h.classList.toggle("is-scrolled", window.scrollY>24); };
+  window.addEventListener("scroll", onScroll, { passive:true });
+  onScroll();
+})();
+`;
+  }
+  return out;
 }
 
 function ensureWhatsAppScript(js: string, wa: string | null): string {
