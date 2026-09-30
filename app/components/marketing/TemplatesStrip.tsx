@@ -1,52 +1,14 @@
+import Link from "next/link";
+
 const templates = [
-  {
-    name: "Commerce",
-    cat: "Store",
-    slug: "commerce",
-    desc: "Product grid, cart, checkout",
-  },
-  {
-    name: "Luxe",
-    cat: "Fashion",
-    slug: "luxe",
-    desc: "Black, white, gold editorial",
-  },
-  {
-    name: "Estate",
-    cat: "Property",
-    slug: "estate",
-    desc: "Listings, agents, mortgage",
-  },
-  {
-    name: "Stay",
-    cat: "Hotel",
-    slug: "stay",
-    desc: "Rooms, booking, offers",
-  },
-  {
-    name: "Pro",
-    cat: "Services",
-    slug: "pro",
-    desc: "Team, cases, appointments",
-  },
-  {
-    name: "Clinic",
-    cat: "Health",
-    slug: "clinic",
-    desc: "Services, doctors, booking",
-  },
-  {
-    name: "Auto",
-    cat: "Motors",
-    slug: "auto",
-    desc: "Inventory, financing",
-  },
-  {
-    name: "Creative",
-    cat: "Portfolio",
-    slug: "creative",
-    desc: "Projects and case studies",
-  },
+  { name: "Commerce", cat: "Store", slug: "commerce", desc: "Product grid, cart, checkout" },
+  { name: "Luxe", cat: "Fashion", slug: "luxe", desc: "Black, white, gold editorial" },
+  { name: "Estate", cat: "Property", slug: "estate", desc: "Listings, agents, mortgage" },
+  { name: "Stay", cat: "Hotel", slug: "stay", desc: "Rooms, booking, offers" },
+  { name: "Pro", cat: "Services", slug: "pro", desc: "Team, cases, appointments" },
+  { name: "Clinic", cat: "Health", slug: "clinic", desc: "Services, doctors, booking" },
+  { name: "Auto", cat: "Motors", slug: "auto", desc: "Inventory, financing" },
+  { name: "Creative", cat: "Portfolio", slug: "creative", desc: "Projects and case studies" },
 ];
 
 export function TemplatesStrip() {
@@ -62,7 +24,7 @@ export function TemplatesStrip() {
         </div>
         <div className="gk-template-grid">
           {templates.map((t) => (
-            <article key={t.slug} className="gk-template-card">
+            <a key={t.slug} href="#start" className="gk-template-card gk-template-card--link">
               <div className="gk-template-thumb">
                 <img
                   src={`/marketing/templates/${t.slug}.svg`}
@@ -76,10 +38,15 @@ export function TemplatesStrip() {
               <div className="meta">
                 <h3>Gòke {t.name}</h3>
                 <p>{t.desc}</p>
+                <span className="gk-template-cta">Generate with your export →</span>
               </div>
-            </article>
+            </a>
           ))}
         </div>
+        <p className="gk-templates-foot">
+          Prefer to explore first?{" "}
+          <a href="#demo">Open the demo walkthrough</a>
+        </p>
       </div>
     </section>
   );

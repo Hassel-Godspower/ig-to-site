@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 
 export function SiteHeader() {
   const [open, setOpen] = useState(false);
@@ -10,10 +11,15 @@ export function SiteHeader() {
     <header className="gk-header">
       <div className="gk-container gk-header-inner">
         <Link href="/" className="gk-logo" aria-label="gòke home">
-          <span className="gk-logo-mark" aria-hidden>
-            g
-          </span>
-          gòke
+          <Image
+            src="/icons/icon-192.png"
+            alt=""
+            width={32}
+            height={32}
+            className="gk-logo-img"
+            priority
+          />
+          <span className="gk-logo-word">gòke</span>
         </Link>
 
         <button

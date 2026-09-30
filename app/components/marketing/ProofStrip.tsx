@@ -1,49 +1,49 @@
 const examples = [
   {
-    label: "Spa · Lagos",
-    title: "Bodywork & wellness",
-    desc: "Hero, services, gallery, and booking CTA from an Instagram presence.",
-    slug: "spa",
+    label: "Fitness · Lagos",
+    title: "Coach → full training site",
+    desc: "Profile, offer, and gallery become a booking-ready fitness website.",
+    slug: "fitness",
   },
   {
     label: "Fashion · Boutique",
-    title: "Premium retail",
-    desc: "Catalogue-style sections with brand story — beyond a link-in-bio.",
+    title: "Boutique → lookbook site",
+    desc: "Posts and brand voice turn into a catalogue with story and shop CTAs.",
     slug: "fashion",
   },
   {
-    label: "Services · Firm",
-    title: "Professional practice",
-    desc: "Trust, services, and contact — ready for clients who found you on IG.",
-    slug: "services",
+    label: "Spa · Wellness",
+    title: "Spa → booking site",
+    desc: "Services and highlights become a calm site with a clear book action.",
+    slug: "spa",
   },
 ];
 
 export function ProofStrip() {
   return (
-    <section className="gk-section">
+    <section className="gk-section" id="proof">
       <div className="gk-container">
         <div className="gk-section-head">
-          <h2>Built for real Instagram businesses</h2>
+          <h2>Instagram profile → real website</h2>
           <p>
-            Spas, boutiques, clinics, consultants — anyone with a following who needs a
-            proper site, not another link list.
+            Same content you already post — structured into a multi-section site clients can
+            browse, trust, and act on.
           </p>
         </div>
-        <div className="gk-proof-grid">
+        <div className="gk-proof-grid gk-proof-grid--transform">
           {examples.map((ex) => (
-            <article key={ex.slug} className="gk-proof-card">
-              <div className="gk-proof-visual">
+            <article key={ex.slug} className="gk-proof-card gk-proof-card--transform">
+              <div className="gk-proof-visual gk-proof-visual--wide">
                 <img
                   src={`/marketing/proof/${ex.slug}.svg`}
-                  alt={`${ex.title} website preview`}
-                  width={640}
-                  height={400}
+                  alt={`${ex.title}: Instagram to website`}
+                  width={900}
+                  height={520}
                   loading="lazy"
                 />
-                <span className="gk-proof-badge">{ex.label}</span>
               </div>
               <div className="gk-proof-body">
+                <span className="gk-proof-label">{ex.label}</span>
                 <h3>{ex.title}</h3>
                 <p>{ex.desc}</p>
               </div>

@@ -132,6 +132,10 @@ export function HeroUpload() {
 
         {error && <p className="gk-error">{error}</p>}
 
+        {!file && !error && (
+          <p className="gk-upload-hint">Choose a file to continue</p>
+        )}
+
         <button
           type="submit"
           className="gk-btn gk-btn-primary gk-btn-lg gk-btn-block"
