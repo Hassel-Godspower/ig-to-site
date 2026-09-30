@@ -1,27 +1,73 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="640" height="400" viewBox="0 0 640 400" role="img" aria-label="Spa wellness site preview">
-  <rect width="640" height="400" rx="14" fill="#1a1d24"/>
-  <rect x="10" y="10" width="620" height="380" rx="10" fill="#0b0d12"/>
-  <circle cx="28" cy="28" r="4" fill="#f87171"/>
-  <circle cx="44" cy="28" r="4" fill="#fbbf24"/>
-  <circle cx="60" cy="28" r="4" fill="#34d399"/>
-  <rect x="80" y="22" width="160" height="12" rx="3" fill="#27272a"/>
-  <g transform="translate(10,44)">
-    <rect width="620" height="346" fill="#f0f9ff"/>
-    <rect width="620" height="48" fill="#3b82f6"/>
-    <text x="20" y="30" fill="#fff" font-family="system-ui,sans-serif" font-size="13" font-weight="700">Pax and Pearl</text>
-    <text x="420" y="30" fill="rgba(255,255,255,0.8)" font-family="system-ui,sans-serif" font-size="10">Home  Services  Gallery  Book</text>
-    <text x="310" y="120" text-anchor="middle" fill="#1d4ed8" font-family="system-ui,sans-serif" font-size="22" font-weight="700">Release Tension</text>
-    <text x="310" y="148" text-anchor="middle" fill="#64748b" font-family="system-ui,sans-serif" font-size="11">Hot Stone · Hammam · Facial · Massage</text>
-    <rect x="250" y="165" width="120" height="30" rx="8" fill="#3b82f6"/>
-    <text x="310" y="185" text-anchor="middle" fill="#fff" font-family="system-ui,sans-serif" font-size="11" font-weight="600">Book experience</text>
-    <text x="40" y="240" fill="#1e40af" font-family="system-ui,sans-serif" font-size="14" font-weight="600">Our Services</text>
-    <rect x="40" y="255" width="160" height="70" rx="8" fill="#fff" stroke="#bfdbfe"/>
-    <rect x="55" y="270" width="80" height="8" rx="2" fill="#3b82f6" opacity="0.4"/>
-    <rect x="55" y="288" width="120" height="6" rx="2" fill="#94a3b8" opacity="0.5"/>
-    <rect x="220" y="255" width="160" height="70" rx="8" fill="#fff" stroke="#bfdbfe"/>
-    <rect x="235" y="270" width="80" height="8" rx="2" fill="#3b82f6" opacity="0.4"/>
-    <rect x="400" y="255" width="160" height="70" rx="8" fill="#fff" stroke="#bfdbfe"/>
-    <rect x="415" y="270" width="80" height="8" rx="2" fill="#3b82f6" opacity="0.4"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="520" viewBox="0 0 900 520" role="img" aria-label="Pax & Pearl: Instagram to website">
+  <defs>
+    <linearGradient id="ig-spa" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f58529"/>
+      <stop offset="50%" stop-color="#dd2a7b"/>
+      <stop offset="100%" stop-color="#8134af"/>
+    </linearGradient>
+    <filter id="sh-spa" x="-5%" y="-5%" width="110%" height="110%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-opacity="0.25"/>
+    </filter>
+  </defs>
+  <rect width="900" height="520" fill="#f3e8ff"/>
+  <!-- IG card -->
+  <g filter="url(#sh-spa)">
+    <rect x="36" y="40" width="340" height="440" rx="16" fill="#ffffff"/>
+    <!-- header -->
+    <circle cx="88" cy="100" r="28" fill="url(#ig-spa)"/>
+    <circle cx="88" cy="100" r="24" fill="#e5e7eb"/>
+    <text x="130" y="92" font-family="system-ui,sans-serif" font-size="14" font-weight="700" fill="#111">@paxpearl</text>
+    <text x="130" y="112" font-family="system-ui,sans-serif" font-size="11" fill="#6b7280">Pax & Pearl</text>
+    <!-- stats -->
+    <text x="60" y="160" font-family="system-ui,sans-serif" font-size="12" font-weight="700" fill="#111">248</text>
+    <text x="60" y="176" font-family="system-ui,sans-serif" font-size="9" fill="#6b7280">posts</text>
+    <text x="130" y="160" font-family="system-ui,sans-serif" font-size="12" font-weight="700" fill="#111">12.4k</text>
+    <text x="130" y="176" font-family="system-ui,sans-serif" font-size="9" fill="#6b7280">followers</text>
+    <text x="220" y="160" font-family="system-ui,sans-serif" font-size="12" font-weight="700" fill="#111">890</text>
+    <text x="220" y="176" font-family="system-ui,sans-serif" font-size="9" fill="#6b7280">following</text>
+    <!-- bio -->
+    <text x="60" y="210" font-family="system-ui,sans-serif" font-size="11" font-weight="600" fill="#111">Hot stone · Hammam · Facial</text>
+    <text x="60" y="228" font-family="system-ui,sans-serif" font-size="10" fill="#6b7280">Lagos, NG</text>
+    <text x="60" y="248" font-family="system-ui,sans-serif" font-size="10" fill="#2563eb">paxpearl.com</text>
+    <!-- buttons -->
+    <rect x="60" y="265" width="120" height="28" rx="8" fill="#2563eb"/>
+    <text x="120" y="283" text-anchor="middle" font-family="system-ui,sans-serif" font-size="11" font-weight="600" fill="#fff">Follow</text>
+    <rect x="190" y="265" width="120" height="28" rx="8" fill="#e5e7eb"/>
+    <text x="250" y="283" text-anchor="middle" font-family="system-ui,sans-serif" font-size="11" font-weight="600" fill="#111">Message</text>
+    <!-- grid posts -->
+    <rect x="60" y="310" width="80" height="80" rx="4" fill="#dbeafe"/>
+    <rect x="150" y="310" width="80" height="80" rx="4" fill="#fce7f3"/>
+    <rect x="240" y="310" width="80" height="80" rx="4" fill="#d1fae5"/>
+    <rect x="60" y="400" width="80" height="60" rx="4" fill="#fef3c7"/>
+    <rect x="150" y="400" width="80" height="60" rx="4" fill="#e0e7ff"/>
+    <rect x="240" y="400" width="80" height="60" rx="4" fill="#ffedd5"/>
+  </g>
+  <!-- Arrow -->
+  <path d="M400 250 C430 220, 450 220, 480 250" fill="none" stroke="#7c3aed" stroke-width="3" stroke-linecap="round"/>
+  <path d="M468 238 L488 250 L468 262" fill="none" stroke="#7c3aed" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- IG glyph -->
+  <rect x="430" y="160" width="36" height="36" rx="10" fill="url(#ig-spa)"/>
+  <rect x="438" y="168" width="20" height="20" rx="6" fill="none" stroke="#fff" stroke-width="2"/>
+  <circle cx="448" cy="178" r="4" fill="none" stroke="#fff" stroke-width="1.5"/>
+  <!-- Website card -->
+  <g filter="url(#sh-spa)">
+    <rect x="500" y="50" width="360" height="420" rx="12" fill="#0a0a0a"/>
+    <rect x="500" y="50" width="360" height="36" rx="12" fill="#171717"/>
+    <circle cx="520" cy="68" r="5" fill="#f87171"/>
+    <circle cx="536" cy="68" r="5" fill="#fbbf24"/>
+    <circle cx="552" cy="68" r="5" fill="#34d399"/>
+    <!-- hero -->
+    <rect x="500" y="86" width="360" height="200" fill="#1e3a5f"/>
+    <text x="680" y="180" text-anchor="middle" font-family="system-ui,sans-serif" font-size="22" font-weight="800" fill="#ffffff">PAX & PEARL</text>
+    <text x="680" y="205" text-anchor="middle" font-family="system-ui,sans-serif" font-size="11" fill="rgba(255,255,255,0.85)">Bodywork & wellness</text>
+    <rect x="630" y="225" width="100" height="28" rx="6" fill="#ffffff"/>
+    <text x="680" y="243" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10" font-weight="700" fill="#0a0a0a">Book experience</text>
+    <!-- gallery strip -->
+    <text x="520" y="320" font-family="system-ui,sans-serif" font-size="12" font-weight="700" fill="#f3f4f6">GALLERY</text>
+    <rect x="520" y="335" width="100" height="70" rx="4" fill="#262626"/>
+    <rect x="630" y="335" width="100" height="70" rx="4" fill="#262626"/>
+    <rect x="740" y="335" width="100" height="70" rx="4" fill="#262626"/>
+    <rect x="520" y="420" width="320" height="30" rx="4" fill="#171717"/>
   </g>
 </svg>
