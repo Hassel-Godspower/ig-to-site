@@ -155,7 +155,7 @@ export function PwaInstallPrompt() {
       <div className="goke-pwa-backdrop" onClick={() => close(false)} />
       <div className="goke-pwa-sheet">
         <div className="goke-pwa-mark" aria-hidden>
-          g
+          <img src="/icons/icon-192.png" alt="" width={44} height={44} />
         </div>
 
         <h2 id="goke-pwa-title">
