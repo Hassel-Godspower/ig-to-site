@@ -1,180 +1,118 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1536" height="1024" viewBox="0 0 1536 1024">
-<defs>
-  <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f5e7f4"/><stop offset=".55" stop-color="#ead9ee"/><stop offset="1" stop-color="#e7d9e7"/></linearGradient>
-  <linearGradient id="igGrad" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#ffd45a"/><stop offset=".28" stop-color="#ed4b67"/><stop offset=".62" stop-color="#c62a8f"/><stop offset="1" stop-color="#5b35c8"/></linearGradient>
-  <linearGradient id="hero" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#d8c1b1"/><stop offset=".45" stop-color="#a47b6b"/><stop offset="1" stop-color="#3d2927"/></linearGradient>
-  <linearGradient id="cream" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fffaf2"/><stop offset="1" stop-color="#eadbcb"/></linearGradient>
-  <linearGradient id="burg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7d2031"/><stop offset="1" stop-color="#2a1018"/></linearGradient>
-  <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="16" stdDeviation="18" flood-opacity=".18"/></filter>
-  <filter id="soft" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation=".7"/></filter>
-  <pattern id="grain" width="18" height="18" patternUnits="userSpaceOnUse"><circle cx="2" cy="3" r=".8" fill="#fff" opacity=".08"/><circle cx="12" cy="10" r=".7" fill="#000" opacity=".04"/><circle cx="7" cy="16" r=".5" fill="#fff" opacity=".07"/></pattern>
-  <clipPath id="igPosts"><rect x="91" y="510" width="590" height="350" rx="2"/></clipPath>
-  <clipPath id="siteHero"><rect x="690" y="380" width="750" height="335" rx="8"/></clipPath>
-  <clipPath id="gallery"><rect x="695" y="805" width="730" height="155" rx="3"/></clipPath>
-</defs>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1536" height="1024" viewBox="0 0 1536 1024">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f7edf3"/><stop offset="1" stop-color="#ead7e8"/></linearGradient>
+    <linearGradient id="ig" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#f58529"/><stop offset=".42" stop-color="#dd2a7b"/><stop offset=".75" stop-color="#8134af"/><stop offset="1" stop-color="#515bd4"/></linearGradient>
+    <linearGradient id="wine" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3c071c"/><stop offset="1" stop-color="#8f1f4e"/></linearGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="14" stdDeviation="18" flood-color="#4b2440" flood-opacity=".18"/></filter>
+    <filter id="soft" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="3"/></filter>
+    <clipPath id="profileClip"><rect x="86" y="120" width="620" height="725" rx="22"/></clipPath>
+    <clipPath id="siteClip"><rect x="755" y="286" width="690" height="610" rx="18"/></clipPath>
+    <clipPath id="heroClip"><rect x="755" y="286" width="690" height="285" rx="18"/></clipPath>
+    <clipPath id="grid1"><rect x="770" y="665" width="205" height="205" rx="8"/></clipPath>
+    <clipPath id="grid2"><rect x="990" y="665" width="205" height="205" rx="8"/></clipPath>
+    <clipPath id="grid3"><rect x="1210" y="665" width="205" height="205" rx="8"/></clipPath>
+  </defs>
 
-<!-- BACKGROUND -->
-<rect width="1536" height="1024" fill="url(#bg)"/>
-<circle cx="126" cy="154" r="170" fill="#fff" opacity=".15"/>
-<circle cx="1450" cy="900" r="260" fill="#fff" opacity=".12"/>
-<rect width="1536" height="1024" fill="url(#grain)"/>
+  <rect width="1536" height="1024" fill="url(#bg)"/>
+  <circle cx="1390" cy="80" r="180" fill="#fff" opacity=".22"/>
+  <circle cx="80" cy="970" r="240" fill="#fff" opacity=".20"/>
 
-<!-- INSTAGRAM PROFILE CARD -->
-<g filter="url(#shadow)">
-  <rect x="64" y="62" width="790" height="820" rx="18" fill="#fff"/>
-  <rect x="64" y="62" width="790" height="820" rx="18" fill="none" stroke="#ece8ea"/>
-</g>
+  <!-- Header -->
+  <text x="768" y="60" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="700" letter-spacing="4" fill="#3d1630">FROM INSTAGRAM TO YOUR OWN WEBSITE</text>
+  <text x="768" y="91" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="13" letter-spacing="2" fill="#765467">A REAL-WORLD FASHION BOUTIQUE EXAMPLE</text>
 
-<!-- profile header -->
-<circle cx="174" cy="177" r="70" fill="url(#burg)"/>
-<circle cx="174" cy="177" r="61" fill="url(#cream)"/>
-<!-- boutique logo in profile -->
-<path d="M145 195 C148 169 151 151 174 140 C197 151 201 170 203 195" fill="none" stroke="#7d2031" stroke-width="5"/>
-<path d="M153 185 C160 175 188 175 196 185 L196 202 L153 202 Z" fill="#7d2031" opacity=".9"/>
-<circle cx="174" cy="177" r="70" fill="none" stroke="#c43d68" stroke-width="4"/>
+  <!-- Instagram card -->
+  <rect x="70" y="104" width="650" height="765" rx="28" fill="#fff" filter="url(#shadow)"/>
+  <g clip-path="url(#profileClip)">
+    <rect x="86" y="120" width="620" height="725" fill="#fff"/>
+  </g>
+  <text x="112" y="158" font-family="Arial,Helvetica,sans-serif" font-size="14" font-weight="700" fill="#111">Instagram</text>
+  <circle cx="664" cy="150" r="3" fill="#111"/><circle cx="674" cy="150" r="3" fill="#111"/><circle cx="684" cy="150" r="3" fill="#111"/>
 
-<text x="270" y="124" font-family="Arial,Helvetica,sans-serif" font-size="22" font-weight="700" fill="#161216">lumeboutique.ng</text>
-<text x="270" y="151" font-family="Arial,Helvetica,sans-serif" font-size="14" fill="#777">LUMÉ BOUTIQUE · Fashion Boutique</text>
-<text x="270" y="181" font-family="Arial,Helvetica,sans-serif" font-size="14" font-weight="700" fill="#252027">284 posts</text>
-<text x="388" y="181" font-family="Arial,Helvetica,sans-serif" font-size="14" font-weight="700" fill="#252027">8,420 followers</text>
-<text x="528" y="181" font-family="Arial,Helvetica,sans-serif" font-size="14" font-weight="700" fill="#252027">392 following</text>
-<text x="270" y="213" font-family="Arial,Helvetica,sans-serif" font-size="15" fill="#2a2429">Curated womenswear for modern living ✦</text>
-<text x="270" y="236" font-family="Arial,Helvetica,sans-serif" font-size="15" fill="#2a2429">New drops · Occasion pieces · Everyday luxury</text>
-<text x="270" y="259" font-family="Arial,Helvetica,sans-serif" font-size="14" fill="#555">Lagos, Nigeria</text>
-<text x="270" y="283" font-family="Arial,Helvetica,sans-serif" font-size="14" font-weight="700" fill="#6f1d31">lumeboutique.ng</text>
+  <!-- Profile image -->
+  <circle cx="176" cy="244" r="78" fill="url(#ig)"/>
+  <circle cx="176" cy="244" r="72" fill="#fff"/>
+  <image x="110" y="178" width="132" height="132" preserveAspectRatio="xMidYMid slice" href="https://images.unsplash.com/photo-1768825136230-34fb80291f19?auto=format&amp;fit=crop&amp;fm=jpg&amp;q=80&amp;w=800" clip-path="circle(66px at 66px 66px)"/>
 
-<!-- buttons -->
-<rect x="110" y="320" width="335" height="42" rx="9" fill="#7d2031"/>
-<text x="277" y="347" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="15" font-weight="700" fill="#fff">Follow</text>
-<rect x="457" y="320" width="280" height="42" rx="9" fill="#efedef"/>
-<text x="597" y="347" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="15" font-weight="700" fill="#222">Message</text>
+  <text x="280" y="202" font-family="Arial,Helvetica,sans-serif" font-size="22" font-weight="700" fill="#111">lume.boutique</text>
+  <text x="280" y="228" font-family="Arial,Helvetica,sans-serif" font-size="13" fill="#777">LUMÉ BOUTIQUE · Fashion &amp; Style</text>
+  <text x="280" y="262" font-family="Arial,Helvetica,sans-serif" font-size="12" fill="#333">2,438 posts</text>
+  <text x="392" y="262" font-family="Arial,Helvetica,sans-serif" font-size="12" fill="#333">18.6K followers</text>
+  <text x="520" y="262" font-family="Arial,Helvetica,sans-serif" font-size="12" fill="#333">612 following</text>
+  <text x="280" y="293" font-family="Arial,Helvetica,sans-serif" font-size="13" font-weight="600" fill="#333">Contemporary pieces for women who dress with intention ✦</text>
+  <text x="280" y="315" font-family="Arial,Helvetica,sans-serif" font-size="12" fill="#555">Lagos · Abuja · Nationwide delivery</text>
+  <text x="280" y="337" font-family="Arial,Helvetica,sans-serif" font-size="12" fill="#9b214f">lume-boutique.com</text>
 
-<!-- highlights -->
-<g font-family="Arial,Helvetica,sans-serif" font-size="12" fill="#3b3438" text-anchor="middle">
-  <circle cx="140" cy="421" r="35" fill="url(#cream)" stroke="#cfc5c9"/>
-  <path d="M122 432 Q140 400 158 432" fill="none" stroke="#7d2031" stroke-width="3"/>
-  <text x="140" y="476">NEW IN</text>
-  <circle cx="235" cy="421" r="35" fill="#d6b9b1" stroke="#cfc5c9"/>
-  <path d="M216 437 L226 405 L244 405 L254 437 Z" fill="#7d2031"/><path d="M226 405 Q235 393 244 405" fill="none" stroke="#7d2031" stroke-width="4"/>
-  <text x="235" y="476">DRESSES</text>
-  <circle cx="330" cy="421" r="35" fill="#e5d5b9" stroke="#cfc5c9"/>
-  <path d="M307 436 L330 400 L353 436" fill="none" stroke="#7d2031" stroke-width="4"/><circle cx="330" cy="417" r="8" fill="none" stroke="#7d2031" stroke-width="3"/>
-  <text x="330" y="476">ACCESSORIES</text>
-  <circle cx="425" cy="421" r="35" fill="#d1c1c8" stroke="#cfc5c9"/>
-  <path d="M407 435 Q425 395 443 435" fill="none" stroke="#3d292f" stroke-width="5"/><path d="M414 416 Q425 425 436 416" fill="none" stroke="#7d2031" stroke-width="3"/>
-  <text x="425" y="476">LOOKBOOK</text>
-  <circle cx="520" cy="421" r="35" fill="#c8c4b9" stroke="#cfc5c9"/>
-  <path d="M499 436 L507 407 L533 407 L541 436 Z" fill="#242124"/><path d="M507 407 Q520 393 533 407" fill="none" stroke="#242124" stroke-width="4"/>
-  <text x="520" y="476">STYLE</text>
-  <circle cx="615" cy="421" r="35" fill="#e1c7c9" stroke="#cfc5c9"/>
-  <path d="M594 435 Q615 399 636 435" fill="none" stroke="#7d2031" stroke-width="4"/><path d="M603 421 L615 411 L627 421" fill="none" stroke="#7d2031" stroke-width="3"/>
-  <text x="615" y="476">SALE</text>
-</g>
+  <rect x="280" y="355" width="195" height="36" rx="9" fill="#1877f2"/>
+  <text x="377" y="378" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="12" font-weight="700" fill="#fff">Follow</text>
+  <rect x="485" y="355" width="195" height="36" rx="9" fill="#efefef"/>
+  <text x="582" y="378" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="12" font-weight="700" fill="#111">Message</text>
 
-<!-- Instagram grid -->
-<g clip-path="url(#igPosts)">
-  <!-- row 1 -->
-  <rect x="91" y="510" width="195" height="175" fill="url(#hero)"/>
-  <!-- model silhouette -->
-  <circle cx="190" cy="565" r="27" fill="#e5b99d"/><path d="M160 600 Q190 580 220 600 L245 685 L135 685 Z" fill="#efe9df"/><path d="M175 585 Q190 573 205 585" fill="none" stroke="#2b2021" stroke-width="13"/>
-  <path d="M168 616 L190 680 L212 616" fill="none" stroke="#7d2031" stroke-width="5"/>
-  <rect x="286" y="510" width="195" height="175" fill="#e8d6c9"/>
-  <!-- clothing rack -->
-  <path d="M310 550 H455" stroke="#2d2527" stroke-width="5"/><path d="M325 550 L325 675 M440 550 L440 675" stroke="#2d2527" stroke-width="4"/>
-  <path d="M330 555 L350 585 L350 665 L330 665 Z" fill="#7d2031"/><path d="M365 555 L385 585 L385 665 L365 665 Z" fill="#d8b48e"/><path d="M400 555 L420 585 L420 665 L400 665 Z" fill="#252124"/>
-  <rect x="481" y="510" width="200" height="175" fill="#c8a99a"/>
-  <!-- handbag -->
-  <rect x="535" y="570" width="90" height="70" rx="8" fill="#7d2031"/><path d="M555 570 Q580 535 605 570" fill="none" stroke="#7d2031" stroke-width="8"/>
-  <circle cx="580" cy="605" r="7" fill="#e6c77c"/>
-  <!-- row 2 -->
-  <rect x="91" y="685" width="195" height="175" fill="#c5b0aa"/>
-  <path d="M170 728 Q190 705 210 728 L230 850 L150 850 Z" fill="#f5efe6"/><circle cx="190" cy="710" r="20" fill="#d8a98f"/>
-  <path d="M160 735 L190 790 L220 735" fill="none" stroke="#7d2031" stroke-width="5"/>
-  <rect x="286" y="685" width="195" height="175" fill="#dfd2c5"/>
-  <path d="M325 745 Q385 705 445 745 L430 845 H340 Z" fill="#242124"/><path d="M350 744 L385 800 L420 744" fill="none" stroke="#d7b08d" stroke-width="7"/>
-  <rect x="481" y="685" width="200" height="175" fill="#9b7370"/>
-  <path d="M520 735 H642" stroke="#fff" opacity=".45" stroke-width="2"/><path d="M540 755 L565 825 H610 L635 755" fill="#e7d5c1"/><path d="M565 825 L555 850 M610 825 L620 850" stroke="#2b2225" stroke-width="6"/>
-</g>
-<rect x="91" y="510" width="590" height="350" fill="none" stroke="#eee" stroke-width="1"/>
+  <!-- Highlights -->
+  <g font-family="Arial,Helvetica,sans-serif" font-size="10" fill="#333" text-anchor="middle">
+    <circle cx="132" cy="443" r="34" fill="#f4d8e4"/><circle cx="220" cy="443" r="34" fill="#eee0d1"/><circle cx="308" cy="443" r="34" fill="#dce7df"/><circle cx="396" cy="443" r="34" fill="#e5dce8"/><circle cx="484" cy="443" r="34" fill="#f0e3cf"/><circle cx="572" cy="443" r="34" fill="#e3d4d4"/>
+    <image x="99" y="410" width="66" height="66" preserveAspectRatio="xMidYMid slice" href="https://images.unsplash.com/photo-1753161025545-1f4b1bfb362c?auto=format&amp;fit=crop&amp;fm=jpg&amp;q=80&amp;w=500"/>
+    <image x="187" y="410" width="66" height="66" preserveAspectRatio="xMidYMid slice" href="https://images.unsplash.com/photo-1769107805511-0bb7075fca27?auto=format&amp;fit=crop&amp;fm=jpg&amp;q=80&amp;w=500"/>
+    <image x="275" y="410" width="66" height="66" preserveAspectRatio="xMidYMid slice" href="https://i.pinimg.com/originals/42/83/f2/4283f25e6281763d513c38b5accaae39.jpg"/>
+    <text x="132" y="493">NEW IN</text><text x="220" y="493">DRESSES</text><text x="308" y="493">STYLE</text><text x="396" y="493">LAGOS</text><text x="484" y="493">SALE</text><text x="572" y="493">CLIENTS</text>
+  </g>
 
-<!-- RIGHT TOP INSTAGRAM ICON -->
-<g filter="url(#shadow)">
-  <rect x="1202" y="61" width="196" height="196" rx="49" fill="url(#igGrad)"/>
-  <rect x="1243" y="102" width="114" height="114" rx="31" fill="none" stroke="#fff" stroke-width="13"/>
-  <circle cx="1300" cy="159" r="28" fill="none" stroke="#fff" stroke-width="12"/>
-  <circle cx="1337" cy="122" r="9" fill="#fff"/>
-</g>
+  <!-- Instagram grid -->
+  <rect x="98" y="520" width="180" height="210" fill="#f4f4f4"/>
+  <rect x="288" y="520" width="180" height="210" fill="#f4f4f4"/>
+  <rect x="478" y="520" width="180" height="210" fill="#f4f4f4"/>
+  <image x="98" y="520" width="180" height="210" preserveAspectRatio="xMidYMid slice" href="https://images.unsplash.com/photo-1768825136230-34fb80291f19?auto=format&amp;fit=crop&amp;fm=jpg&amp;q=80&amp;w=800"/>
+  <image x="288" y="520" width="180" height="210" preserveAspectRatio="xMidYMid slice" href="https://images.unsplash.com/photo-1753161025545-1f4b1bfb362c?auto=format&amp;fit=crop&amp;fm=jpg&amp;q=80&amp;w=800"/>
+  <image x="478" y="520" width="180" height="210" preserveAspectRatio="xMidYMid slice" href="https://images.unsplash.com/photo-1769107805511-0bb7075fca27?auto=format&amp;fit=crop&amp;fm=jpg&amp;q=80&amp;w=800"/>
+  <rect x="98" y="740" width="180" height="90" fill="#ddd"/><rect x="288" y="740" width="180" height="90" fill="#ddd"/><rect x="478" y="740" width="180" height="90" fill="#ddd"/>
+  <image x="98" y="740" width="180" height="90" preserveAspectRatio="xMidYMid slice" href="https://i.pinimg.com/originals/42/83/f2/4283f25e6281763d513c38b5accaae39.jpg"/>
+  <image x="288" y="740" width="180" height="90" preserveAspectRatio="xMidYMid slice" href="https://images.unsplash.com/photo-1768825136230-34fb80291f19?auto=format&amp;fit=crop&amp;fm=jpg&amp;q=80&amp;w=800"/>
+  <image x="478" y="740" width="180" height="90" preserveAspectRatio="xMidYMid slice" href="https://images.unsplash.com/photo-1753161025545-1f4b1bfb362c?auto=format&amp;fit=crop&amp;fm=jpg&amp;q=80&amp;w=800"/>
 
-<!-- CURVED ARROW -->
-<path d="M913 155 C1010 122 1087 158 1088 259 C1089 294 1076 325 1052 347" fill="none" stroke="#6b39a5" stroke-width="7" stroke-linecap="round"/>
-<path d="M1024 322 L1052 347 L1071 311" fill="none" stroke="#e56d2f" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
-<text x="912" y="118" font-family="Arial,Helvetica,sans-serif" font-size="17" font-weight="700" fill="#7d2031" letter-spacing="2">YOUR INSTAGRAM → YOUR WEBSITE</text>
+  <!-- Transformation arrow -->
+  <path d="M 700 470 C 760 430, 780 330, 840 330" fill="none" stroke="#9b214f" stroke-width="9" stroke-linecap="round"/>
+  <path d="M 823 306 L 850 330 L 821 353" fill="none" stroke="#9b214f" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="754" y="400" transform="rotate(-25 754 400)" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="16" font-weight="700" fill="#8d2149">TURN IT INTO A WEBSITE</text>
 
-<!-- WEBSITE CARD -->
-<g filter="url(#shadow)">
-  <rect x="655" y="353" width="820" height="635" rx="18" fill="#171315"/>
-  <rect x="655" y="353" width="820" height="635" rx="18" fill="none" stroke="#2d2528"/>
-</g>
+  <!-- Website -->
+  <rect x="735" y="266" width="730" height="660" rx="26" fill="#fff" filter="url(#shadow)"/>
+  <rect x="755" y="286" width="690" height="610" rx="18" fill="#15100f"/>
+  <rect x="755" y="286" width="690" height="48" fill="#fbf4ed"/>
+  <text x="785" y="316" font-family="Georgia,serif" font-size="20" font-weight="700" letter-spacing="2" fill="#3d071c">LUMÉ</text>
+  <text x="1180" y="316" font-family="Arial,Helvetica,sans-serif" font-size="10" letter-spacing="2" fill="#4a403e">NEW IN</text>
+  <text x="1255" y="316" font-family="Arial,Helvetica,sans-serif" font-size="10" letter-spacing="2" fill="#4a403e">SHOP</text>
+  <text x="1315" y="316" font-family="Arial,Helvetica,sans-serif" font-size="10" letter-spacing="2" fill="#4a403e">ABOUT</text>
+  <text x="1395" y="316" font-family="Arial,Helvetica,sans-serif" font-size="10" letter-spacing="2" fill="#4a403e">BAG</text>
 
-<!-- browser bar -->
-<rect x="655" y="353" width="820" height="27" rx="18" fill="#252022"/>
-<circle cx="678" cy="366" r="4" fill="#bdb3b6"/><circle cx="692" cy="366" r="4" fill="#bdb3b6"/><circle cx="706" cy="366" r="4" fill="#bdb3b6"/>
-<text x="1045" y="371" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="10" fill="#a99fa2">lumeboutique.ng</text>
+  <!-- Real hero image -->
+  <g clip-path="url(#heroClip)">
+    <image x="755" y="286" width="690" height="285" preserveAspectRatio="xMidYMid slice" href="https://i.pinimg.com/originals/42/83/f2/4283f25e6281763d513c38b5accaae39.jpg"/>
+    <rect x="755" y="286" width="690" height="285" fill="#160b10" opacity=".35"/>
+  </g>
+  <text x="795" y="405" font-family="Georgia,serif" font-size="50" fill="#fff">THE NEW</text>
+  <text x="795" y="460" font-family="Georgia,serif" font-size="50" fill="#fff" font-style="italic">SEASON</text>
+  <text x="798" y="493" font-family="Arial,Helvetica,sans-serif" font-size="12" letter-spacing="2" fill="#fff">CURATED STYLE · MADE FOR YOU</text>
+  <rect x="798" y="516" width="138" height="34" rx="2" fill="#fff"/>
+  <text x="867" y="538" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="10" font-weight="700" letter-spacing="1" fill="#3d071c">SHOP COLLECTION</text>
 
-<!-- hero photo -->
-<g clip-path="url(#siteHero)">
-  <rect x="690" y="380" width="750" height="335" fill="url(#hero)"/>
-  <rect x="690" y="380" width="750" height="335" fill="#120f11" opacity=".16"/>
-  <!-- boutique interior -->
-  <path d="M700 650 L825 500 L920 510 L995 650 Z" fill="#6e4b43" opacity=".65"/>
-  <rect x="1185" y="405" width="200" height="230" fill="#4c3836" opacity=".55"/>
-  <path d="M1190 455 H1378 M1190 500 H1378 M1190 545 H1378" stroke="#d9c2b5" opacity=".3" stroke-width="2"/>
-  <!-- editorial model -->
-  <circle cx="1035" cy="466" r="42" fill="#d7a487"/>
-  <path d="M997 510 Q1035 485 1073 510 L1110 685 H960 Z" fill="#f2eee7"/>
-  <path d="M996 510 Q1035 490 1074 510 L1086 570 Q1035 590 984 570 Z" fill="#7d2031"/>
-  <path d="M990 518 L950 640 M1080 518 L1120 640" stroke="#e1b295" stroke-width="19" stroke-linecap="round"/>
-  <path d="M997 510 Q1035 470 1073 510" fill="none" stroke="#2c2223" stroke-width="18"/>
-  <path d="M1000 585 L970 705 M1070 585 L1100 705" stroke="#242022" stroke-width="18" stroke-linecap="round"/>
-  <!-- clothing rail -->
-  <path d="M1240 425 V650 M1240 425 H1375" stroke="#d9c8bf" stroke-width="4" opacity=".8"/>
-  <path d="M1260 450 L1280 490 L1280 625 L1260 625 Z" fill="#e7d5c3"/><path d="M1300 450 L1320 490 L1320 625 L1300 625 Z" fill="#7d2031"/><path d="M1340 450 L1360 490 L1360 625 L1340 625 Z" fill="#222022"/>
-  <rect x="690" y="610" width="750" height="105" fill="#090809" opacity=".38"/>
-</g>
+  <!-- Collection -->
+  <text x="770" y="625" font-family="Georgia,serif" font-size="28" fill="#fff">Latest Collection</text>
+  <text x="770" y="646" font-family="Arial,Helvetica,sans-serif" font-size="9" letter-spacing="2" fill="#bba9a4">SHOP THE LOOKS FROM @LUME.BOUTIQUE</text>
 
-<!-- site title -->
-<text x="725" y="555" font-family="Georgia,Times New Roman,serif" font-size="73" font-weight="700" letter-spacing="2" fill="#fff">LUMÉ</text>
-<text x="729" y="610" font-family="Arial,Helvetica,sans-serif" font-size="42" font-weight="700" letter-spacing="10" fill="#fff">BOUTIQUE</text>
-<text x="730" y="645" font-family="Arial,Helvetica,sans-serif" font-size="13" letter-spacing="3" fill="#f1dfd8">MODERN STYLE · CURATED IN LAGOS</text>
+  <g clip-path="url(#grid1)"><image x="770" y="665" width="205" height="205" preserveAspectRatio="xMidYMid slice" href="https://images.unsplash.com/photo-1768825136230-34fb80291f19?auto=format&amp;fit=crop&amp;fm=jpg&amp;q=80&amp;w=900"/></g>
+  <g clip-path="url(#grid2)"><image x="990" y="665" width="205" height="205" preserveAspectRatio="xMidYMid slice" href="https://images.unsplash.com/photo-1753161025545-1f4b1bfb362c?auto=format&amp;fit=crop&amp;fm=jpg&amp;q=80&amp;w=900"/></g>
+  <g clip-path="url(#grid3)"><image x="1210" y="665" width="205" height="205" preserveAspectRatio="xMidYMid slice" href="https://images.unsplash.com/photo-1769107805511-0bb7075fca27?auto=format&amp;fit=crop&amp;fm=jpg&amp;q=80&amp;w=900"/></g>
 
-<!-- navigation -->
-<text x="1188" y="685" font-family="Arial,Helvetica,sans-serif" font-size="11" letter-spacing="2" fill="#fff">SHOP</text>
-<text x="1255" y="685" font-family="Arial,Helvetica,sans-serif" font-size="11" letter-spacing="2" fill="#fff">COLLECTIONS</text>
-<text x="1365" y="685" font-family="Arial,Helvetica,sans-serif" font-size="11" letter-spacing="2" fill="#fff">CONTACT</text>
+  <!-- Bottom label -->
+  <rect x="755" y="875" width="690" height="21" fill="#3c071c"/>
+  <text x="1100" y="890" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="8" letter-spacing="2" fill="#fff">LUMÉ BOUTIQUE · LAGOS · ABUJA · NATIONWIDE DELIVERY</text>
 
-<!-- gallery heading -->
-<text x="700" y="768" font-family="Georgia,Times New Roman,serif" font-size="38" fill="#fff">LATEST COLLECTION</text>
-<text x="700" y="793" font-family="Arial,Helvetica,sans-serif" font-size="10" letter-spacing="2" fill="#aaa1a4">DISCOVER THE PIECES BEHIND THE FEED</text>
+  <!-- Instagram logo -->
+  <rect x="1340" y="95" width="86" height="86" rx="23" fill="url(#ig)"/>
+  <rect x="1360" y="115" width="46" height="46" rx="13" fill="none" stroke="#fff" stroke-width="6"/>
+  <circle cx="1383" cy="138" r="10" fill="none" stroke="#fff" stroke-width="5"/>
+  <circle cx="1399" cy="122" r="4" fill="#fff"/>
 
-<!-- gallery -->
-<g clip-path="url(#gallery)">
-  <rect x="695" y="805" width="170" height="155" fill="#c7a99c"/>
-  <path d="M730 845 Q780 815 830 845 L845 960 H715 Z" fill="#f1ece5"/><circle cx="780" cy="828" r="24" fill="#d7a287"/><path d="M758 838 Q780 810 802 838" fill="none" stroke="#282123" stroke-width="10"/>
-  <rect x="875" y="805" width="170" height="155" fill="#dfd2c7"/>
-  <path d="M905 850 L945 825 L1005 850 L1015 960 H900 Z" fill="#7d2031"/><path d="M945 825 L960 850 L975 825" fill="none" stroke="#e8cdbd" stroke-width="5"/>
-  <rect x="1055" y="805" width="170" height="155" fill="#9c7771"/>
-  <rect x="1095" y="850" width="90" height="65" rx="8" fill="#efe5d8"/><path d="M1115 850 Q1140 815 1165 850" fill="none" stroke="#efe5d8" stroke-width="8"/>
-  <rect x="1235" y="805" width="190" height="155" fill="#cbbba9"/>
-  <path d="M1270 860 H1390" stroke="#3a3031" stroke-width="4"/><path d="M1285 860 L1305 900 L1305 950 L1285 950 Z" fill="#242022"/><path d="M1330 860 L1350 900 L1350 950 L1330 950 Z" fill="#f1e5d7"/><path d="M1370 860 L1390 900 L1390 950 L1370 950 Z" fill="#7d2031"/>
-</g>
-
-<!-- footer/CTA -->
-<text x="1395" y="971" text-anchor="end" font-family="Arial,Helvetica,sans-serif" font-size="11" letter-spacing="2" fill="#b9afb2">SHOP THE DROP  →</text>
-
-<!-- foreground connector -->
-<path d="M640 890 C650 870 650 850 662 835" stroke="#fff" stroke-width="3" opacity=".5"/>
-
-<!-- small concept label -->
-<rect x="68" y="922" width="525" height="42" rx="21" fill="#fff" opacity=".72"/>
-<text x="330" y="949" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="13" font-weight="700" letter-spacing="1.8" fill="#5b2939">ONE INSTAGRAM PROFILE → A REAL BUSINESS WEBSITE</text>
+  <text x="768" y="974" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="12" letter-spacing="2" fill="#765467">YOUR INSTAGRAM CONTENT · YOUR BRAND · YOUR OWN DIGITAL HOME</text>
+  <text x="768" y="998" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="10" fill="#9a7d8d">Real photography shown for visual mockup purposes. Boutique concept: LUMÉ.</text>
 </svg>
