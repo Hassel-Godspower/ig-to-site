@@ -1,73 +1,28 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="900" height="520" viewBox="0 0 900 520" role="img" aria-label="Pax & Pearl: Instagram to website">
-  <defs>
-    <linearGradient id="ig-spa" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#f58529"/>
-      <stop offset="50%" stop-color="#dd2a7b"/>
-      <stop offset="100%" stop-color="#8134af"/>
-    </linearGradient>
-    <filter id="sh-spa" x="-5%" y="-5%" width="110%" height="110%">
-      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-opacity="0.25"/>
-    </filter>
-  </defs>
-  <rect width="900" height="520" fill="#f3e8ff"/>
-  <!-- IG card -->
-  <g filter="url(#sh-spa)">
-    <rect x="36" y="40" width="340" height="440" rx="16" fill="#ffffff"/>
-    <!-- header -->
-    <circle cx="88" cy="100" r="28" fill="url(#ig-spa)"/>
-    <circle cx="88" cy="100" r="24" fill="#e5e7eb"/>
-    <text x="130" y="92" font-family="system-ui,sans-serif" font-size="14" font-weight="700" fill="#111">@paxpearl</text>
-    <text x="130" y="112" font-family="system-ui,sans-serif" font-size="11" fill="#6b7280">Pax & Pearl</text>
-    <!-- stats -->
-    <text x="60" y="160" font-family="system-ui,sans-serif" font-size="12" font-weight="700" fill="#111">248</text>
-    <text x="60" y="176" font-family="system-ui,sans-serif" font-size="9" fill="#6b7280">posts</text>
-    <text x="130" y="160" font-family="system-ui,sans-serif" font-size="12" font-weight="700" fill="#111">12.4k</text>
-    <text x="130" y="176" font-family="system-ui,sans-serif" font-size="9" fill="#6b7280">followers</text>
-    <text x="220" y="160" font-family="system-ui,sans-serif" font-size="12" font-weight="700" fill="#111">890</text>
-    <text x="220" y="176" font-family="system-ui,sans-serif" font-size="9" fill="#6b7280">following</text>
-    <!-- bio -->
-    <text x="60" y="210" font-family="system-ui,sans-serif" font-size="11" font-weight="600" fill="#111">Hot stone · Hammam · Facial</text>
-    <text x="60" y="228" font-family="system-ui,sans-serif" font-size="10" fill="#6b7280">Lagos, NG</text>
-    <text x="60" y="248" font-family="system-ui,sans-serif" font-size="10" fill="#2563eb">paxpearl.com</text>
-    <!-- buttons -->
-    <rect x="60" y="265" width="120" height="28" rx="8" fill="#2563eb"/>
-    <text x="120" y="283" text-anchor="middle" font-family="system-ui,sans-serif" font-size="11" font-weight="600" fill="#fff">Follow</text>
-    <rect x="190" y="265" width="120" height="28" rx="8" fill="#e5e7eb"/>
-    <text x="250" y="283" text-anchor="middle" font-family="system-ui,sans-serif" font-size="11" font-weight="600" fill="#111">Message</text>
-    <!-- grid posts -->
-    <rect x="60" y="310" width="80" height="80" rx="4" fill="#dbeafe"/>
-    <rect x="150" y="310" width="80" height="80" rx="4" fill="#fce7f3"/>
-    <rect x="240" y="310" width="80" height="80" rx="4" fill="#d1fae5"/>
-    <rect x="60" y="400" width="80" height="60" rx="4" fill="#fef3c7"/>
-    <rect x="150" y="400" width="80" height="60" rx="4" fill="#e0e7ff"/>
-    <rect x="240" y="400" width="80" height="60" rx="4" fill="#ffedd5"/>
-  </g>
-  <!-- Arrow -->
-  <path d="M400 250 C430 220, 450 220, 480 250" fill="none" stroke="#7c3aed" stroke-width="3" stroke-linecap="round"/>
-  <path d="M468 238 L488 250 L468 262" fill="none" stroke="#7c3aed" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-  <!-- IG glyph -->
-  <rect x="430" y="160" width="36" height="36" rx="10" fill="url(#ig-spa)"/>
-  <rect x="438" y="168" width="20" height="20" rx="6" fill="none" stroke="#fff" stroke-width="2"/>
-  <circle cx="448" cy="178" r="4" fill="none" stroke="#fff" stroke-width="1.5"/>
-  <!-- Website card -->
-  <g filter="url(#sh-spa)">
-    <rect x="500" y="50" width="360" height="420" rx="12" fill="#0a0a0a"/>
-    <rect x="500" y="50" width="360" height="36" rx="12" fill="#171717"/>
-    <circle cx="520" cy="68" r="5" fill="#f87171"/>
-    <circle cx="536" cy="68" r="5" fill="#fbbf24"/>
-    <circle cx="552" cy="68" r="5" fill="#34d399"/>
-    <!-- hero -->
-    <rect x="500" y="86" width="360" height="200" fill="#1e3a5f"/>
-    <text x="680" y="180" text-anchor="middle" font-family="system-ui,sans-serif" font-size="22" font-weight="800" fill="#ffffff">PAX & PEARL</text>
-    <text x="680" y="205" text-anchor="middle" font-family="system-ui,sans-serif" font-size="11" fill="rgba(255,255,255,0.85)">Bodywork & wellness</text>
-    <rect x="630" y="225" width="100" height="28" rx="6" fill="#ffffff"/>
-    <text x="680" y="243" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10" font-weight="700" fill="#0a0a0a">Book experience</text>
-    <!-- gallery strip -->
-    <text x="520" y="320" font-family="system-ui,sans-serif" font-size="12" font-weight="700" fill="#f3f4f6">GALLERY</text>
-    <rect x="520" y="335" width="100" height="70" rx="4" fill="#262626"/>
-    <rect x="630" y="335" width="100" height="70" rx="4" fill="#262626"/>
-    <rect x="740" y="335" width="100" height="70" rx="4" fill="#262626"/>
-    <rect x="520" y="420" width="320" height="30" rx="4" fill="#171717"/>
-  </g>
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000">
+<defs>
+<linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f7e9e9"/><stop offset="1" stop-color="#ead6d8"/></linearGradient>
+<linearGradient id="rose" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#b85c68"/><stop offset="1" stop-color="#7d2f3d"/></linearGradient>
+<linearGradient id="site" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#231719"/><stop offset="1" stop-color="#110d0f"/></linearGradient>
+<filter id="shadow" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="18" stdDeviation="22" flood-opacity=".18"/></filter>
+<clipPath id="phoneClip"><rect x="74" y="145" width="690" height="700" rx="26"/></clipPath>
+<clipPath id="siteClip"><rect x="825" y="340" width="700" height="510" rx="18"/></clipPath>
+</defs>
+<rect width="1600" height="1000" fill="url(#bg)"/>
+<circle cx="1440" cy="110" r="180" fill="#fff" opacity=".25"/><circle cx="150" cy="880" r="230" fill="#fff" opacity=".2"/>
+<text x="80" y="75" font-family="Arial" font-size="25" font-weight="700" fill="#7d2f3d" letter-spacing="4">GÒKE</text>
+<text x="80" y="108" font-family="Arial" font-size="14" fill="#604b4f" letter-spacing="2">TURN YOUR INSTAGRAM INTO A WEBSITE</text>
+<rect x="55" y="125" width="730" height="755" rx="34" fill="#fff" filter="url(#shadow)"/><rect x="74" y="145" width="690" height="700" rx="26" fill="#fafafa"/>
+<circle cx="148" cy="218" r="55" fill="url(#rose)"/><circle cx="148" cy="218" r="43" fill="#f2d9d9"/><path d="M118 226 Q148 175 178 226 Q165 244 148 247 Q131 244 118 226Z" fill="#8d4a50"/><circle cx="148" cy="207" r="18" fill="#e5b9b9"/>
+<text x="225" y="184" font-family="Arial" font-size="21" font-weight="700" fill="#171113">veloura.skin</text><text x="225" y="211" font-family="Arial" font-size="15" fill="#6d5b5e">Veloura Beauty Spa • Wellness</text><text x="225" y="241" font-family="Arial" font-size="15" fill="#2c2224">Facials • Body Rituals • Massage ✨</text><text x="225" y="266" font-family="Arial" font-size="14" fill="#6d5b5e">A calm space for skin, body &amp; soul</text><text x="225" y="291" font-family="Arial" font-size="14" font-weight="700" fill="#7d2f3d">📍 Lagos • Book your self-care ritual ↓</text>
+<text x="520" y="185" font-family="Arial" font-size="16" font-weight="700">248</text><text x="520" y="207" font-family="Arial" font-size="12" fill="#777">posts</text><text x="590" y="185" font-family="Arial" font-size="16" font-weight="700">8.4K</text><text x="590" y="207" font-family="Arial" font-size="12" fill="#777">followers</text><text x="670" y="185" font-family="Arial" font-size="16" font-weight="700">391</text><text x="670" y="207" font-family="Arial" font-size="12" fill="#777">following</text>
+<rect x="112" y="315" width="305" height="42" rx="10" fill="#7d2f3d"/><text x="264" y="342" text-anchor="middle" font-family="Arial" font-size="15" font-weight="700" fill="#fff">Follow</text><rect x="428" y="315" width="230" height="42" rx="10" fill="#eee8e9"/><text x="543" y="342" text-anchor="middle" font-family="Arial" font-size="15" font-weight="700" fill="#32272a">Message</text>
+<g font-family="Arial" font-size="11" text-anchor="middle" fill="#45373a"><circle cx="125" cy="406" r="31" fill="#ead3d5"/><text x="125" y="452">Facials</text><circle cx="205" cy="406" r="31" fill="#d8c1b7"/><text x="205" y="452">Massage</text><circle cx="285" cy="406" r="31" fill="#edd8c4"/><text x="285" y="452">Glow</text><circle cx="365" cy="406" r="31" fill="#d7c7c9"/><text x="365" y="452">Reviews</text><circle cx="445" cy="406" r="31" fill="#e6d3d0"/><text x="445" y="452">Spa Day</text><circle cx="525" cy="406" r="31" fill="#d5bfc2"/><text x="525" y="452">Offers</text></g>
+<g clip-path="url(#phoneClip)"><rect x="94" y="475" width="215" height="170" fill="#cda9a4"/><ellipse cx="202" cy="565" rx="75" ry="52" fill="#f0d8d2"/><circle cx="200" cy="550" r="30" fill="#e7c2be"/><rect x="320" y="475" width="215" height="170" fill="#b88b80"/><ellipse cx="430" cy="560" rx="72" ry="48" fill="#eed2cb"/><path d="M355 590 Q430 500 505 590" fill="#8f5e57"/><rect x="546" y="475" width="215" height="170" fill="#dbc0b5"/><circle cx="652" cy="545" r="45" fill="#f2ded8"/><path d="M610 580 Q650 525 695 580" fill="#9c6861"/><rect x="94" y="660" width="215" height="170" fill="#b9968f"/><circle cx="200" cy="745" r="48" fill="#f0d5cd"/><rect x="320" y="660" width="215" height="170" fill="#d9c1b8"/><ellipse cx="430" cy="745" rx="78" ry="46" fill="#f3e1da"/><rect x="546" y="660" width="215" height="170" fill="#a97870"/><circle cx="650" cy="744" r="44" fill="#ecd0c9"/></g>
+<rect x="1220" y="125" width="120" height="120" rx="30" fill="url(#rose)"/><rect x="1248" y="153" width="64" height="64" rx="19" fill="none" stroke="#fff" stroke-width="8"/><circle cx="1280" cy="185" r="15" fill="none" stroke="#fff" stroke-width="7"/><circle cx="1300" cy="166" r="5" fill="#fff"/>
+<path d="M810 180 C980 155 1070 215 1060 315 C1055 350 1030 365 1005 380" fill="none" stroke="#7d2f3d" stroke-width="11" stroke-linecap="round"/><path d="M1005 380 L1035 365 M1005 380 L1012 345" fill="none" stroke="#7d2f3d" stroke-width="11" stroke-linecap="round"/><text x="895" y="155" font-family="Arial" font-size="16" font-weight="700" fill="#7d2f3d" letter-spacing="1">YOUR BUSINESS, ONLINE</text>
+<rect x="795" y="315" width="760" height="570" rx="28" fill="#171113" filter="url(#shadow)"/><rect x="815" y="335" width="720" height="530" rx="18" fill="url(#site)"/><circle cx="840" cy="357" r="5" fill="#fff" opacity=".7"/><circle cx="858" cy="357" r="5" fill="#fff" opacity=".4"/><circle cx="876" cy="357" r="5" fill="#fff" opacity=".25"/>
+<g clip-path="url(#siteClip)"><rect x="825" y="340" width="700" height="250" fill="#332224"/><ellipse cx="1190" cy="465" rx="180" ry="145" fill="#a96c70" opacity=".65"/><ellipse cx="1190" cy="450" rx="120" ry="125" fill="#e8c5c1" opacity=".8"/><path d="M1080 550 Q1190 375 1300 550" fill="#754047" opacity=".9"/><text x="875" y="410" font-family="Georgia" font-size="19" fill="#e7c8c8" letter-spacing="3">VELOURA BEAUTY SPA</text><text x="875" y="458" font-family="Georgia" font-size="43" fill="#fff">YOUR RITUAL.</text><text x="875" y="500" font-family="Georgia" font-size="43" fill="#fff">YOUR GLOW.</text><text x="875" y="533" font-family="Arial" font-size="13" fill="#eadcdd">Facials • Massage • Body Treatments • Wellness</text><rect x="875" y="555" width="140" height="42" rx="21" fill="#e8c5c1"/><text x="945" y="581" text-anchor="middle" font-family="Arial" font-size="13" font-weight="700" fill="#351f22">BOOK NOW</text>
+<rect x="825" y="600" width="700" height="70" fill="#1a1214"/><text x="865" y="642" font-family="Georgia" font-size="21" fill="#fff" letter-spacing="2">VELOURA</text><text x="1160" y="642" font-family="Arial" font-size="11" fill="#dbc3c5">HOME</text><text x="1210" y="642" font-family="Arial" font-size="11" fill="#dbc3c5">TREATMENTS</text><text x="1300" y="642" font-family="Arial" font-size="11" fill="#dbc3c5">ABOUT</text><text x="1350" y="642" font-family="Arial" font-size="11" fill="#dbc3c5">CONTACT</text><rect x="1415" y="623" width="80" height="30" rx="15" fill="#7d2f3d"/><text x="1455" y="643" text-anchor="middle" font-family="Arial" font-size="10" font-weight="700" fill="#fff">RESERVE</text>
+<text x="865" y="715" font-family="Georgia" font-size="25" fill="#fff">THE SPA EXPERIENCE</text><text x="865" y="739" font-family="Arial" font-size="11" fill="#bfaeaf">A curated space for restoration, beauty and deep relaxation.</text><rect x="865" y="765" width="135" height="90" fill="#9a706c"/><rect x="1015" y="765" width="135" height="90" fill="#c5a19a"/><rect x="1165" y="765" width="135" height="90" fill="#795052"/><rect x="1315" y="765" width="135" height="90" fill="#b98b84"/></g>
+<rect x="930" y="905" width="530" height="55" rx="27" fill="#fff" opacity=".92"/><text x="1195" y="939" text-anchor="middle" font-family="Arial" font-size="16" font-weight="700" fill="#7d2f3d" letter-spacing="1">FROM INSTAGRAM PROFILE → PROFESSIONAL SPA WEBSITE</text>
 </svg>
