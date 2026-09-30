@@ -100,61 +100,48 @@ export default function PreviewPage() {
   const [device, setDevice] = useState<Breakpoint>("desktop");
   const [tree, setTree] = useState<NavNode[]>([]);
   const [rightTab, setRightTab] = useState<"content" | "design" | "globals">("content");
-  const [currentPage, setCurrentPage] = useState("index.html");
-  const [sitePages, setSitePages] = useState<{ file: string; title: string }[]>([
-    { file: "index.html", title: "Home" },
-  ]);
   const [leftTab, setLeftTab] = useState<"structure" | "components" | "templates" | "media">("components");
   const [tokens, setTokens] = useState<DesignTokens>(DEFAULT_TOKENS);
   const [tplRefresh, setTplRefresh] = useState(0);
   const [canPasteStyle, setCanPasteStyle] = useState(false);
+  /** Timed guidance: 'regen' at 1min, 'publish' at 3min */
+  const [helpPrompt, setHelpPrompt] = useState<null | "regen" | "publish">(null);
 
-  const previewSrc = `/api/site/${jobId}/${currentPage}`;
 
+  const previewSrc = `/api/site/${jobId}/index.html`;
 
-  // Discover multi-page site files
+  // Guidance popups: 1 min → redo generation; 3 min → publish help
   useEffect(() => {
-    if (!jobId) return;
-    (async () => {
+    if (!jobId || phase !== "editing") return;
+
+    const key1 = `goke-help-regen-${jobId}`;
+    const key3 = `goke-help-publish-${jobId}`;
+
+    const t1 = window.setTimeout(() => {
       try {
-        const res = await fetch(`/api/site/${jobId}/pages.json`);
-        if (res.ok) {
-          const data = await res.json();
-          if (Array.isArray(data.pages) && data.pages.length) {
-            setSitePages(data.pages);
-            return;
-          }
-        }
-      } catch { /* ignore */ }
-      const candidates = [
-        "index.html",
-        "about.html",
-        "services.html",
-        "gallery.html",
-        "contact.html",
-        "booking.html",
-        "menu.html",
-        "shop.html",
-      ];
-      const found: { file: string; title: string }[] = [];
-      for (const file of candidates) {
-        try {
-          const r = await fetch(`/api/site/${jobId}/${file}`);
-          if (r.ok) {
-            const title =
-              file === "index.html"
-                ? "Home"
-                : file
-                    .replace(/\.html$/i, "")
-                    .replace(/[-_]/g, " ")
-                    .replace(/\b\w/g, (c) => c.toUpperCase());
-            found.push({ file, title });
-          }
-        } catch { /* skip */ }
+        if (sessionStorage.getItem(key1)) return;
+      } catch {
+        /* ignore */
       }
-      if (found.length) setSitePages(found);
-    })();
-  }, [jobId]);
+      setHelpPrompt((cur) => (cur ? cur : "regen"));
+    }, 60_000);
+
+    const t3 = window.setTimeout(() => {
+      try {
+        if (sessionStorage.getItem(key3)) return;
+      } catch {
+        /* ignore */
+      }
+      setHelpPrompt("publish");
+    }, 180_000);
+
+    return () => {
+      window.clearTimeout(t1);
+      window.clearTimeout(t3);
+    };
+  }, [jobId, phase]);
+
+
 
   const refreshTree = useCallback(() => {
     const t = builderRef.current?.getTree() ?? [];
@@ -435,7 +422,7 @@ export default function PreviewPage() {
       builder?.getHtml() ||
       "<!DOCTYPE html>\n" + doc.documentElement.outerHTML;
 
-    await fetch(`/api/site/${jobId}/${currentPage}`, {
+    await fetch(`/api/site/${jobId}/index.html`, {
       method: "PUT",
       body: html,
     });
@@ -625,6 +612,18 @@ export default function PreviewPage() {
 
 
 
+  function dismissHelp(kind: "regen" | "publish") {
+    try {
+      sessionStorage.setItem(
+        kind === "regen" ? `goke-help-regen-${jobId}` : `goke-help-publish-${jobId}`,
+        "1"
+      );
+    } catch {
+      /* ignore */
+    }
+    setHelpPrompt(null);
+  }
+
   async function goLive() {
     setError(null);
     setPhase("modal");
@@ -672,22 +671,6 @@ export default function PreviewPage() {
     }
   }
 
-
-  async function switchPage(nextFile: string) {
-    if (nextFile === currentPage) return;
-    try {
-      if (!saved) await saveEdits();
-    } catch {
-      /* allow switch */
-    }
-    setSelectedElement(null);
-    setSelectedComponent(null);
-    setBuilderReady(false);
-    builderRef.current?.destroy();
-    builderRef.current = null;
-    setCurrentPage(nextFile);
-  }
-
   const deviceWidths: Record<string, string> = {
     desktop: "100%",
     tablet: "768px",
@@ -700,30 +683,6 @@ export default function PreviewPage() {
       <header className="goke-toolbar">
         <div className="goke-toolbar-left">
           <span className="goke-logo">gòke</span>
-          {sitePages.length > 1 && (
-            <label className="goke-page-switcher" style={{ display: "inline-flex", alignItems: "center", gap: 6, marginLeft: 12 }}>
-              <span style={{ fontSize: 11, opacity: 0.7 }}>Page</span>
-              <select
-                value={currentPage}
-                onChange={(e) => void switchPage(e.target.value)}
-                style={{
-                  background: "#1e222d",
-                  color: "#e8eaed",
-                  border: "1px solid #2a2f3c",
-                  borderRadius: 6,
-                  padding: "4px 8px",
-                  fontSize: 12,
-                }}
-              >
-                {sitePages.map((pg) => (
-                  <option key={pg.file} value={pg.file}>
-                    {pg.title}
-                  </option>
-                ))}
-              </select>
-            </label>
-          )}
-
           <button type="button" disabled={!canUndo} onClick={handleUndo}>
             ↶ Undo
           </button>
@@ -907,7 +866,6 @@ export default function PreviewPage() {
             }}
           >
             <iframe
-              key={currentPage}
               ref={iframeRef}
               title="Site preview"
               src={previewSrc}
@@ -1053,6 +1011,72 @@ export default function PreviewPage() {
         </div>
       )}
     </div>
+
+      {/* Timed help: 1 minute — redo generation */}
+      {helpPrompt === "regen" && phase === "editing" && (
+        <div style={s.overlay} role="dialog" aria-modal="true" aria-labelledby="goke-help-regen-title">
+          <div style={{ ...s.modal, width: 400 }}>
+            <h2 id="goke-help-regen-title" style={s.modalHeading}>
+              Not quite what you expected?
+            </h2>
+            <p style={s.modalSub}>
+              You&apos;ve been editing for a minute. If this site isn&apos;t matching your brand,
+              you can run generation again with the same or a fresh Instagram export.
+            </p>
+            <div style={s.modalActions}>
+              <button
+                type="button"
+                style={s.button}
+                onClick={() => dismissHelp("regen")}
+              >
+                Keep editing
+              </button>
+              <a
+                href="/"
+                style={{ ...s.primaryButton, textDecoration: "none", display: "inline-block" }}
+                onClick={() => dismissHelp("regen")}
+              >
+                Redo generation
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Timed help: 3 minutes — publish / we take it from here */}
+      {helpPrompt === "publish" && phase === "editing" && (
+        <div style={s.overlay} role="dialog" aria-modal="true" aria-labelledby="goke-help-publish-title">
+          <div style={{ ...s.modal, width: 420 }}>
+            <h2 id="goke-help-publish-title" style={s.modalHeading}>
+              Hi there — stuck on design ideas?
+            </h2>
+            <p style={s.modalSub}>
+              Proceed to publish (Go live) and we will take it up from there. You can keep polishing
+              after payment, or let us help finish the site once it&apos;s live.
+            </p>
+            <div style={s.modalActions}>
+              <button
+                type="button"
+                style={s.button}
+                onClick={() => dismissHelp("publish")}
+              >
+                Keep editing
+              </button>
+              <button
+                type="button"
+                style={s.primaryButton}
+                onClick={() => {
+                  dismissHelp("publish");
+                  void goLive();
+                }}
+              >
+                Go live
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </MediaProvider>
   );
 }
