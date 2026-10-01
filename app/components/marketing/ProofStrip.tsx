@@ -1,3 +1,10 @@
+const metrics = [
+  { value: "Free", label: "to generate & edit" },
+  { value: "₦10k", label: "once to publish" },
+  { value: "Multi-page", label: "not a link list" },
+  { value: "Visual", label: "editor included" },
+];
+
 const examples = [
   {
     label: "Fitness · Lagos",
@@ -23,6 +30,15 @@ export function ProofStrip() {
   return (
     <section className="gk-section" id="proof">
       <div className="gk-container">
+        <div className="gk-proof-metrics">
+          {metrics.map((m) => (
+            <div key={m.label} className="gk-proof-metric">
+              <strong>{m.value}</strong>
+              <span>{m.label}</span>
+            </div>
+          ))}
+        </div>
+
         <div className="gk-section-head">
           <h2>Instagram profile → real website</h2>
           <p>
@@ -50,6 +66,10 @@ export function ProofStrip() {
             </article>
           ))}
         </div>
+        <p className="gk-proof-footnote">
+          Built for Instagram-native businesses — coaches, spas, boutiques, studios, and service
+          brands ready to look established off the app.
+        </p>
       </div>
     </section>
   );
