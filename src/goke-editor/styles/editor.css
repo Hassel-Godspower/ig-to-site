@@ -897,3 +897,12 @@
 .goke-btn-primary:hover {
   background: var(--goke-accent-hover, #c4b5fd) !important;
 }
+
+/* goke-9-selection — clearer canvas chrome */
+.goke-canvas-wrap {
+  background: #121018;
+}
+.goke-page-switch select:focus {
+  outline: 2px solid #a78bfa;
+  outline-offset: 2px;
+}
