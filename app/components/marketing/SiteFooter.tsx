@@ -23,16 +23,18 @@ export function SiteFooter() {
           </div>
           <div>
             <h4>Product</h4>
-            <a href="#how">How it works</a>
-            <a href="#editor">Editor</a>
-            <a href="#templates">Templates</a>
-            <a href="#pricing">Pricing</a>
+            <Link href="/why">Why gòke</Link>
+            <a href="/#how">How it works</a>
+            <a href="/#editor">Editor</a>
+            <a href="/#templates">Templates</a>
+            <a href="/#pricing">Pricing</a>
           </div>
           <div>
             <h4>Help</h4>
             <Link href="/how-to-export">Export guide</Link>
-            <a href="#start">Generate site</a>
-            <a href="#demo">View demo</a>
+            <Link href="/why">Why gòke</Link>
+            <a href="/#start">Generate site</a>
+            <a href="/#demo">View demo</a>
           </div>
           <div>
             <h4>Legal</h4>

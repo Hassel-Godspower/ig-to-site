@@ -45,6 +45,9 @@ export function SiteHeader() {
           <a href="#pricing" onClick={() => setOpen(false)}>
             Pricing
           </a>
+          <Link href="/why" onClick={() => setOpen(false)}>
+            Why gòke
+          </Link>
           <Link href="/how-to-export" onClick={() => setOpen(false)}>
             Export guide
           </Link>
