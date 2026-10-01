@@ -112,9 +112,41 @@ export default function PreviewPage() {
   /** Timed guidance: 'regen' at 1min, 'publish' at 3min */
   const [helpPrompt, setHelpPrompt] = useState<null | "regen" | "publish">(null);
   const [tourOpen, setTourOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState("index.html");
+  const [sitePages, setSitePages] = useState<{ file: string; title: string }[]>([
+    { file: "index.html", title: "Home" },
+  ]);
 
 
-  const previewSrc = `/api/site/${jobId}/index.html`;
+  const previewSrc = `/api/site/${jobId}/${currentPage}`;
+
+
+  // Multi-page manifest
+  useEffect(() => {
+    if (!jobId) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(`/api/site/${jobId}/pages.json`);
+        if (!res.ok) return;
+        const data = await res.json();
+        const pages = Array.isArray(data?.pages) ? data.pages : [];
+        if (!cancelled && pages.length) {
+          setSitePages(
+            pages.map((p: { file?: string; title?: string }) => ({
+              file: p.file || "index.html",
+              title: p.title || p.file || "Page",
+            }))
+          );
+        }
+      } catch {
+        /* optional */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [jobId]);
 
   // Guidance popups: 1 min → redo generation; 3 min → publish help
   useEffect(() => {
@@ -431,7 +463,7 @@ export default function PreviewPage() {
       builder?.getHtml() ||
       "<!DOCTYPE html>\n" + doc.documentElement.outerHTML;
 
-    await fetch(`/api/site/${jobId}/index.html`, {
+    await fetch(`/api/site/${jobId}/${currentPage}`, {
       method: "PUT",
       body: html,
     });
@@ -751,6 +783,34 @@ export default function PreviewPage() {
             </button>
           ) : (
             <>
+              {sitePages.length > 1 && (
+                <label className="goke-page-switch" data-tour="tour-page-switch" style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, color: "#9ca3af" }}>
+                  <span>Page</span>
+                  <select
+                    value={currentPage}
+                    onChange={(e) => {
+                      setCurrentPage(e.target.value);
+                      setSelectedElement(null);
+                      setSelectedComponent(null);
+                      setSaved(true);
+                    }}
+                    style={{
+                      background: "#1a1e28",
+                      color: "#f3f4f6",
+                      border: "1px solid rgba(167,139,250,0.35)",
+                      borderRadius: 8,
+                      padding: "6px 10px",
+                      fontSize: 12,
+                    }}
+                  >
+                    {sitePages.map((pg) => (
+                      <option key={pg.file} value={pg.file}>
+                        {pg.title}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              )}
               <button
                 type="button"
                 title="Editor tour"
@@ -891,6 +951,7 @@ export default function PreviewPage() {
             }}
           >
             <iframe
+              key={previewSrc}
               ref={iframeRef}
               title="Site preview"
               src={previewSrc}
@@ -949,7 +1010,7 @@ export default function PreviewPage() {
               <GlobalsPanel tokens={tokens} onChange={handleTokensChange} />
             ) : !selectedElement ? (
               <p className="goke-properties-empty">
-                Select an element on the canvas
+                Click text, a button, or an image on the canvas to edit it here
               </p>
             ) : rightTab === "content" ? (
               <PropertiesPanel
