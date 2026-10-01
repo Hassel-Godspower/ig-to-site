@@ -48,6 +48,9 @@ export function SiteHeader() {
           <Link href="/why" onClick={() => setOpen(false)}>
             Why gòke
           </Link>
+          <Link href="/own-your-presence" onClick={() => setOpen(false)}>
+            Own your presence
+          </Link>
           <Link href="/how-to-export" onClick={() => setOpen(false)}>
             Export guide
           </Link>

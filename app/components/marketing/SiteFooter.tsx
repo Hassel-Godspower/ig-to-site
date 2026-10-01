@@ -24,6 +24,7 @@ export function SiteFooter() {
           <div>
             <h4>Product</h4>
             <Link href="/why">Why gòke</Link>
+            <Link href="/own-your-presence">Own your presence</Link>
             <a href="/#how">How it works</a>
             <a href="/#editor">Editor</a>
             <a href="/#templates">Templates</a>
