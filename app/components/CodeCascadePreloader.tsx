@@ -202,7 +202,7 @@ export function CodeCascadePreloader() {
         gòke
       </div>
       <canvas ref={canvasRef} className="goke-preloader-canvas" />
-      <p className="goke-preloader-caption">code, slowly moving through gòke</p>
+      <p className="goke-preloader-caption">Scale forward, upward</p>
     </div>
   );
 }
