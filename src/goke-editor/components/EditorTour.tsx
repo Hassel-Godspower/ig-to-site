@@ -73,6 +73,12 @@ const DEFAULT_STEPS: TourStep[] = [
     placement: "left",
   },
   {
+    target: "tour-page-switch",
+    title: "Multiple pages",
+    body: "Switch Home, About, Services, Gallery, and Contact here. Each page is part of the full site you publish.",
+    placement: "bottom",
+  },
+  {
     target: "tour-go-live",
     title: "Go live",
     body: "When you’re happy, publish. We’ll host the full multi-page site so visitors see what you built in the editor.",
