@@ -1,16 +1,21 @@
 /* gòke marketing site */
 :root {
-  --gk-bg: #08090c;
-  --gk-bg-elevated: #0e1016;
-  --gk-surface: #141820;
-  --gk-surface-2: #1a1f2a;
-  --gk-border: rgba(255, 255, 255, 0.07);
-  --gk-border-strong: rgba(255, 255, 255, 0.12);
-  --gk-text: #f3f4f6;
-  --gk-muted: #9ca3af;
-  --gk-faint: #6b7280;
-  --gk-accent: #5b8def;
-  --gk-accent-soft: rgba(91, 141, 239, 0.15);
+  /* Warm-dark base (less pure black, more social-app depth) */
+  --gk-bg: #0c0a10;
+  --gk-bg-elevated: #121018;
+  --gk-surface: #17141f;
+  --gk-surface-2: #1e1a28;
+  --gk-border: rgba(255, 255, 255, 0.08);
+  --gk-border-strong: rgba(196, 181, 253, 0.22);
+  --gk-text: #f5f3ff;
+  --gk-muted: #a8a3b8;
+  --gk-faint: #7a7590;
+  /* Subtle purple accent + Instagram-inspired gradient */
+  --gk-accent: #a78bfa;
+  --gk-accent-hover: #c4b5fd;
+  --gk-accent-soft: rgba(167, 139, 250, 0.16);
+  --gk-ig: linear-gradient(135deg, #f9ce34 0%, #ee2a7b 45%, #a337f8 75%, #7b2ff7 100%);
+  --gk-ig-soft: linear-gradient(135deg, rgba(249, 206, 52, 0.2), rgba(238, 42, 123, 0.18), rgba(167, 139, 250, 0.22));
   --gk-success: #34d399;
   --gk-danger: #f87171;
   --gk-radius: 12px;
@@ -29,7 +34,11 @@ html {
 body {
   margin: 0;
   font-family: var(--gk-font);
-  background: var(--gk-bg);
+  background:
+    radial-gradient(ellipse 100% 80% at 50% -30%, rgba(167, 139, 250, 0.09), transparent 55%),
+    radial-gradient(ellipse 60% 40% at 100% 0%, rgba(238, 42, 123, 0.05), transparent 45%),
+    var(--gk-bg);
+  background-attachment: fixed;
   color: var(--gk-text);
   line-height: 1.55;
   min-height: 100vh;
@@ -49,7 +58,7 @@ img { max-width: 100%; display: block; }
   position: sticky;
   top: 0;
   z-index: 50;
-  background: rgba(8, 9, 12, 0.85);
+  background: rgba(12, 10, 16, 0.88);
   backdrop-filter: blur(14px);
   border-bottom: 1px solid var(--gk-border);
 }
@@ -166,7 +175,7 @@ img { max-width: 100%; display: block; }
   position: absolute;
   inset: -20% 20% auto;
   height: 60%;
-  background: radial-gradient(ellipse, rgba(91, 141, 239, 0.12), transparent 70%);
+  background: radial-gradient(ellipse, rgba(167, 139, 250, 0.18), transparent 70%);
   pointer-events: none;
 }
 .gk-hero-grid {
@@ -189,7 +198,7 @@ img { max-width: 100%; display: block; }
   padding: 0.35rem 0.7rem;
   background: var(--gk-accent-soft);
   border-radius: 999px;
-  border: 1px solid rgba(91, 141, 239, 0.25);
+  border: 1px solid rgba(167, 139, 250, 0.28);
 }
 .gk-hero h1 {
   margin: 0 0 1rem;
@@ -616,7 +625,7 @@ img { max-width: 100%; display: block; }
 }
 .gk-price-card.featured {
   border-color: var(--gk-accent);
-  box-shadow: 0 0 0 1px var(--gk-accent), 0 20px 50px rgba(91, 141, 239, 0.12);
+  box-shadow: 0 0 0 1px var(--gk-accent), 0 20px 50px rgba(167, 139, 250, 0.18);
 }
 .gk-price-card h3 {
   margin: 0 0 0.35rem;
@@ -1014,8 +1023,8 @@ img { max-width: 100%; display: block; }
 .goke-pwa-status {
   margin: 0 0 0.85rem;
   padding: 0.65rem 0.75rem;
-  background: rgba(91, 141, 239, 0.12);
-  border: 1px solid rgba(91, 141, 239, 0.25);
+  background: rgba(167, 139, 250, 0.18);
+  border: 1px solid rgba(167, 139, 250, 0.28);
   border-radius: 8px;
   color: #bfdbfe;
   font-size: 0.85rem;
@@ -1201,7 +1210,7 @@ a.gk-template-card--link:hover {
   margin-bottom: 0.35rem;
 }
 .gk-editor-side .row.on {
-  background: rgba(91, 141, 239, 0.35);
+  background: rgba(167, 139, 250, 0.35);
 }
 .gk-editor-canvas--site {
   background: #0a0a0a !important;
@@ -1323,7 +1332,7 @@ a.gk-template-card--link:hover {
   padding: 1rem 1.15rem;
   border-radius: 12px;
   background: rgba(91, 141, 239, 0.1);
-  border: 1px solid rgba(91, 141, 239, 0.25);
+  border: 1px solid rgba(167, 139, 250, 0.28);
   color: #d1d5db;
   font-size: 0.9rem;
   line-height: 1.5;
@@ -1387,7 +1396,7 @@ a.gk-template-card--link:hover {
   padding: 3.5rem 0 2.5rem;
   border-bottom: 1px solid var(--gk-border);
   background:
-    radial-gradient(ellipse 80% 60% at 50% -20%, rgba(91, 141, 239, 0.14), transparent 55%),
+    radial-gradient(ellipse 80% 60% at 50% -20%, rgba(167, 139, 250, 0.14), transparent 55%),
     var(--gk-bg);
 }
 .gk-why-hero-inner {
@@ -1469,7 +1478,7 @@ a.gk-template-card--link:hover {
   margin: 0;
   padding: 1rem 1.15rem;
   background: var(--gk-accent-soft);
-  border: 1px solid rgba(91, 141, 239, 0.25);
+  border: 1px solid rgba(167, 139, 250, 0.28);
   border-radius: var(--gk-radius);
   font-size: 0.95rem;
 }
@@ -1647,7 +1656,7 @@ a.gk-template-card--link:hover {
   padding: 3.5rem 0 2.5rem;
   border-bottom: 1px solid var(--gk-border);
   background:
-    radial-gradient(ellipse 70% 50% at 30% -10%, rgba(91, 141, 239, 0.12), transparent 50%),
+    radial-gradient(ellipse 70% 50% at 30% -10%, rgba(167, 139, 250, 0.18), transparent 50%),
     radial-gradient(ellipse 50% 40% at 90% 20%, rgba(52, 211, 153, 0.06), transparent 45%),
     var(--gk-bg);
 }
@@ -1780,7 +1789,7 @@ a.gk-template-card--link:hover {
 }
 .gk-own-split-card li { margin-bottom: 0.45rem; }
 .gk-own-split-card-accent {
-  border-color: rgba(91, 141, 239, 0.35);
+  border-color: rgba(167, 139, 250, 0.35);
   background: linear-gradient(160deg, var(--gk-accent-soft), var(--gk-surface));
 }
 .gk-own-split-card-accent h3 { color: var(--gk-text); }
@@ -1804,4 +1813,112 @@ a.gk-template-card--link:hover {
   margin: 0;
   color: var(--gk-muted);
   font-size: 0.98rem;
+}
+
+
+/* —— Homepage Instagram feel + purple accent —— */
+.gk-logo-word {
+  background: var(--gk-ig);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.gk-logo-img {
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px var(--gk-bg), 0 0 0 4px transparent;
+  background: var(--gk-ig);
+  padding: 2px;
+}
+
+.gk-btn-primary {
+  background: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 50%, #c084fc 100%) !important;
+  color: #0c0a10 !important;
+  border: none !important;
+  font-weight: 600;
+  box-shadow: 0 4px 20px rgba(167, 139, 250, 0.28);
+}
+.gk-btn-primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #a78bfa 0%, #c4b5fd 100%) !important;
+  box-shadow: 0 6px 28px rgba(167, 139, 250, 0.4);
+  filter: brightness(1.05);
+}
+
+.gk-hero {
+  position: relative;
+  overflow: hidden;
+}
+.gk-hero::before {
+  content: "";
+  position: absolute;
+  inset: -20% -10% auto;
+  height: 70%;
+  background:
+    radial-gradient(circle at 20% 40%, rgba(238, 42, 123, 0.12), transparent 42%),
+    radial-gradient(circle at 75% 20%, rgba(167, 139, 250, 0.18), transparent 40%),
+    radial-gradient(circle at 50% 80%, rgba(249, 206, 52, 0.06), transparent 35%);
+  pointer-events: none;
+  z-index: 0;
+}
+.gk-hero > * {
+  position: relative;
+  z-index: 1;
+}
+.gk-hero h1 em {
+  background: var(--gk-ig);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.gk-kicker {
+  color: var(--gk-accent) !important;
+  letter-spacing: 0.06em;
+}
+
+/* Story-ring style accents on cards / upload */
+.gk-upload-card,
+.gk-hero .gk-card,
+[class*="upload"] {
+  /* soft IG ring when focused */
+}
+.gk-section-alt {
+  background:
+    linear-gradient(180deg, rgba(167, 139, 250, 0.04), transparent 40%),
+    var(--gk-bg-elevated);
+  border-color: var(--gk-border);
+}
+
+.gk-cta-band {
+  background:
+    radial-gradient(ellipse 80% 100% at 50% 100%, rgba(167, 139, 250, 0.15), transparent 55%),
+    radial-gradient(ellipse 50% 80% at 0% 50%, rgba(238, 42, 123, 0.08), transparent 50%),
+    var(--gk-surface);
+  border-top: 1px solid rgba(167, 139, 250, 0.15);
+}
+
+.gk-nav a:hover {
+  color: var(--gk-accent-hover, #c4b5fd);
+}
+
+/* Soft purple focus rings */
+.gk-btn:focus-visible,
+.gk-nav a:focus-visible {
+  outline: 2px solid var(--gk-accent);
+  outline-offset: 3px;
+}
+
+/* Demo frame — subtle gradient border (IG story energy) */
+.gk-demo-frame {
+  border-radius: var(--gk-radius-lg);
+  padding: 2px;
+  background: var(--gk-ig);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+}
+.gk-demo-frame img,
+.gk-demo-frame > * {
+  border-radius: calc(var(--gk-radius-lg) - 1px);
+  background: var(--gk-bg);
+}
+
+.gk-header {
+  border-bottom-color: rgba(167, 139, 250, 0.1);
 }
