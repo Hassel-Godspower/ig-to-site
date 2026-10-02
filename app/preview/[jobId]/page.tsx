@@ -87,6 +87,7 @@ export default function PreviewPage() {
     searchParams.get("reference") || searchParams.get("trxref");
 
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const [iframeEl, setIframeEl] = useState<HTMLIFrameElement | null>(null);
   const builderRef = useRef<Builder | null>(null);
 
   const [saved, setSaved] = useState(true);
@@ -1003,7 +1004,10 @@ export default function PreviewPage() {
           >
             <iframe
               key={previewSrc}
-              ref={iframeRef}
+              ref={(el) => {
+                iframeRef.current = el;
+                setIframeEl(el);
+              }}
               title="Site preview"
               src={previewSrc}
               className="goke-canvas"
@@ -1031,7 +1035,8 @@ export default function PreviewPage() {
         {/* Right: content props + design panel */}
         {editorMode === "simple" && (
           <SimpleEditorBar
-            iframe={iframeRef.current}
+            iframe={iframeEl ?? iframeRef.current}
+            selectedElement={selectedElement}
             onDirty={() => setSaved(false)}
           />
         )}
