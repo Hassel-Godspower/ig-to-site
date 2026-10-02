@@ -1,0 +1,24 @@
+{
+  "username": "paxandpearl_demo",
+  "full_name": "Pax and Pearl BodyWorks",
+  "biography": "Massage Spa in Lagos · Festac\nHot Stone · Hammam · Facial\nBook your experience",
+  "profile": {
+    "username": "paxandpearl_demo",
+    "full_name": "Pax and Pearl BodyWorks",
+    "biography": "Massage Spa in Lagos · Festac\nHot Stone · Hammam · Facial\nWhatsApp bookings welcome"
+  },
+  "posts": [
+    {
+      "caption": "Release Tension, Relax Your Body\nSignature massage for busy Lagos professionals.",
+      "media_url": ""
+    },
+    {
+      "caption": "Hot Stone Massage\nDeep warmth for tight shoulders and back.",
+      "media_url": ""
+    },
+    {
+      "caption": "Hammam & Facial\nGlow and reset in one visit.",
+      "media_url": ""
+    }
+  ]
+}

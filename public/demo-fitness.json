@@ -1,0 +1,24 @@
+{
+  "username": "naijafit_demo",
+  "full_name": "Naija Fit Coaching",
+  "biography": "Strength & lifestyle coaching\nLagos · Online programs\nTrain with purpose",
+  "profile": {
+    "username": "naijafit_demo",
+    "full_name": "Naija Fit Coaching",
+    "biography": "Strength & lifestyle coaching for Nigerians everywhere"
+  },
+  "posts": [
+    {
+      "caption": "Strength, Function & Community\nYour journey starts here.",
+      "media_url": ""
+    },
+    {
+      "caption": "Training that fits real life\nPrograms for busy schedules.",
+      "media_url": ""
+    },
+    {
+      "caption": "Results you can see\nBefore and after client work.",
+      "media_url": ""
+    }
+  ]
+}
