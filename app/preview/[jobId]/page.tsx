@@ -1,5 +1,3 @@
-this is the file.. correct it. 
-
 "use client";
 /**
  * Live site builder — Elementor-style structure + design
