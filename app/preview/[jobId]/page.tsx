@@ -5,7 +5,8 @@
  * Keeps payment / deploy / save pipeline unchanged.
  */
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react"
+import type { MutableRefObject } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 
 import { Builder } from "@/src/goke-editor/core/builder";
@@ -86,7 +87,7 @@ export default function PreviewPage() {
   const reference =
     searchParams.get("reference") || searchParams.get("trxref");
 
-  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const iframeRef = useRef<HTMLIFrameElement | null>(null) as MutableRefObject<HTMLIFrameElement | null>;
   const [iframeEl, setIframeEl] = useState<HTMLIFrameElement | null>(null);
   const builderRef = useRef<Builder | null>(null);
 
@@ -1004,10 +1005,8 @@ export default function PreviewPage() {
           >
             <iframe
               key={previewSrc}
-              ref={(el) => {
-                iframeRef.current = el;
-                setIframeEl(el);
-              }}
+              ref={iframeRef}
+              onLoad={() => setIframeEl(iframeRef.current)}
               title="Site preview"
               src={previewSrc}
               className="goke-canvas"
