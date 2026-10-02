@@ -1979,3 +1979,98 @@ a.gk-template-card--link:hover {
     display: none;
   }
 }
+
+/* Dual path hero card */
+.gk-path-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.35rem;
+  margin-bottom: 1.15rem;
+  padding: 0.25rem;
+  background: var(--gk-bg);
+  border-radius: 10px;
+  border: 1px solid var(--gk-border);
+}
+.gk-path-tabs button {
+  border: none;
+  background: transparent;
+  color: var(--gk-muted);
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 0.55rem 0.5rem;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.gk-path-tabs button.active {
+  background: rgba(167, 139, 250, 0.2);
+  color: #ede9fe;
+}
+.gk-field-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  font-size: 0.78rem;
+  color: var(--gk-muted);
+  margin-bottom: 0.85rem;
+}
+.gk-handle-row {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--gk-border);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--gk-bg);
+}
+.gk-handle-at {
+  padding: 0 0.65rem;
+  color: var(--gk-accent);
+  font-weight: 700;
+}
+.gk-handle-row input,
+.gk-field-label select {
+  flex: 1;
+  border: none;
+  background: transparent;
+  color: var(--gk-text);
+  padding: 0.75rem 0.85rem;
+  font-size: 0.95rem;
+  outline: none;
+}
+.gk-field-label select {
+  border: 1px solid var(--gk-border);
+  border-radius: 10px;
+  background: var(--gk-bg);
+}
+.gk-btn-block {
+  width: 100%;
+  justify-content: center;
+  margin-top: 0.35rem;
+}
+.gk-card-footnote {
+  margin: 0.9rem 0 0;
+  font-size: 0.8rem;
+  color: var(--gk-muted);
+}
+.gk-text-btn {
+  background: none;
+  border: none;
+  color: var(--gk-accent);
+  cursor: pointer;
+  font: inherit;
+  text-decoration: underline;
+  padding: 0;
+}
+.gk-sample-row {
+  font-size: 0.78rem;
+  color: var(--gk-muted);
+  margin: 0.65rem 0;
+}
+.gk-sample-row a {
+  color: var(--gk-accent);
+  text-decoration: underline;
+}
+.gk-upload-error {
+  color: var(--gk-danger);
+  font-size: 0.85rem;
+  margin: 0.5rem 0;
+}
