@@ -43,13 +43,34 @@ export async function POST(req: NextRequest) {
     const jobId = nanoid(12);
     await saveSiteFiles(jobId, files);
 
-    await createJob({
-      id: jobId,
-      status: "draft",
-      parsedUsername: profile.username || undefined,
-    });
+    await saveSiteFile(
+      jobId,
+      "editor-meta.json",
+      JSON.stringify({ editorMode: "advanced", createdVia: "export" }, null, 2)
+    );
 
-    return NextResponse.json({ jobId, defaultUsername: profile.username || "" });
+    try {
+      await createJob({
+        id: jobId,
+        status: "draft",
+        parsedUsername: profile.username || undefined,
+        editorMode: "advanced",
+      });
+    } catch (e: any) {
+      if (/editor_mode/i.test(String(e?.message))) {
+        await createJob({
+          id: jobId,
+          status: "draft",
+          parsedUsername: profile.username || undefined,
+        });
+      } else throw e;
+    }
+
+    return NextResponse.json({
+      jobId,
+      defaultUsername: profile.username || "",
+      editorMode: "advanced",
+    });
   } catch (err: any) {
     return NextResponse.json({ error: String(err?.message ?? err) }, { status: 500 });
   }
