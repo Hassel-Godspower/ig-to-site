@@ -12,6 +12,8 @@ export interface Job {
   repoName?: string;
   repoUrl?: string;
   defaultBranch?: string;
+  /** simple = handle path; advanced = full editor */
+  editorMode?: "simple" | "advanced";
   createdAt?: string;
 }
 
@@ -34,6 +36,7 @@ export interface Job {
 //
 // If you already created this table before the admin dashboard was added,
 // just run:  alter table jobs add column email text;
+// alter table jobs add column editor_mode text;
 
 function mapRow(data: any): Job {
   return {
@@ -48,6 +51,7 @@ function mapRow(data: any): Job {
     repoName: data.repo_name ?? undefined,
     repoUrl: data.repo_url ?? undefined,
     defaultBranch: data.default_branch ?? undefined,
+    editorMode: data.editor_mode === "simple" ? "simple" : data.editor_mode === "advanced" ? "advanced" : undefined,
     createdAt: data.created_at ?? undefined,
   };
 }
@@ -65,6 +69,7 @@ export async function createJob(job: Job): Promise<void> {
     repo_name: job.repoName ?? null,
     repo_url: job.repoUrl ?? null,
     default_branch: job.defaultBranch ?? null,
+    editor_mode: job.editorMode ?? null,
   });
   if (error) throw new Error(`Supabase insert failed: ${error.message}`);
 }
@@ -99,6 +104,7 @@ export async function updateJob(id: string, patch: Partial<Job>): Promise<Job> {
   if (patch.repoName !== undefined) row.repo_name = patch.repoName;
   if (patch.repoUrl !== undefined) row.repo_url = patch.repoUrl;
   if (patch.defaultBranch !== undefined) row.default_branch = patch.defaultBranch;
+  if (patch.editorMode !== undefined) row.editor_mode = patch.editorMode;
 
   const { error } = await getSupabase().from("jobs").update(row).eq("id", id);
   if (error) throw new Error(`Supabase update failed: ${error.message}`);
