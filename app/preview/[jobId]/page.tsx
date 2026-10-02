@@ -37,6 +37,7 @@ import {
   shouldAutoStartTour,
   markTourDone,
 } from "@/src/goke-editor/components/EditorTour";
+import { SimpleEditorBar } from "@/src/goke-editor/components/SimpleEditorBar";
 import { matchSiteElement } from "@/src/goke-editor/components/site-markers";
 import {
   applyBreakpointPreview,
@@ -112,6 +113,7 @@ export default function PreviewPage() {
   /** Timed guidance: 'regen' at 1min, 'publish' at 3min */
   const [helpPrompt, setHelpPrompt] = useState<null | "regen" | "publish">(null);
   const [tourOpen, setTourOpen] = useState(false);
+  const [editorMode, setEditorMode] = useState<"simple" | "advanced">("advanced");
   const [currentPage, setCurrentPage] = useState("index.html");
   const [sitePages, setSitePages] = useState<{ file: string; title: string }[]>([
     { file: "index.html", title: "Home" },
@@ -120,6 +122,30 @@ export default function PreviewPage() {
 
   const previewSrc = `/api/site/${jobId}/${currentPage}`;
 
+
+  
+  // Editor mode: ?mode= or editor-meta.json (handle vs export)
+  useEffect(() => {
+    const q = searchParams.get("mode");
+    if (q === "simple" || q === "advanced") setEditorMode(q);
+    if (!jobId) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(`/api/site/${jobId}/editor-meta.json`);
+        if (!res.ok) return;
+        const meta = await res.json();
+        if (!cancelled && (meta.editorMode === "simple" || meta.editorMode === "advanced")) {
+          setEditorMode(meta.editorMode);
+        }
+      } catch {
+        /* optional */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [jobId, searchParams]);
 
   // Multi-page manifest
   useEffect(() => {
@@ -847,8 +873,32 @@ export default function PreviewPage() {
         </div>
       )}
 
+      
+      {editorMode === "simple" && phase === "editing" && (
+        <div style={{ background: "#1a1625", borderBottom: "1px solid rgba(167,139,250,0.25)", padding: "8px 16px", fontSize: 12, color: "#c4b5fd", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" as const }}>
+          <span>Quick edit mode — text, logo, color, WhatsApp. Full drag-and-drop unlocks after go-live or via Instagram export.</span>
+          <button
+            type="button"
+            style={{ background: "transparent", border: "1px solid rgba(167,139,250,0.4)", color: "#ede9fe", borderRadius: 6, padding: "4px 10px", cursor: "pointer", fontSize: 12 }}
+            onClick={async () => {
+              setEditorMode("advanced");
+              try {
+                await fetch(`/api/site/${jobId}/editor-meta.json`, {
+                  method: "PUT",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ editorMode: "advanced", upgradedFrom: "simple" }),
+                });
+              } catch { /* ignore */ }
+            }}
+          >
+            Open full editor
+          </button>
+        </div>
+      )}
+
       <div className="goke-workspace">
-        {/* Left: structure + components */}
+        {/* Left: structure + components — advanced only */}
+        {editorMode === "advanced" && (
         <div className="goke-left-stack">
           <div className="goke-left-tabs">
             <button
@@ -938,6 +988,7 @@ export default function PreviewPage() {
             />
           )}
         </div>
+        )}
 
         {/* Center: canvas */}
         <main className="goke-canvas-wrap" data-tour="tour-canvas" style={{ position: "relative" }}>
@@ -978,7 +1029,13 @@ export default function PreviewPage() {
         </main>
 
         {/* Right: content props + design panel */}
-        <aside className="goke-properties" data-tour="tour-properties">
+        {editorMode === "simple" && (
+          <SimpleEditorBar
+            iframe={iframeRef.current}
+            onDirty={() => setSaved(false)}
+          />
+        )}
+        <aside className="goke-properties" data-tour="tour-properties" style={{ display: editorMode === "simple" ? "none" : undefined }}>
           <div className="goke-properties-header">
             <h2>{selectedComponent?.name || "Properties"}</h2>
             <div className="goke-device-switch" style={{ marginTop: 8 }}>
