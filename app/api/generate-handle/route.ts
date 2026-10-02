@@ -1,160 +1,77 @@
 import { NextRequest, NextResponse } from "next/server";
 import { nanoid } from "nanoid";
 import { createJob } from "@/lib/jobStore";
+import { parseInstagramExport } from "@/lib/parseInstagramExport";
 import { generateSite } from "@/lib/generateSite";
-import { saveSiteFiles, saveSiteFile } from "@/lib/siteStore";
-import type { InstagramProfile } from "@/lib/parseInstagramExport";
+import { saveSiteFiles } from "@/lib/siteStore";
 
-const NICHES = [
-  "spa_wellness",
-  "fitness_gym",
-  "beauty_salon",
-  "ecommerce_retail",
-  "restaurant_food",
-  "creative_portfolio",
-  "real_estate",
-  "general_business",
-] as const;
+// Mirrors the client-side check in app/page.tsx. On Vercel, oversized
+// requests are usually rejected by the platform itself before this code
+// ever runs -- but if this app is hosted elsewhere (Render, a VM), that
+// platform-level cutoff doesn't exist, so this is the real backstop there.
+const MAX_FILE_BYTES = 4 * 1024 * 1024;
 
-function sanitizeHandle(raw: string): string {
-  return raw
-    .trim()
-    .replace(/^@+/, "")
-    .replace(/[^a-zA-Z0-9._]/g, "")
-    .slice(0, 30);
-}
-
-function displayNameFromHandle(handle: string): string {
-  const base = handle.replace(/[._]+/g, " ").trim();
-  return base
-    .split(" ")
-    .filter(Boolean)
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
-    .join(" ");
-}
-
-function profileFromHandle(
-  handle: string,
-  nicheHint: string,
-  displayName?: string,
-  bio?: string
-): InstagramProfile {
-  const name = displayName?.trim() || displayNameFromHandle(handle);
-  const nicheBio =
-    bio?.trim() ||
-    (nicheHint.includes("spa")
-      ? "Wellness · Massage · Body care. Book your session today."
-      : nicheHint.includes("fit")
-        ? "Training · Results · Community. Start your journey."
-        : nicheHint.includes("beauty")
-          ? "Beauty · Hair · Glow. Look and feel your best."
-          : nicheHint.includes("ecom") || nicheHint.includes("retail")
-            ? "Quality products. Fast delivery. Shop the collection."
-            : `${name} on Instagram — now on the open web.`);
-
-  return {
-    username: handle,
-    name,
-    bio: `${nicheBio}\n@${handle}`,
-    posts: [
-      {
-        caption: `${name} — featured work\nCrafted for clients who want quality.`,
-        imageUrls: [],
-      },
-      {
-        caption: "What we offer\nClear packages and a simple way to get in touch.",
-        imageUrls: [],
-      },
-      {
-        caption: "Gallery\nReal results and moments from our work.",
-        imageUrls: [],
-      },
-    ],
-    mediaUrls: [],
-  };
-}
-
-/**
- * POST { handle, niche?, name?, bio? }
- * Generates a premium multi-page site without Instagram export.
- * Jobs are marked editorMode: "simple".
- */
+// Runs synchronously and returns once the site is generated. Nothing gets
+// created in GitHub here -- files are stored in Supabase Storage only, so
+// browsing/generating/editing is free and leaves no trace in your GitHub
+// account. A repo only gets created once someone actually pays (see
+// app/api/webhook/route.ts).
 export async function POST(req: NextRequest) {
-  try {
-    const body = await req.json();
-    const handle = sanitizeHandle(String(body.handle || ""));
-    if (handle.length < 2) {
-      return NextResponse.json(
-        { error: "Enter a valid Instagram handle (e.g. yourbrand)." },
-        { status: 400 }
-      );
-    }
+  const formData = await req.formData();
+  const file = formData.get("file") as File | null;
 
-    const nicheRaw = String(body.niche || "general_business");
-    const niche = NICHES.includes(nicheRaw as (typeof NICHES)[number])
-      ? nicheRaw
-      : "general_business";
+  if (!file) {
+    return NextResponse.json({ error: "Upload your Instagram export file." }, { status: 400 });
+  }
 
-    const profile = profileFromHandle(
-      handle,
-      niche,
-      body.name ? String(body.name) : undefined,
-      body.bio ? String(body.bio) : undefined
+  if (file.size > MAX_FILE_BYTES) {
+    return NextResponse.json(
+      {
+        error:
+          `That file is ${(file.size / 1024 / 1024).toFixed(1)} MB, over the 4 MB limit. ` +
+          "Export just your profile and posts (not messages, stories, or media) to keep it small.",
+      },
+      { status: 413 }
     );
+  }
 
-    // Seed niche into bio so detectNiche / curated images fire correctly
-    if (!profile.bio.toLowerCase().includes(niche.split("_")[0])) {
-      profile.bio = `${profile.bio}\n${niche.replace(/_/g, " ")}`;
-    }
-
+  try {
+    const bytes = Buffer.from(await file.arrayBuffer());
+    const profile = parseInstagramExport(bytes, file.name);
     const files = await generateSite(profile);
+
     const jobId = nanoid(12);
     await saveSiteFiles(jobId, files);
 
-    // Meta for simple editor (works even if DB column missing)
     await saveSiteFile(
       jobId,
       "editor-meta.json",
-      JSON.stringify(
-        {
-          editorMode: "simple",
-          handle,
-          niche,
-          createdVia: "handle",
-        },
-        null,
-        2
-      )
+      JSON.stringify({ editorMode: "advanced", createdVia: "export" }, null, 2)
     );
 
     try {
       await createJob({
         id: jobId,
         status: "draft",
-        parsedUsername: handle,
-        editorMode: "simple",
+        parsedUsername: profile.username || undefined,
+        editorMode: "advanced",
       });
-    } catch (e: unknown) {
-      // Retry without editorMode if column not migrated yet
-      const msg = e instanceof Error ? e.message : String(e);
-      if (/editor_mode/i.test(msg)) {
+    } catch (e: any) {
+      if (/editor_mode/i.test(String(e?.message))) {
         await createJob({
           id: jobId,
           status: "draft",
-          parsedUsername: handle,
+          parsedUsername: profile.username || undefined,
         });
-      } else {
-        throw e;
-      }
+      } else throw e;
     }
 
     return NextResponse.json({
       jobId,
-      defaultUsername: handle,
-      editorMode: "simple",
+      defaultUsername: profile.username || "",
+      editorMode: "advanced",
     });
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : String(err);
-    return NextResponse.json({ error: message }, { status: 500 });
+  } catch (err: any) {
+    return NextResponse.json({ error: String(err?.message ?? err) }, { status: 500 });
   }
 }
