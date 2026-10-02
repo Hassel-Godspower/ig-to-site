@@ -599,6 +599,7 @@ export class Builder {
     const tag = el.tagName;
     const editable = [
       "H1", "H2", "H3", "H4", "H5", "H6", "P", "SPAN", "A", "BUTTON", "LI", "LABEL",
+      "TD", "TH", "FIGCAPTION", "STRONG", "EM", "SMALL",
     ].includes(tag);
     if (!editable) return;
     if (this.inlineEl) this.commitInlineEdit();
