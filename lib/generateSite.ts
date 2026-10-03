@@ -645,8 +645,13 @@ ${captions || "(none)"}
 Media URLs (prefer as <img src>; otherwise niche-matched picsum seeds):
 ${mediaLines}
 WhatsApp: ${wa}
-Brand logo / avatar URL (REQUIRED in header when available):
-${(profile as { profilePicUrl?: string; logoUrl?: string }).logoUrl || (profile as { profilePicUrl?: string }).profilePicUrl || profile.mediaUrls?.[0] || galleryUrls[0] || ""}
+Brand logo / avatar URL (REQUIRED in header when available — use EXACTLY):
+${profile.logoUrl || profile.profilePicUrl || profile.mediaUrls?.[0] || galleryUrls[0] || ""}
+Brand primary color HEX (if provided, :root --primary and --goke-primary MUST be this exact value):
+${profile.brandColor || "(derive from niche palette only if missing)"}
+External website from Instagram: ${profile.externalUrl || "(none)"}
+Instagram category: ${profile.category || "(detect from bio)"}
+IMPORTANT: Copy, headlines, and service labels MUST come from the Bio and Captions above — do not invent a generic unrelated business story when real text is present.
 HEADER LOGO RULES:
 - If a logo/avatar URL is provided above, the header brand MUST show:
   <a href="index.html" class="brand" id="site-title" data-goke="link">
@@ -685,7 +690,7 @@ Notes: ${bp.pagesExtra}
 - Site must feel ALIVE: scroll-reveal on sections, smooth hover on buttons/cards, sticky premium header
 
 === LAYER 4 — DESIGN SYSTEM (styles.css :root) ===
-Define --primary --primary-hover --bg --surface --text --muted --border --radius --shadow --header-h with HEX for THIS niche.
+Define --primary --primary-hover --bg --surface --text --muted --border --radius --shadow --header-h with HEX for THIS niche. If Brand primary color HEX is provided, --primary and --goke-primary MUST equal that HEX.
 Hero ~70–100vh with real image + readable overlay.
 Dual CTAs everywhere important: .btn solid + .btn-outline.
 Gallery cards: image + title + small action button.

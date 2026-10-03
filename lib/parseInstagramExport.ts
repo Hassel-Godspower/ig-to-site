@@ -16,6 +16,12 @@ export interface InstagramProfile {
   posts: InstagramPost[];
   /** Best-effort gallery URLs/paths for the site generator */
   mediaUrls: string[];
+  profilePicUrl?: string;
+  logoUrl?: string;
+  brandColor?: string;
+  externalUrl?: string;
+  followers?: number;
+  category?: string;
 }
 
 /**
