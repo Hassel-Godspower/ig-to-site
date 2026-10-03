@@ -4,6 +4,7 @@ import { createJob } from "@/lib/jobStore";
 import { generateSite } from "@/lib/generateSite";
 import { saveSiteFiles, saveSiteFile } from "@/lib/siteStore";
 import type { InstagramProfile } from "@/lib/parseInstagramExport";
+import { enrichFromHandle } from "@/lib/instagramEnrich";
 
 const NICHES = [
   "spa_wellness",
@@ -33,52 +34,25 @@ function displayNameFromHandle(handle: string): string {
     .join(" ");
 }
 
-function profileFromHandle(
+/** Only used when live enrich fails */
+function templateProfile(
   handle: string,
-  nicheHint: string,
-  displayName?: string,
-  bio?: string
+  nicheHint: string
 ): InstagramProfile {
-  const name = displayName?.trim() || displayNameFromHandle(handle);
-  const nicheBio =
-    bio?.trim() ||
-    (nicheHint.includes("spa")
-      ? "Wellness · Massage · Body care. Book your session today."
-      : nicheHint.includes("fit")
-        ? "Training · Results · Community. Start your journey."
-        : nicheHint.includes("beauty")
-          ? "Beauty · Hair · Glow. Look and feel your best."
-          : nicheHint.includes("ecom") || nicheHint.includes("retail")
-            ? "Quality products. Fast delivery. Shop the collection."
-            : `${name} on Instagram — now on the open web.`);
-
+  const name = displayNameFromHandle(handle);
   return {
     username: handle,
     name,
-    bio: `${nicheBio}\n@${handle}`,
+    bio: `${name} (@${handle})\n${nicheHint.replace(/_/g, " ")}`,
     posts: [
-      {
-        caption: `${name} — featured work\nCrafted for clients who want quality.`,
-        imageUrls: [],
-      },
-      {
-        caption: "What we offer\nClear packages and a simple way to get in touch.",
-        imageUrls: [],
-      },
-      {
-        caption: "Gallery\nReal results and moments from our work.",
-        imageUrls: [],
-      },
+      { caption: `${name}\nWelcome — explore what we offer.`, imageUrls: [] },
+      { caption: "Services\nBuilt around what our clients need.", imageUrls: [] },
+      { caption: "Gallery\nA look at our work.", imageUrls: [] },
     ],
     mediaUrls: [],
   };
 }
 
-/**
- * POST { handle, niche?, name?, bio? }
- * Generates a premium multi-page site without Instagram export.
- * Jobs are marked editorMode: "simple".
- */
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
@@ -95,23 +69,70 @@ export async function POST(req: NextRequest) {
       ? nicheRaw
       : "general_business";
 
-    const profile = profileFromHandle(
-      handle,
-      niche,
-      body.name ? String(body.name) : undefined,
-      body.bio ? String(body.bio) : undefined
-    );
+    let profile: InstagramProfile;
+    let enrichSource = "template";
 
-    // Seed niche into bio so detectNiche / curated images fire correctly
-    if (!profile.bio.toLowerCase().includes(niche.split("_")[0])) {
-      profile.bio = `${profile.bio}\n${niche.replace(/_/g, " ")}`;
+    const enriched = await enrichFromHandle(handle);
+    if (enriched?.profile) {
+      profile = enriched.profile;
+      enrichSource = enriched.source;
+
+      // Keep user niche as soft hint in bio for detectNiche if bio is thin
+      if ((profile.bio || "").length < 12) {
+        profile.bio = `${profile.bio || profile.name}\n${niche.replace(/_/g, " ")}`.trim();
+      }
+    } else {
+      profile = templateProfile(handle, niche);
+    }
+
+    // Optional client overrides
+    if (body.name) profile.name = String(body.name).trim();
+    if (body.bio) profile.bio = String(body.bio).trim();
+    if (body.brandColor && /^#[0-9a-fA-F]{6}$/.test(String(body.brandColor))) {
+      profile.brandColor = String(body.brandColor);
     }
 
     const files = await generateSite(profile);
+
+    // Stamp brand color into CSS so the site isn't a random palette
+    if (profile.brandColor && files["styles.css"]) {
+      const hex = profile.brandColor;
+      let css = files["styles.css"];
+      css = css.replace(/--goke-primary\s*:\s*#[0-9a-fA-F]{3,8}/gi, `--goke-primary:${hex}`);
+      css = css.replace(/--primary\s*:\s*#[0-9a-fA-F]{3,8}/gi, `--primary:${hex}`);
+      if (!css.includes("--goke-primary")) {
+        css = `:root{--goke-primary:${hex};--primary:${hex};}\n` + css;
+      } else if (!css.trimStart().startsWith(":root") || !css.includes(`--goke-primary:${hex}`)) {
+        css = `:root{--goke-primary:${hex};--primary:${hex};}\n` + css;
+      }
+      files["styles.css"] = css;
+    }
+
+    // Force logo URL into HTML if generator omitted it
+    const logo = profile.logoUrl || profile.profilePicUrl;
+    if (logo) {
+      for (const key of Object.keys(files)) {
+        if (!key.endsWith(".html")) continue;
+        let html = files[key];
+        if (!html.includes(logo) && html.includes("brand-logo")) {
+          html = html.replace(
+            /src="[^"]*"(\s[^>]*class="[^"]*brand-logo)/,
+            `src="${logo}"$1`
+          );
+        }
+        if (!html.includes("brand-logo") && html.includes('class="brand"')) {
+          html = html.replace(
+            /(<a[^>]*class="brand"[^>]*>)/i,
+            `$1<img class="brand-logo site-logo" src="${logo}" alt="" width="40" height="40" data-goke="image" />`
+          );
+        }
+        files[key] = html;
+      }
+    }
+
     const jobId = nanoid(12);
     await saveSiteFiles(jobId, files);
 
-    // Meta for simple editor (works even if DB column missing)
     await saveSiteFile(
       jobId,
       "editor-meta.json",
@@ -121,6 +142,11 @@ export async function POST(req: NextRequest) {
           handle,
           niche,
           createdVia: "handle",
+          enrichSource,
+          brandColor: profile.brandColor || null,
+          name: profile.name,
+          hasBio: Boolean(profile.bio),
+          postCount: profile.posts?.length || 0,
         },
         null,
         2
@@ -135,23 +161,21 @@ export async function POST(req: NextRequest) {
         editorMode: "simple",
       });
     } catch (e: unknown) {
-      // Retry without editorMode if column not migrated yet
       const msg = e instanceof Error ? e.message : String(e);
       if (/editor_mode/i.test(msg)) {
-        await createJob({
-          id: jobId,
-          status: "draft",
-          parsedUsername: handle,
-        });
-      } else {
-        throw e;
-      }
+        await createJob({ id: jobId, status: "draft", parsedUsername: handle });
+      } else throw e;
     }
 
     return NextResponse.json({
       jobId,
       defaultUsername: handle,
       editorMode: "simple",
+      enrichSource,
+      brandColor: profile.brandColor || null,
+      name: profile.name,
+      hasProfilePic: Boolean(profile.profilePicUrl),
+      postCount: profile.posts?.length || 0,
     });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);
