@@ -164,7 +164,7 @@ export async function POST(req: NextRequest) {
       "editor-meta.json",
       JSON.stringify(
         {
-          editorMode: "advanced",
+          editorMode: "simple",
           handle,
           niche,
           createdVia: "handle",
@@ -184,7 +184,7 @@ export async function POST(req: NextRequest) {
         id: jobId,
         status: "draft",
         parsedUsername: handle,
-        editorMode: "advanced",
+        editorMode: "simple",
       });
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);
@@ -196,7 +196,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       jobId,
       defaultUsername: handle,
-      editorMode: "advanced",
+      editorMode: "simple",
       enrichSource,
       brandColor: profile.brandColor || null,
       name: profile.name,
