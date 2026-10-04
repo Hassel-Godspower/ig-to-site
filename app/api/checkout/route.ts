@@ -3,10 +3,23 @@ import { getJob, updateJob } from "@/lib/jobStore";
 import { initializeTransaction } from "@/lib/paystack";
 
 export async function POST(req: NextRequest) {
-  const { jobId, username, email } = await req.json();
+  const body = await req.json();
+  const jobId = String(body.jobId || "");
+  const username = String(body.username || "");
+  const email = String(body.email || "").trim();
+  const returnPath = String(body.returnPath || "preview"); // preview | preview-simple
 
-  if (!jobId || !username || !email) {
-    return NextResponse.json({ error: "jobId, username and email are required" }, { status: 400 });
+  if (!jobId || !username) {
+    return NextResponse.json(
+      { error: "jobId and username are required" },
+      { status: 400 }
+    );
+  }
+  if (!email || !email.includes("@")) {
+    return NextResponse.json(
+      { error: "A valid email is required for payment" },
+      { status: 400 }
+    );
   }
 
   const job = await getJob(jobId);
@@ -15,21 +28,52 @@ export async function POST(req: NextRequest) {
   }
 
   const cleanUsername = sanitizeUsername(username);
-  await updateJob(jobId, { status: "pending_payment", username: cleanUsername, email });
+  await updateJob(jobId, {
+    status: "pending_payment",
+    username: cleanUsername,
+    email,
+  });
 
-  const baseUrl = process.env.BASE_URL;
-  const amount = Number(process.env.PAYSTACK_AMOUNT);
+  const baseUrl = (process.env.BASE_URL || "").replace(/\/$/, "");
+  if (!baseUrl) {
+    return NextResponse.json(
+      { error: "BASE_URL is not configured on the server" },
+      { status: 500 }
+    );
+  }
+
+  const amount = Number(process.env.PAYSTACK_AMOUNT || 1000000); // kobo: 1000000 = ₦10,000
+  const path =
+    returnPath === "preview-simple"
+      ? `/preview-simple/${jobId}`
+      : `/preview/${jobId}`;
 
   const { authorizationUrl } = await initializeTransaction({
     email,
     amount,
-    callbackUrl: `${baseUrl}/preview/${jobId}?paid=1`,
-    metadata: { jobId, username: cleanUsername },
+    callbackUrl: `${baseUrl}${path}?paid=1`,
+    metadata: {
+      jobId,
+      username: cleanUsername,
+      custom_fields: [
+        { display_name: "Job ID", variable_name: "jobId", value: jobId },
+        {
+          display_name: "Username",
+          variable_name: "username",
+          value: cleanUsername,
+        },
+      ],
+    },
   });
 
   return NextResponse.json({ checkoutUrl: authorizationUrl });
 }
 
 function sanitizeUsername(name: string): string {
-  return name.toLowerCase().replace(/[^a-z0-9-]/g, "-").replace(/-+/g, "-").slice(0, 50);
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9-]/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "")
+    .slice(0, 50);
 }
