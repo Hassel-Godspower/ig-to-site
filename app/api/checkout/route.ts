@@ -42,12 +42,13 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const amount = Number(process.env.PAYSTACK_AMOUNT || 1000000); // kobo: 1000000 = ₦10,000
+  const amount = Number(process.env.PAYSTACK_AMOUNT || 1000000); // kobo: ₦10,000
   const path =
     returnPath === "preview-simple"
       ? `/preview-simple/${jobId}`
       : `/preview/${jobId}`;
 
+  // metadata must be Record<string, string> per lib/paystack.ts
   const { authorizationUrl } = await initializeTransaction({
     email,
     amount,
@@ -55,14 +56,6 @@ export async function POST(req: NextRequest) {
     metadata: {
       jobId,
       username: cleanUsername,
-      custom_fields: [
-        { display_name: "Job ID", variable_name: "jobId", value: jobId },
-        {
-          display_name: "Username",
-          variable_name: "username",
-          value: cleanUsername,
-        },
-      ],
     },
   });
 
