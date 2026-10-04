@@ -3,6 +3,7 @@ import { verifyWebhookSignature } from "@/lib/paystack";
 import { completePaidJob } from "@/lib/completePaidJob";
 
 export const runtime = "nodejs";
+export const maxDuration = 60;
 
 export async function POST(req: NextRequest) {
   const rawBody = await req.text();
@@ -12,24 +13,40 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
   }
 
-  const event = JSON.parse(rawBody);
+  let event: any;
+  try {
+    event = JSON.parse(rawBody);
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
 
   if (event.event !== "charge.success") {
     return NextResponse.json({ received: true });
   }
 
   const metadata = event.data?.metadata ?? {};
-  const jobId = metadata.jobId;
+  const jobId = metadata.jobId || metadata.job_id;
   const username = metadata.username;
 
-  if (!jobId || !username) {
-    return NextResponse.json({ error: "Missing jobId/username in transaction metadata" }, { status: 400 });
+  if (!jobId) {
+    console.error("[webhook] charge.success missing jobId in metadata", metadata);
+    return NextResponse.json(
+      { error: "Missing jobId in transaction metadata" },
+      { status: 400 }
+    );
   }
 
-  // No Vercel call happens here at all -- deploying is a manual step you do
-  // from the Vercel dashboard whenever you get to it. This just gets a real
-  // repo, with the real files, ready for that.
-  await completePaidJob(jobId, username);
+  try {
+    await completePaidJob(String(jobId), username ? String(username) : undefined);
+  } catch (err) {
+    console.error("[webhook] completePaidJob failed", err);
+    // Still 200 so Paystack does not infinite-retry with same broken state
+    // Client verify-payment /api/deploy can retry.
+    return NextResponse.json({
+      received: true,
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
 
   return NextResponse.json({ received: true });
 }
