@@ -69,7 +69,7 @@ export function HeroUpload() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Generation failed");
-      router.push(`/preview/${data.jobId}?mode=simple`);
+      router.push(`/preview-simple/${data.jobId}`);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Something went wrong");
       setLoading(false);
