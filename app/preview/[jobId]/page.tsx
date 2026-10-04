@@ -9,6 +9,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 
 import { Builder } from "@/src/goke-editor/core/builder";
+import { decorateEditableDocument } from "@/src/goke-editor/core/decorate-editable";
 import { Undo } from "@/src/goke-editor/core/undo";
 import { styleManager } from "@/src/goke-editor/core/style-manager";
 import { registry } from "@/src/goke-editor/core/registry";
@@ -37,7 +38,6 @@ import {
   shouldAutoStartTour,
   markTourDone,
 } from "@/src/goke-editor/components/EditorTour";
-import { SimpleEditorBar } from "@/src/goke-editor/components/SimpleEditorBar";
 import { matchSiteElement } from "@/src/goke-editor/components/site-markers";
 import {
   applyBreakpointPreview,
@@ -113,66 +113,9 @@ export default function PreviewPage() {
   /** Timed guidance: 'regen' at 1min, 'publish' at 3min */
   const [helpPrompt, setHelpPrompt] = useState<null | "regen" | "publish">(null);
   const [tourOpen, setTourOpen] = useState(false);
-  const [editorMode, setEditorMode] = useState<"simple" | "advanced">("advanced");
-  const [currentPage, setCurrentPage] = useState("index.html");
-  const [sitePages, setSitePages] = useState<{ file: string; title: string }[]>([
-    { file: "index.html", title: "Home" },
-  ]);
 
 
-  const previewSrc = `/api/site/${jobId}/${currentPage}`;
-
-
-  
-  // Editor mode: ?mode= or editor-meta.json (handle vs export)
-  useEffect(() => {
-    const q = searchParams.get("mode");
-    if (q === "simple" || q === "advanced") setEditorMode(q);
-    if (!jobId) return;
-    let cancelled = false;
-    (async () => {
-      try {
-        const res = await fetch(`/api/site/${jobId}/editor-meta.json`);
-        if (!res.ok) return;
-        const meta = await res.json();
-        if (!cancelled && (meta.editorMode === "simple" || meta.editorMode === "advanced")) {
-          setEditorMode(meta.editorMode);
-        }
-      } catch {
-        /* optional */
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [jobId, searchParams]);
-
-  // Multi-page manifest
-  useEffect(() => {
-    if (!jobId) return;
-    let cancelled = false;
-    (async () => {
-      try {
-        const res = await fetch(`/api/site/${jobId}/pages.json`);
-        if (!res.ok) return;
-        const data = await res.json();
-        const pages = Array.isArray(data?.pages) ? data.pages : [];
-        if (!cancelled && pages.length) {
-          setSitePages(
-            pages.map((p: { file?: string; title?: string }) => ({
-              file: p.file || "index.html",
-              title: p.title || p.file || "Page",
-            }))
-          );
-        }
-      } catch {
-        /* optional */
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [jobId]);
+  const previewSrc = `/api/site/${jobId}/index.html`;
 
   // Guidance popups: 1 min → redo generation; 3 min → publish help
   useEffect(() => {
@@ -220,6 +163,16 @@ export default function PreviewPage() {
     const builder = new Builder();
     builderRef.current = builder;
     await builder.attach(iframe);
+
+    // Mark all text / images / buttons so Properties panel can edit them
+    try {
+      const doc = iframe.contentDocument;
+      if (doc) {
+        decorateEditableDocument(doc);
+      }
+    } catch {
+      /* cross-origin unlikely for same-origin api iframe */
+    }
 
     builder.on("select", ({ element }: { element: HTMLElement | null }) => {
       if (!element) {
@@ -489,7 +442,7 @@ export default function PreviewPage() {
       builder?.getHtml() ||
       "<!DOCTYPE html>\n" + doc.documentElement.outerHTML;
 
-    await fetch(`/api/site/${jobId}/${currentPage}`, {
+    await fetch(`/api/site/${jobId}/index.html`, {
       method: "PUT",
       body: html,
     });
@@ -809,34 +762,6 @@ export default function PreviewPage() {
             </button>
           ) : (
             <>
-              {sitePages.length > 1 && (
-                <label className="goke-page-switch" data-tour="tour-page-switch" style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, color: "#9ca3af" }}>
-                  <span>Page</span>
-                  <select
-                    value={currentPage}
-                    onChange={(e) => {
-                      setCurrentPage(e.target.value);
-                      setSelectedElement(null);
-                      setSelectedComponent(null);
-                      setSaved(true);
-                    }}
-                    style={{
-                      background: "#1a1e28",
-                      color: "#f3f4f6",
-                      border: "1px solid rgba(167,139,250,0.35)",
-                      borderRadius: 8,
-                      padding: "6px 10px",
-                      fontSize: 12,
-                    }}
-                  >
-                    {sitePages.map((pg) => (
-                      <option key={pg.file} value={pg.file}>
-                        {pg.title}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              )}
               <button
                 type="button"
                 title="Editor tour"
@@ -873,32 +798,8 @@ export default function PreviewPage() {
         </div>
       )}
 
-      
-      {editorMode === "simple" && phase === "editing" && (
-        <div style={{ background: "#1a1625", borderBottom: "1px solid rgba(167,139,250,0.25)", padding: "8px 16px", fontSize: 12, color: "#c4b5fd", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" as const }}>
-          <span>Quick edit mode — text, logo, color, WhatsApp. Full drag-and-drop unlocks after go-live or via Instagram export.</span>
-          <button
-            type="button"
-            style={{ background: "transparent", border: "1px solid rgba(167,139,250,0.4)", color: "#ede9fe", borderRadius: 6, padding: "4px 10px", cursor: "pointer", fontSize: 12 }}
-            onClick={async () => {
-              setEditorMode("advanced");
-              try {
-                await fetch(`/api/site/${jobId}/editor-meta.json`, {
-                  method: "PUT",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ editorMode: "advanced", upgradedFrom: "simple" }),
-                });
-              } catch { /* ignore */ }
-            }}
-          >
-            Open full editor
-          </button>
-        </div>
-      )}
-
       <div className="goke-workspace">
-        {/* Left: structure + components — advanced only */}
-        {editorMode === "advanced" && (
+        {/* Left: structure + components */}
         <div className="goke-left-stack">
           <div className="goke-left-tabs">
             <button
@@ -988,7 +889,6 @@ export default function PreviewPage() {
             />
           )}
         </div>
-        )}
 
         {/* Center: canvas */}
         <main className="goke-canvas-wrap" data-tour="tour-canvas" style={{ position: "relative" }}>
@@ -1002,7 +902,6 @@ export default function PreviewPage() {
             }}
           >
             <iframe
-              key={previewSrc}
               ref={iframeRef}
               title="Site preview"
               src={previewSrc}
@@ -1029,13 +928,7 @@ export default function PreviewPage() {
         </main>
 
         {/* Right: content props + design panel */}
-        {editorMode === "simple" && (
-          <SimpleEditorBar
-            iframe={iframeRef.current}
-            onDirty={() => setSaved(false)}
-          />
-        )}
-        <aside className="goke-properties" data-tour="tour-properties" style={{ display: editorMode === "simple" ? "none" : undefined }}>
+        <aside className="goke-properties" data-tour="tour-properties">
           <div className="goke-properties-header">
             <h2>{selectedComponent?.name || "Properties"}</h2>
             <div className="goke-device-switch" style={{ marginTop: 8 }}>
@@ -1067,7 +960,7 @@ export default function PreviewPage() {
               <GlobalsPanel tokens={tokens} onChange={handleTokensChange} />
             ) : !selectedElement ? (
               <p className="goke-properties-empty">
-                Click text, a button, or an image on the canvas to edit it here
+                Select an element on the canvas
               </p>
             ) : rightTab === "content" ? (
               <PropertiesPanel
