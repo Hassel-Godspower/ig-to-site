@@ -274,6 +274,14 @@ export default function SimplePreviewPage() {
   }
 
   async function submitCheckout() {
+    if (!email || !email.includes("@")) {
+      setError("Enter a valid email for the payment receipt.");
+      return;
+    }
+    if (!(username || handle)) {
+      setError("Enter a site username.");
+      return;
+    }
     setBusy(true);
     setError(null);
     try {
@@ -284,7 +292,8 @@ export default function SimplePreviewPage() {
         body: JSON.stringify({
           jobId,
           username: username || handle || "site",
-          email: email || undefined,
+          email,
+          returnPath: "preview-simple",
         }),
       });
       const data = await res.json();
@@ -303,63 +312,85 @@ export default function SimplePreviewPage() {
     }
   }
 
-  // Payment return polling (same as full preview)
+  // After Paystack redirect: verify payment → create GitHub repo immediately
   useEffect(() => {
     if (phase !== "verifying" || !jobId) return;
+
+    (async () => {
+      try {
+        if (!reference) {
+          // Webhook may still land — poll status briefly
+          setPhase("polling");
+          return;
+        }
+        const res = await fetch("/api/verify-payment", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ jobId, reference }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          setError(data.error || "Verification failed");
+          setPhase("failed");
+          return;
+        }
+        if (data.status === "payment_failed") {
+          setError(data.reason || "Payment failed");
+          setPhase("payment_failed");
+          return;
+        }
+        if (data.status === "failed") {
+          setError(data.error || "GitHub publish failed");
+          setPhase("failed");
+          return;
+        }
+        if (data.repoUrl || data.siteUrl) {
+          setSiteUrl(data.siteUrl || data.repoUrl);
+        }
+        if (data.status === "done") {
+          setPhase("live");
+        } else {
+          // deploying — repo should exist on GitHub; poll for live URL
+          setPhase("polling");
+        }
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : "Verify failed");
+        setPhase("failed");
+      }
+    })();
+  }, [phase, jobId, reference]);
+
+  // Poll deploy status until site is reachable (or show repo URL from failed live check)
+  useEffect(() => {
+    if (phase !== "polling" || !jobId) return;
     let n = 0;
-    const t = window.setInterval(async () => {
+    const interval = window.setInterval(async () => {
       n++;
       try {
-        const res = await fetch(`/api/status?jobId=${jobId}`);
+        const res = await fetch(`/api/status/${jobId}`);
         if (!res.ok) return;
         const data = await res.json();
         if (data.status === "done" && data.siteUrl) {
           setSiteUrl(data.siteUrl);
           setPhase("live");
-          window.clearInterval(t);
+          window.clearInterval(interval);
         } else if (data.status === "failed") {
+          setError(data.error || "Publish failed");
           setPhase("failed");
-          setError(data.error || "Deploy failed");
-          window.clearInterval(t);
-        } else if (data.status === "deploying" || data.status === "pending_payment") {
-          setPhase("polling");
+          window.clearInterval(interval);
+        } else if (data.siteUrl) {
+          setSiteUrl(data.siteUrl);
         }
       } catch {
         /* retry */
       }
-      if (n > 60) {
-        window.clearInterval(t);
-        setPhase("failed");
-        setError("Timed out waiting for deploy");
+      if (n > 90) {
+        window.clearInterval(interval);
+        // Repo may exist even if vercel.app not live yet
+        setPhase("live");
       }
-    }, 3000);
-    return () => window.clearInterval(t);
-  }, [phase, jobId, reference]);
-
-  useEffect(() => {
-    if (phase !== "polling" || !jobId) return;
-    let n = 0;
-    const t = window.setInterval(async () => {
-      n++;
-      try {
-        const res = await fetch(`/api/status?jobId=${jobId}`);
-        if (!res.ok) return;
-        const data = await res.json();
-        if (data.status === "done" && data.siteUrl) {
-          setSiteUrl(data.siteUrl);
-          setPhase("live");
-          window.clearInterval(t);
-        } else if (data.status === "failed") {
-          setPhase("failed");
-          setError(data.error || "Deploy failed");
-          window.clearInterval(t);
-        }
-      } catch {
-        /* */
-      }
-      if (n > 80) window.clearInterval(t);
-    }, 3000);
-    return () => window.clearInterval(t);
+    }, 2500);
+    return () => window.clearInterval(interval);
   }, [phase, jobId]);
 
   return (
@@ -537,9 +568,36 @@ export default function SimplePreviewPage() {
           </div>
 
           {error && (
-            <p style={{ padding: 12, color: "#fca5a5", fontSize: 12, margin: 0 }}>
-              {error}
-            </p>
+            <div style={{ padding: 12 }}>
+              <p style={{ color: "#fca5a5", fontSize: 12, margin: 0 }}>{error}</p>
+              {reference && (
+                <button
+                  type="button"
+                  style={{ marginTop: 8, ...btnSecondary }}
+                  onClick={async () => {
+                    setBusy(true);
+                    try {
+                      const res = await fetch("/api/deploy", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ jobId, reference }),
+                      });
+                      const data = await res.json();
+                      if (!res.ok) throw new Error(data.error || "Retry failed");
+                      setSiteUrl(data.siteUrl || data.repoUrl);
+                      setError(null);
+                      setPhase(data.status === "done" ? "live" : "polling");
+                    } catch (e: unknown) {
+                      setError(e instanceof Error ? e.message : "Retry failed");
+                    } finally {
+                      setBusy(false);
+                    }
+                  }}
+                >
+                  Retry publish to GitHub
+                </button>
+              )}
+            </div>
           )}
         </aside>
       </div>
