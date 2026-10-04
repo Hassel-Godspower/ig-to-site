@@ -53,6 +53,27 @@ function templateProfile(
   };
 }
 
+
+/** Ensure generated HTML has data-goke hooks for the visual editor */
+function stampEditableHooks(html: string): string {
+  let out = html;
+  // Headings
+  out = out.replace(/<(h[1-6])(\s)(?![^>]*data-goke)/gi, '<$1 data-goke="heading"$2');
+  out = out.replace(/<(h[1-6])>/gi, '<$1 data-goke="heading">');
+  // Paragraphs
+  out = out.replace(/<(p)(\s)(?![^>]*data-goke)/gi, '<$1 data-goke="text"$2');
+  out = out.replace(/<(p)>/gi, '<$1 data-goke="text">');
+  // Images
+  out = out.replace(/<(img)(\s)(?![^>]*data-goke)/gi, '<$1 data-goke="image"$2');
+  // Buttons
+  out = out.replace(/<(button)(\s)(?![^>]*data-goke)/gi, '<$1 data-goke="button"$2');
+  out = out.replace(/<(button)>/gi, '<$1 data-goke="button">');
+  // Sections
+  out = out.replace(/<(section)(\s)(?![^>]*data-goke)/gi, '<$1 data-goke="section"$2');
+  out = out.replace(/<(section)>/gi, '<$1 data-goke="section">');
+  return out;
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
@@ -93,6 +114,11 @@ export async function POST(req: NextRequest) {
     }
 
     const files = await generateSite(profile);
+    for (const [k, v] of Object.entries(files)) {
+      if (k.endsWith(".html") && typeof v === "string") {
+        files[k] = stampEditableHooks(v);
+      }
+    }
 
     // Stamp brand color into CSS so the site isn't a random palette
     if (profile.brandColor && files["styles.css"]) {
@@ -138,7 +164,7 @@ export async function POST(req: NextRequest) {
       "editor-meta.json",
       JSON.stringify(
         {
-          editorMode: "simple",
+          editorMode: "advanced",
           handle,
           niche,
           createdVia: "handle",
@@ -158,7 +184,7 @@ export async function POST(req: NextRequest) {
         id: jobId,
         status: "draft",
         parsedUsername: handle,
-        editorMode: "simple",
+        editorMode: "advanced",
       });
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);
@@ -170,7 +196,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       jobId,
       defaultUsername: handle,
-      editorMode: "simple",
+      editorMode: "advanced",
       enrichSource,
       brandColor: profile.brandColor || null,
       name: profile.name,
