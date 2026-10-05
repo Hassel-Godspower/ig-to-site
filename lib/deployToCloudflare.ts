@@ -1,14 +1,18 @@
 /**
- * Deploy static site files to Cloudflare Pages (Direct Upload).
- * Each customer gets: https://{project}.pages.dev
- * Optional custom host: https://{project}.{CLOUDFLARE_PAGES_DOMAIN}
+ * Cloudflare Pages Direct Upload (Wrangler-compatible protocol)
  *
- * Env (Vercel Production):
+ * 1) Ensure project exists
+ * 2) GET upload-token (JWT)
+ * 3) Hash files (MD5 hex) + POST /pages/assets/upload
+ * 4) POST deployments with multipart form field `manifest`
+ *
+ * Env:
  *   CLOUDFLARE_ACCOUNT_ID
- *   CLOUDFLARE_API_TOKEN   (Account — Cloudflare Pages: Edit)
- *   CLOUDFLARE_PAGES_DOMAIN  (optional, e.g. goke.site → user.goke.site)
+ *   CLOUDFLARE_API_TOKEN
+ *   CLOUDFLARE_PAGES_DOMAIN (optional)
  */
 
+import { createHash } from "crypto";
 import type { PublishFile } from "./siteStore";
 
 const CF_API = "https://api.cloudflare.com/client/v4";
@@ -36,20 +40,15 @@ function apiToken(): string {
   return t;
 }
 
-function headers(json = true): Record<string, string> {
-  const h: Record<string, string> = {
-    Authorization: `Bearer ${apiToken()}`,
-  };
-  if (json) h["Content-Type"] = "application/json";
-  return h;
+function authHeader(): Record<string, string> {
+  return { Authorization: `Bearer ${apiToken()}` };
 }
 
 export interface CloudflareDeployResult {
   projectName: string;
-  /** Live URL (pages.dev or custom subdomain) */
   siteUrl: string;
-  deploymentId?: string;
   pagesDevUrl: string;
+  deploymentId?: string;
 }
 
 function sanitizeProjectName(name: string): string {
@@ -63,22 +62,57 @@ function sanitizeProjectName(name: string): string {
   );
 }
 
-async function cfFetch(path: string, init?: RequestInit) {
-  const res = await fetch(`${CF_API}${path}`, {
-    ...init,
-    headers: { ...headers(!(init?.body instanceof FormData)), ...(init?.headers ?? {}) },
-  });
-  const data = await res.json().catch(() => ({}));
-  return { res, data };
+function md5Hex(buf: Buffer): string {
+  return createHash("md5").update(buf).digest("hex");
 }
 
-/** Create Pages project if it does not exist */
-async function ensureProject(projectName: string): Promise<void> {
-  const getPath = `/accounts/${accountId()}/pages/projects/${projectName}`;
-  const { res: getRes } = await cfFetch(getPath);
-  if (getRes.ok) return;
+function contentTypeFor(path: string): string {
+  const ext = path.split(".").pop()?.toLowerCase() || "";
+  const map: Record<string, string> = {
+    html: "text/html; charset=utf-8",
+    css: "text/css; charset=utf-8",
+    js: "application/javascript; charset=utf-8",
+    mjs: "application/javascript; charset=utf-8",
+    json: "application/json",
+    svg: "image/svg+xml",
+    png: "image/png",
+    jpg: "image/jpeg",
+    jpeg: "image/jpeg",
+    webp: "image/webp",
+    gif: "image/gif",
+    ico: "image/x-icon",
+    woff: "font/woff",
+    woff2: "font/woff2",
+    txt: "text/plain",
+    xml: "application/xml",
+    map: "application/json",
+  };
+  return map[ext] || "application/octet-stream";
+}
 
-  const { res, data } = await cfFetch(`/accounts/${accountId()}/pages/projects`, {
+async function cfJson(
+  path: string,
+  init?: RequestInit
+): Promise<{ ok: boolean; status: number; data: any }> {
+  const res = await fetch(`${CF_API}${path}`, {
+    ...init,
+    headers: {
+      ...authHeader(),
+      "Content-Type": "application/json",
+      ...(init?.headers ?? {}),
+    },
+  });
+  const data = await res.json().catch(() => ({}));
+  return { ok: res.ok, status: res.status, data };
+}
+
+async function ensureProject(projectName: string): Promise<void> {
+  const get = await cfJson(
+    `/accounts/${accountId()}/pages/projects/${projectName}`
+  );
+  if (get.ok) return;
+
+  const created = await cfJson(`/accounts/${accountId()}/pages/projects`, {
     method: "POST",
     body: JSON.stringify({
       name: projectName,
@@ -86,18 +120,111 @@ async function ensureProject(projectName: string): Promise<void> {
     }),
   });
 
-  if (!res.ok) {
-    // 409 already exists is fine
-    const msg = JSON.stringify(data?.errors ?? data);
-    if (res.status === 409 || /already exists/i.test(msg)) return;
-    throw new Error(`Cloudflare Pages create project failed (${res.status}): ${msg}`);
+  if (created.ok) return;
+  const msg = JSON.stringify(created.data?.errors ?? created.data);
+  if (created.status === 409 || /already exists/i.test(msg)) return;
+  throw new Error(
+    `Cloudflare Pages create project failed (${created.status}): ${msg}`
+  );
+}
+
+async function getUploadToken(projectName: string): Promise<string> {
+  const { ok, status, data } = await cfJson(
+    `/accounts/${accountId()}/pages/projects/${projectName}/upload-token`
+  );
+  if (!ok || !data?.result?.jwt) {
+    throw new Error(
+      `Cloudflare upload-token failed (${status}): ${JSON.stringify(data?.errors ?? data)}`
+    );
   }
+  return data.result.jwt as string;
 }
 
 /**
- * Direct-upload all files as a production deployment.
- * Multipage: paths like about.html, styles.css, media/foo.jpg preserved.
+ * Upload file blobs to Pages asset store (authenticated with upload JWT).
+ * Batches of up to 50 files.
  */
+async function uploadAssets(
+  jwt: string,
+  files: { hash: string; bytes: Buffer; contentType: string }[]
+): Promise<void> {
+  const endpoint = `${CF_API}/pages/assets/upload`;
+  const batchSize = 40;
+
+  for (let i = 0; i < files.length; i += batchSize) {
+    const slice = files.slice(i, i + batchSize);
+    const body = slice.map((f) => ({
+      key: f.hash,
+      value: f.bytes.toString("base64"),
+      base64: true,
+      metadata: { contentType: f.contentType },
+    }));
+
+    const res = await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${jwt}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      throw new Error(
+        `Cloudflare asset upload failed (${res.status}): ${JSON.stringify(data?.errors ?? data)}`
+      );
+    }
+  }
+}
+
+async function createDeployment(
+  projectName: string,
+  manifest: Record<string, string>
+): Promise<{ id?: string; url?: string }> {
+  const form = new FormData();
+  form.append("manifest", JSON.stringify(manifest));
+  form.append("branch", "main");
+  form.append("commit_message", "goke publish");
+  form.append("commit_dirty", "true");
+
+  const res = await fetch(
+    `${CF_API}/accounts/${accountId()}/pages/projects/${projectName}/deployments`,
+    {
+      method: "POST",
+      headers: authHeader(),
+      body: form,
+    }
+  );
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(
+      `Cloudflare Pages deploy failed (${res.status}): ${JSON.stringify(data?.errors ?? data)}`
+    );
+  }
+  return {
+    id: data?.result?.id,
+    url: data?.result?.url || data?.result?.aliases?.[0],
+  };
+}
+
+async function attachCustomDomain(
+  projectName: string,
+  hostname: string
+): Promise<void> {
+  const { ok, status, data } = await cfJson(
+    `/accounts/${accountId()}/pages/projects/${projectName}/domains`,
+    {
+      method: "POST",
+      body: JSON.stringify({ name: hostname }),
+    }
+  );
+  if (!ok && status !== 409) {
+    throw new Error(
+      `Custom domain attach failed: ${JSON.stringify(data?.errors ?? data)}`
+    );
+  }
+}
+
 export async function deployToCloudflarePages(
   preferredName: string,
   files: PublishFile[]
@@ -108,7 +235,6 @@ export async function deployToCloudflarePages(
 
   let projectName = sanitizeProjectName(preferredName);
 
-  // Retry with suffix if name taken by another account-level conflict
   for (let attempt = 0; attempt < 4; attempt++) {
     try {
       await ensureProject(projectName);
@@ -125,42 +251,39 @@ export async function deployToCloudflarePages(
     }
   }
 
-  const form = new FormData();
+  // Build path → hash manifest + payload list
+  const manifest: Record<string, string> = {};
+  const toUpload: { hash: string; bytes: Buffer; contentType: string }[] = [];
+  const seenHash = new Set<string>();
+
   for (const f of files) {
     const path = f.path.replace(/^\//, "");
     if (!path || path === "editor.json" || path === "editor-meta.json") continue;
 
     const bytes = Buffer.from(f.contentBase64, "base64");
-    const type = contentTypeFor(path);
-    const blob = new Blob([bytes], { type });
-    // Cloudflare Pages direct upload uses the filename as the path
-    form.append(path, blob, path);
-  }
+    const hash = md5Hex(bytes);
+    manifest[path] = hash;
 
-  const { res, data } = await cfFetch(
-    `/accounts/${accountId()}/pages/projects/${projectName}/deployments`,
-    {
-      method: "POST",
-      // Let fetch set multipart boundary — do not set Content-Type manually
-      headers: { Authorization: `Bearer ${apiToken()}` },
-      body: form,
+    if (!seenHash.has(hash)) {
+      seenHash.add(hash);
+      toUpload.push({
+        hash,
+        bytes,
+        contentType: contentTypeFor(path),
+      });
     }
-  );
-
-  if (!res.ok) {
-    throw new Error(
-      `Cloudflare Pages deploy failed (${res.status}): ${JSON.stringify(data?.errors ?? data)}`
-    );
   }
 
-  const deployment = data?.result;
-  const pagesDevUrl =
-    deployment?.url ||
-    deployment?.aliases?.[0] ||
-    `https://${projectName}.pages.dev`;
+  if (Object.keys(manifest).length === 0) {
+    throw new Error("No publishable files after filtering");
+  }
 
-  // Prefer stable production URL
-  const productionUrl = `https://${projectName}.pages.dev`;
+  const jwt = await getUploadToken(projectName);
+  await uploadAssets(jwt, toUpload);
+  const deployment = await createDeployment(projectName, manifest);
+
+  const pagesDevUrl = `https://${projectName}.pages.dev`;
+  let siteUrl = pagesDevUrl;
 
   const customRoot = (process.env.CLOUDFLARE_PAGES_DOMAIN || "")
     .replace(/^https?:\/\//, "")
@@ -168,67 +291,23 @@ export async function deployToCloudflarePages(
     .replace(/\.$/, "")
     .trim();
 
-  let siteUrl = productionUrl;
   if (customRoot) {
-    // e.g. paxpearlbodyworks.goke.site — requires wildcard DNS + Pages custom domain setup
-    siteUrl = `https://${projectName}.${customRoot}`;
     try {
       await attachCustomDomain(projectName, `${projectName}.${customRoot}`);
+      siteUrl = `https://${projectName}.${customRoot}`;
     } catch {
-      // Domain attach is best-effort; pages.dev still works
-      siteUrl = productionUrl;
+      siteUrl = pagesDevUrl;
     }
   }
 
   return {
     projectName,
     siteUrl,
-    pagesDevUrl: productionUrl,
-    deploymentId: deployment?.id,
+    pagesDevUrl,
+    deploymentId: deployment.id,
   };
 }
 
-async function attachCustomDomain(
-  projectName: string,
-  hostname: string
-): Promise<void> {
-  const { res, data } = await cfFetch(
-    `/accounts/${accountId()}/pages/projects/${projectName}/domains`,
-    {
-      method: "POST",
-      body: JSON.stringify({ name: hostname }),
-    }
-  );
-  if (!res.ok && res.status !== 409) {
-    throw new Error(
-      `Custom domain attach failed: ${JSON.stringify(data?.errors ?? data)}`
-    );
-  }
-}
-
-function contentTypeFor(path: string): string {
-  const ext = path.split(".").pop()?.toLowerCase() || "";
-  const map: Record<string, string> = {
-    html: "text/html; charset=utf-8",
-    css: "text/css; charset=utf-8",
-    js: "application/javascript; charset=utf-8",
-    json: "application/json",
-    svg: "image/svg+xml",
-    png: "image/png",
-    jpg: "image/jpeg",
-    jpeg: "image/jpeg",
-    webp: "image/webp",
-    gif: "image/gif",
-    ico: "image/x-icon",
-    woff: "font/woff",
-    woff2: "font/woff2",
-    txt: "text/plain",
-    xml: "application/xml",
-  };
-  return map[ext] || "application/octet-stream";
-}
-
-/** True if Cloudflare env is configured */
 export function isCloudflareConfigured(): boolean {
   return Boolean(
     process.env.CLOUDFLARE_ACCOUNT_ID &&
