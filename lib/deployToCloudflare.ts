@@ -1,18 +1,17 @@
 /**
- * Cloudflare Pages Direct Upload (Wrangler-compatible protocol)
+ * Cloudflare Pages Direct Upload — Wrangler-compatible protocol
  *
- * 1) Ensure project exists
- * 2) GET upload-token (JWT)
- * 3) Hash files (MD5 hex) + POST /pages/assets/upload
- * 4) POST deployments with multipart form field `manifest`
+ * Hash must match Wrangler:
+ *   blake3( base64(file) + extension ).hex.slice(0, 32)
  *
- * Env:
- *   CLOUDFLARE_ACCOUNT_ID
- *   CLOUDFLARE_API_TOKEN
- *   CLOUDFLARE_PAGES_DOMAIN (optional)
+ * Env: CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_API_TOKEN
+ * Optional: CLOUDFLARE_PAGES_DOMAIN
+ *
+ * Dependency: blake3 (npm i blake3)
  */
 
 import { createHash } from "crypto";
+import path from "path";
 import type { PublishFile } from "./siteStore";
 
 const CF_API = "https://api.cloudflare.com/client/v4";
@@ -21,7 +20,7 @@ function accountId(): string {
   const id = process.env.CLOUDFLARE_ACCOUNT_ID;
   if (!id) {
     throw new Error(
-      "CLOUDFLARE_ACCOUNT_ID is not set. Add it in Vercel env (Cloudflare dashboard → Account ID)."
+      "CLOUDFLARE_ACCOUNT_ID is not set. Add it in Vercel env."
     );
   }
   return id;
@@ -34,7 +33,7 @@ function apiToken(): string {
     process.env.CLOUDFLARE_TOKEN;
   if (!t) {
     throw new Error(
-      "CLOUDFLARE_API_TOKEN is not set. Create a token with Account → Cloudflare Pages → Edit."
+      "CLOUDFLARE_API_TOKEN is not set. Token needs Cloudflare Pages Edit."
     );
   }
   return t;
@@ -49,6 +48,7 @@ export interface CloudflareDeployResult {
   siteUrl: string;
   pagesDevUrl: string;
   deploymentId?: string;
+  fileCount: number;
 }
 
 function sanitizeProjectName(name: string): string {
@@ -62,17 +62,35 @@ function sanitizeProjectName(name: string): string {
   );
 }
 
-function md5Hex(buf: Buffer): string {
-  return createHash("md5").update(buf).digest("hex");
+/**
+ * Same as @cloudflare/deploy-helpers hashFile:
+ * blake3(base64(contents) + extension).hex[0..32]
+ * Falls back to sha256 slice if blake3 package missing (may 404 on edge).
+ */
+function hashAsset(bytes: Buffer, filePath: string): string {
+  const base64Contents = bytes.toString("base64");
+  const extension = path.extname(filePath).replace(/^\./, "");
+  const input = base64Contents + extension;
+
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const blake3 = require("blake3") as {
+      hash: (data: string | Buffer) => Buffer;
+    };
+    return blake3.hash(input).toString("hex").slice(0, 32);
+  } catch {
+    // Fallback — prefer installing blake3
+    return createHash("sha256").update(input).digest("hex").slice(0, 32);
+  }
 }
 
-function contentTypeFor(path: string): string {
-  const ext = path.split(".").pop()?.toLowerCase() || "";
+function contentTypeFor(filePath: string): string {
+  const ext = path.extname(filePath).replace(/^\./, "").toLowerCase();
   const map: Record<string, string> = {
-    html: "text/html; charset=utf-8",
-    css: "text/css; charset=utf-8",
-    js: "application/javascript; charset=utf-8",
-    mjs: "application/javascript; charset=utf-8",
+    html: "text/html",
+    css: "text/css",
+    js: "application/javascript",
+    mjs: "application/javascript",
     json: "application/json",
     svg: "image/svg+xml",
     png: "image/png",
@@ -91,10 +109,10 @@ function contentTypeFor(path: string): string {
 }
 
 async function cfJson(
-  path: string,
+  apiPath: string,
   init?: RequestInit
 ): Promise<{ ok: boolean; status: number; data: any }> {
-  const res = await fetch(`${CF_API}${path}`, {
+  const res = await fetch(`${CF_API}${apiPath}`, {
     ...init,
     headers: {
       ...authHeader(),
@@ -140,16 +158,12 @@ async function getUploadToken(projectName: string): Promise<string> {
   return data.result.jwt as string;
 }
 
-/**
- * Upload file blobs to Pages asset store (authenticated with upload JWT).
- * Batches of up to 50 files.
- */
 async function uploadAssets(
   jwt: string,
   files: { hash: string; bytes: Buffer; contentType: string }[]
 ): Promise<void> {
   const endpoint = `${CF_API}/pages/assets/upload`;
-  const batchSize = 40;
+  const batchSize = 30;
 
   for (let i = 0; i < files.length; i += batchSize) {
     const slice = files.slice(i, i + batchSize);
@@ -180,9 +194,10 @@ async function uploadAssets(
 async function createDeployment(
   projectName: string,
   manifest: Record<string, string>
-): Promise<{ id?: string; url?: string }> {
+): Promise<{ id?: string; url?: string; environment?: string }> {
   const form = new FormData();
   form.append("manifest", JSON.stringify(manifest));
+  // production_branch is "main" — this must match for *.pages.dev apex
   form.append("branch", "main");
   form.append("commit_message", "goke publish");
   form.append("commit_dirty", "true");
@@ -203,7 +218,8 @@ async function createDeployment(
   }
   return {
     id: data?.result?.id,
-    url: data?.result?.url || data?.result?.aliases?.[0],
+    url: data?.result?.url,
+    environment: data?.result?.environment,
   };
 }
 
@@ -251,31 +267,46 @@ export async function deployToCloudflarePages(
     }
   }
 
-  // Build path → hash manifest + payload list
   const manifest: Record<string, string> = {};
   const toUpload: { hash: string; bytes: Buffer; contentType: string }[] = [];
   const seenHash = new Set<string>();
 
   for (const f of files) {
-    const path = f.path.replace(/^\//, "");
-    if (!path || path === "editor.json" || path === "editor-meta.json") continue;
+    let filePath = f.path.replace(/^\//, "").replace(/\\/g, "/");
+    if (
+      !filePath ||
+      filePath === "editor.json" ||
+      filePath === "editor-meta.json" ||
+      filePath.startsWith(".git/")
+    ) {
+      continue;
+    }
+
+    // Flatten accidental nested publish roots
+    if (filePath.startsWith("dist/")) filePath = filePath.slice(5);
+    if (filePath.startsWith("out/")) filePath = filePath.slice(4);
+    if (filePath.startsWith("public/")) filePath = filePath.slice(7);
 
     const bytes = Buffer.from(f.contentBase64, "base64");
-    const hash = md5Hex(bytes);
-    manifest[path] = hash;
+    if (bytes.length === 0) continue;
+
+    const hash = hashAsset(bytes, filePath);
+    manifest[filePath] = hash;
 
     if (!seenHash.has(hash)) {
       seenHash.add(hash);
       toUpload.push({
         hash,
         bytes,
-        contentType: contentTypeFor(path),
+        contentType: contentTypeFor(filePath),
       });
     }
   }
 
-  if (Object.keys(manifest).length === 0) {
-    throw new Error("No publishable files after filtering");
+  if (!manifest["index.html"]) {
+    throw new Error(
+      `No index.html at site root (got: ${Object.keys(manifest).slice(0, 12).join(", ") || "none"}). Cloudflare needs index.html for /`
+    );
   }
 
   const jwt = await getUploadToken(projectName);
@@ -283,7 +314,15 @@ export async function deployToCloudflarePages(
   const deployment = await createDeployment(projectName, manifest);
 
   const pagesDevUrl = `https://${projectName}.pages.dev`;
-  let siteUrl = pagesDevUrl;
+  // Prefer API deployment URL when present (preview vs production)
+  let siteUrl =
+    deployment.environment === "production"
+      ? pagesDevUrl
+      : deployment.url || pagesDevUrl;
+
+  if (deployment.environment === "production" || !deployment.url) {
+    siteUrl = pagesDevUrl;
+  }
 
   const customRoot = (process.env.CLOUDFLARE_PAGES_DOMAIN || "")
     .replace(/^https?:\/\//, "")
@@ -296,7 +335,7 @@ export async function deployToCloudflarePages(
       await attachCustomDomain(projectName, `${projectName}.${customRoot}`);
       siteUrl = `https://${projectName}.${customRoot}`;
     } catch {
-      siteUrl = pagesDevUrl;
+      /* keep pages.dev */
     }
   }
 
@@ -305,6 +344,7 @@ export async function deployToCloudflarePages(
     siteUrl,
     pagesDevUrl,
     deploymentId: deployment.id,
+    fileCount: Object.keys(manifest).length,
   };
 }
 
