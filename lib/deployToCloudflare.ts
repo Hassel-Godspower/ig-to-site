@@ -1,16 +1,12 @@
 /**
- * Cloudflare Pages Direct Upload — Wrangler-compatible protocol
+ * Cloudflare Pages Direct Upload (Wrangler-compatible)
  *
- * Hash must match Wrangler:
- *   blake3( base64(file) + extension ).hex.slice(0, 32)
+ * Hash = blake3(utf8(base64(file) + extension)).hex.slice(0, 32)
+ * Uses @noble/hashes (pure JS) — no blake3-wasm.
  *
- * Env: CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_API_TOKEN
- * Optional: CLOUDFLARE_PAGES_DOMAIN
- *
- * Dependency: blake3 (npm i blake3)
+ *   npm install @noble/hashes
  */
 
-import { createHash } from "crypto";
 import path from "path";
 import type { PublishFile } from "./siteStore";
 
@@ -18,11 +14,7 @@ const CF_API = "https://api.cloudflare.com/client/v4";
 
 function accountId(): string {
   const id = process.env.CLOUDFLARE_ACCOUNT_ID;
-  if (!id) {
-    throw new Error(
-      "CLOUDFLARE_ACCOUNT_ID is not set. Add it in Vercel env."
-    );
-  }
+  if (!id) throw new Error("CLOUDFLARE_ACCOUNT_ID is not set.");
   return id;
 }
 
@@ -31,11 +23,7 @@ function apiToken(): string {
     process.env.CLOUDFLARE_API_TOKEN ||
     process.env.CF_API_TOKEN ||
     process.env.CLOUDFLARE_TOKEN;
-  if (!t) {
-    throw new Error(
-      "CLOUDFLARE_API_TOKEN is not set. Token needs Cloudflare Pages Edit."
-    );
-  }
+  if (!t) throw new Error("CLOUDFLARE_API_TOKEN is not set.");
   return t;
 }
 
@@ -62,26 +50,23 @@ function sanitizeProjectName(name: string): string {
   );
 }
 
-/**
- * Same as @cloudflare/deploy-helpers hashFile:
- * blake3(base64(contents) + extension).hex[0..32]
- * Falls back to sha256 slice if blake3 package missing (may 404 on edge).
- */
+/** Wrangler-compatible asset hash */
 function hashAsset(bytes: Buffer, filePath: string): string {
   const base64Contents = bytes.toString("base64");
   const extension = path.extname(filePath).replace(/^\./, "");
   const input = base64Contents + extension;
 
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const blake3 = require("blake3") as {
-      hash: (data: string | Buffer) => Buffer;
-    };
-    return blake3.hash(input).toString("hex").slice(0, 32);
-  } catch {
-    // Fallback — prefer installing blake3
-    return createHash("sha256").update(input).digest("hex").slice(0, 32);
-  }
+  // @noble/hashes is pure JS
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { blake3 } = require("@noble/hashes/blake3") as {
+    blake3: (msg: Uint8Array) => Uint8Array;
+  };
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { bytesToHex } = require("@noble/hashes/utils") as {
+    bytesToHex: (b: Uint8Array) => string;
+  };
+  const msg = new TextEncoder().encode(input);
+  return bytesToHex(blake3(msg)).slice(0, 32);
 }
 
 function contentTypeFor(filePath: string): string {
@@ -103,7 +88,6 @@ function contentTypeFor(filePath: string): string {
     woff2: "font/woff2",
     txt: "text/plain",
     xml: "application/xml",
-    map: "application/json",
   };
   return map[ext] || "application/octet-stream";
 }
@@ -137,12 +121,11 @@ async function ensureProject(projectName: string): Promise<void> {
       production_branch: "main",
     }),
   });
-
   if (created.ok) return;
   const msg = JSON.stringify(created.data?.errors ?? created.data);
   if (created.status === 409 || /already exists/i.test(msg)) return;
   throw new Error(
-    `Cloudflare Pages create project failed (${created.status}): ${msg}`
+    `Cloudflare create project failed (${created.status}): ${msg}`
   );
 }
 
@@ -152,7 +135,7 @@ async function getUploadToken(projectName: string): Promise<string> {
   );
   if (!ok || !data?.result?.jwt) {
     throw new Error(
-      `Cloudflare upload-token failed (${status}): ${JSON.stringify(data?.errors ?? data)}`
+      `upload-token failed (${status}): ${JSON.stringify(data?.errors ?? data)}`
     );
   }
   return data.result.jwt as string;
@@ -163,17 +146,14 @@ async function uploadAssets(
   files: { hash: string; bytes: Buffer; contentType: string }[]
 ): Promise<void> {
   const endpoint = `${CF_API}/pages/assets/upload`;
-  const batchSize = 30;
-
-  for (let i = 0; i < files.length; i += batchSize) {
-    const slice = files.slice(i, i + batchSize);
+  for (let i = 0; i < files.length; i += 25) {
+    const slice = files.slice(i, i + 25);
     const body = slice.map((f) => ({
       key: f.hash,
       value: f.bytes.toString("base64"),
       base64: true,
       metadata: { contentType: f.contentType },
     }));
-
     const res = await fetch(endpoint, {
       method: "POST",
       headers: {
@@ -185,7 +165,7 @@ async function uploadAssets(
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
       throw new Error(
-        `Cloudflare asset upload failed (${res.status}): ${JSON.stringify(data?.errors ?? data)}`
+        `asset upload failed (${res.status}): ${JSON.stringify(data?.errors ?? data)}`
       );
     }
   }
@@ -197,23 +177,18 @@ async function createDeployment(
 ): Promise<{ id?: string; url?: string; environment?: string }> {
   const form = new FormData();
   form.append("manifest", JSON.stringify(manifest));
-  // production_branch is "main" — this must match for *.pages.dev apex
   form.append("branch", "main");
   form.append("commit_message", "goke publish");
   form.append("commit_dirty", "true");
 
   const res = await fetch(
     `${CF_API}/accounts/${accountId()}/pages/projects/${projectName}/deployments`,
-    {
-      method: "POST",
-      headers: authHeader(),
-      body: form,
-    }
+    { method: "POST", headers: authHeader(), body: form }
   );
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
     throw new Error(
-      `Cloudflare Pages deploy failed (${res.status}): ${JSON.stringify(data?.errors ?? data)}`
+      `Pages deploy failed (${res.status}): ${JSON.stringify(data?.errors ?? data)}`
     );
   }
   return {
@@ -223,34 +198,22 @@ async function createDeployment(
   };
 }
 
-async function attachCustomDomain(
-  projectName: string,
-  hostname: string
-): Promise<void> {
-  const { ok, status, data } = await cfJson(
-    `/accounts/${accountId()}/pages/projects/${projectName}/domains`,
-    {
-      method: "POST",
-      body: JSON.stringify({ name: hostname }),
-    }
-  );
-  if (!ok && status !== 409) {
-    throw new Error(
-      `Custom domain attach failed: ${JSON.stringify(data?.errors ?? data)}`
-    );
-  }
-}
-
 export async function deployToCloudflarePages(
   preferredName: string,
   files: PublishFile[]
 ): Promise<CloudflareDeployResult> {
-  if (!files.length) {
-    throw new Error("No files to deploy to Cloudflare Pages");
+  if (!files.length) throw new Error("No files to deploy to Cloudflare Pages");
+
+  // Fail fast if hash lib missing
+  try {
+    require("@noble/hashes/blake3");
+  } catch {
+    throw new Error(
+      "Missing dependency @noble/hashes. Run: npm install @noble/hashes"
+    );
   }
 
   let projectName = sanitizeProjectName(preferredName);
-
   for (let attempt = 0; attempt < 4; attempt++) {
     try {
       await ensureProject(projectName);
@@ -269,7 +232,7 @@ export async function deployToCloudflarePages(
 
   const manifest: Record<string, string> = {};
   const toUpload: { hash: string; bytes: Buffer; contentType: string }[] = [];
-  const seenHash = new Set<string>();
+  const seen = new Set<string>();
 
   for (const f of files) {
     let filePath = f.path.replace(/^\//, "").replace(/\\/g, "/");
@@ -281,31 +244,24 @@ export async function deployToCloudflarePages(
     ) {
       continue;
     }
-
-    // Flatten accidental nested publish roots
     if (filePath.startsWith("dist/")) filePath = filePath.slice(5);
     if (filePath.startsWith("out/")) filePath = filePath.slice(4);
     if (filePath.startsWith("public/")) filePath = filePath.slice(7);
 
     const bytes = Buffer.from(f.contentBase64, "base64");
-    if (bytes.length === 0) continue;
+    if (!bytes.length) continue;
 
     const hash = hashAsset(bytes, filePath);
     manifest[filePath] = hash;
-
-    if (!seenHash.has(hash)) {
-      seenHash.add(hash);
-      toUpload.push({
-        hash,
-        bytes,
-        contentType: contentTypeFor(filePath),
-      });
+    if (!seen.has(hash)) {
+      seen.add(hash);
+      toUpload.push({ hash, bytes, contentType: contentTypeFor(filePath) });
     }
   }
 
   if (!manifest["index.html"]) {
     throw new Error(
-      `No index.html at site root (got: ${Object.keys(manifest).slice(0, 12).join(", ") || "none"}). Cloudflare needs index.html for /`
+      `No index.html at root. Files: ${Object.keys(manifest).slice(0, 15).join(", ") || "none"}`
     );
   }
 
@@ -314,29 +270,9 @@ export async function deployToCloudflarePages(
   const deployment = await createDeployment(projectName, manifest);
 
   const pagesDevUrl = `https://${projectName}.pages.dev`;
-  // Prefer API deployment URL when present (preview vs production)
-  let siteUrl =
-    deployment.environment === "production"
-      ? pagesDevUrl
-      : deployment.url || pagesDevUrl;
-
-  if (deployment.environment === "production" || !deployment.url) {
-    siteUrl = pagesDevUrl;
-  }
-
-  const customRoot = (process.env.CLOUDFLARE_PAGES_DOMAIN || "")
-    .replace(/^https?:\/\//, "")
-    .replace(/^\*\./, "")
-    .replace(/\.$/, "")
-    .trim();
-
-  if (customRoot) {
-    try {
-      await attachCustomDomain(projectName, `${projectName}.${customRoot}`);
-      siteUrl = `https://${projectName}.${customRoot}`;
-    } catch {
-      /* keep pages.dev */
-    }
+  let siteUrl = pagesDevUrl;
+  if (deployment.environment && deployment.environment !== "production" && deployment.url) {
+    siteUrl = deployment.url;
   }
 
   return {
