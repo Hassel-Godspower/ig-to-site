@@ -1,10 +1,8 @@
 /**
- * Cloudflare Pages Direct Upload (Wrangler-compatible)
+ * Cloudflare Pages Direct Upload — Wrangler-compatible.
+ * Hash: blake3(utf8(base64(fileBytes) + extension)).hex.slice(0, 32)
  *
- * Hash = blake3(utf8(base64(file) + extension)).hex.slice(0, 32)
- * Uses @noble/hashes (pure JS) — no blake3-wasm.
- *
- *   npm install @noble/hashes
+ * Required: npm install @noble/hashes
  */
 
 import path from "path";
@@ -13,21 +11,23 @@ import type { PublishFile } from "./siteStore";
 const CF_API = "https://api.cloudflare.com/client/v4";
 
 function accountId(): string {
-  const id = process.env.CLOUDFLARE_ACCOUNT_ID;
-  if (!id) throw new Error("CLOUDFLARE_ACCOUNT_ID is not set.");
+  const id = process.env.CLOUDFLARE_ACCOUNT_ID?.trim();
+  if (!id) throw new Error("CLOUDFLARE_ACCOUNT_ID is not set");
   return id;
 }
 
 function apiToken(): string {
-  const t =
+  const t = (
     process.env.CLOUDFLARE_API_TOKEN ||
     process.env.CF_API_TOKEN ||
-    process.env.CLOUDFLARE_TOKEN;
-  if (!t) throw new Error("CLOUDFLARE_API_TOKEN is not set.");
+    process.env.CLOUDFLARE_TOKEN ||
+    ""
+  ).trim();
+  if (!t) throw new Error("CLOUDFLARE_API_TOKEN is not set");
   return t;
 }
 
-function authHeader(): Record<string, string> {
+function auth(): Record<string, string> {
   return { Authorization: `Bearer ${apiToken()}` };
 }
 
@@ -39,7 +39,7 @@ export interface CloudflareDeployResult {
   fileCount: number;
 }
 
-function sanitizeProjectName(name: string): string {
+function sanitize(name: string): string {
   return (
     name
       .toLowerCase()
@@ -50,23 +50,20 @@ function sanitizeProjectName(name: string): string {
   );
 }
 
-/** Wrangler-compatible asset hash */
 function hashAsset(bytes: Buffer, filePath: string): string {
   const base64Contents = bytes.toString("base64");
   const extension = path.extname(filePath).replace(/^\./, "");
   const input = base64Contents + extension;
 
-  // @noble/hashes is pure JS
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { blake3 } = require("@noble/hashes/blake3") as {
-    blake3: (msg: Uint8Array) => Uint8Array;
+    blake3: (data: Uint8Array) => Uint8Array;
   };
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { bytesToHex } = require("@noble/hashes/utils") as {
     bytesToHex: (b: Uint8Array) => string;
   };
-  const msg = new TextEncoder().encode(input);
-  return bytesToHex(blake3(msg)).slice(0, 32);
+  return bytesToHex(blake3(new TextEncoder().encode(input))).slice(0, 32);
 }
 
 function contentTypeFor(filePath: string): string {
@@ -88,20 +85,23 @@ function contentTypeFor(filePath: string): string {
     woff2: "font/woff2",
     txt: "text/plain",
     xml: "application/xml",
+    md: "text/markdown",
   };
   return map[ext] || "application/octet-stream";
 }
 
 async function cfJson(
-  apiPath: string,
+  p: string,
   init?: RequestInit
 ): Promise<{ ok: boolean; status: number; data: any }> {
-  const res = await fetch(`${CF_API}${apiPath}`, {
+  const res = await fetch(`${CF_API}${p}`, {
     ...init,
     headers: {
-      ...authHeader(),
-      "Content-Type": "application/json",
-      ...(init?.headers ?? {}),
+      ...auth(),
+      ...(init?.body && !(init.body instanceof FormData)
+        ? { "Content-Type": "application/json" }
+        : {}),
+      ...(init?.headers as Record<string, string> | undefined),
     },
   });
   const data = await res.json().catch(() => ({}));
@@ -116,17 +116,12 @@ async function ensureProject(projectName: string): Promise<void> {
 
   const created = await cfJson(`/accounts/${accountId()}/pages/projects`, {
     method: "POST",
-    body: JSON.stringify({
-      name: projectName,
-      production_branch: "main",
-    }),
+    body: JSON.stringify({ name: projectName, production_branch: "main" }),
   });
   if (created.ok) return;
   const msg = JSON.stringify(created.data?.errors ?? created.data);
   if (created.status === 409 || /already exists/i.test(msg)) return;
-  throw new Error(
-    `Cloudflare create project failed (${created.status}): ${msg}`
-  );
+  throw new Error(`Create project failed (${created.status}): ${msg}`);
 }
 
 async function getUploadToken(projectName: string): Promise<string> {
@@ -138,23 +133,22 @@ async function getUploadToken(projectName: string): Promise<string> {
       `upload-token failed (${status}): ${JSON.stringify(data?.errors ?? data)}`
     );
   }
-  return data.result.jwt as string;
+  return String(data.result.jwt);
 }
 
 async function uploadAssets(
   jwt: string,
   files: { hash: string; bytes: Buffer; contentType: string }[]
 ): Promise<void> {
-  const endpoint = `${CF_API}/pages/assets/upload`;
-  for (let i = 0; i < files.length; i += 25) {
-    const slice = files.slice(i, i + 25);
+  for (let i = 0; i < files.length; i += 20) {
+    const slice = files.slice(i, i + 20);
     const body = slice.map((f) => ({
       key: f.hash,
       value: f.bytes.toString("base64"),
       base64: true,
       metadata: { contentType: f.contentType },
     }));
-    const res = await fetch(endpoint, {
+    const res = await fetch(`${CF_API}/pages/assets/upload`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${jwt}`,
@@ -183,12 +177,12 @@ async function createDeployment(
 
   const res = await fetch(
     `${CF_API}/accounts/${accountId()}/pages/projects/${projectName}/deployments`,
-    { method: "POST", headers: authHeader(), body: form }
+    { method: "POST", headers: auth(), body: form }
   );
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
     throw new Error(
-      `Pages deploy failed (${res.status}): ${JSON.stringify(data?.errors ?? data)}`
+      `deployment failed (${res.status}): ${JSON.stringify(data?.errors ?? data)}`
     );
   }
   return {
@@ -202,18 +196,17 @@ export async function deployToCloudflarePages(
   preferredName: string,
   files: PublishFile[]
 ): Promise<CloudflareDeployResult> {
-  if (!files.length) throw new Error("No files to deploy to Cloudflare Pages");
-
-  // Fail fast if hash lib missing
   try {
     require("@noble/hashes/blake3");
   } catch {
     throw new Error(
-      "Missing dependency @noble/hashes. Run: npm install @noble/hashes"
+      "Missing @noble/hashes. In the project root run: npm install @noble/hashes && redeploy to Vercel"
     );
   }
 
-  let projectName = sanitizeProjectName(preferredName);
+  if (!files.length) throw new Error("No files to deploy");
+
+  let projectName = sanitize(preferredName);
   for (let attempt = 0; attempt < 4; attempt++) {
     try {
       await ensureProject(projectName);
@@ -221,9 +214,7 @@ export async function deployToCloudflarePages(
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);
       if (attempt < 3 && /already|taken|conflict|409/i.test(msg)) {
-        projectName = `${sanitizeProjectName(preferredName)}-${Math.random()
-          .toString(36)
-          .slice(2, 5)}`;
+        projectName = `${sanitize(preferredName)}-${Math.random().toString(36).slice(2, 5)}`;
         continue;
       }
       throw e;
@@ -244,9 +235,10 @@ export async function deployToCloudflarePages(
     ) {
       continue;
     }
-    if (filePath.startsWith("dist/")) filePath = filePath.slice(5);
-    if (filePath.startsWith("out/")) filePath = filePath.slice(4);
-    if (filePath.startsWith("public/")) filePath = filePath.slice(7);
+    // strip accidental wrappers
+    for (const prefix of ["dist/", "out/", "public/", "build/"]) {
+      if (filePath.startsWith(prefix)) filePath = filePath.slice(prefix.length);
+    }
 
     const bytes = Buffer.from(f.contentBase64, "base64");
     if (!bytes.length) continue;
@@ -261,7 +253,7 @@ export async function deployToCloudflarePages(
 
   if (!manifest["index.html"]) {
     throw new Error(
-      `No index.html at root. Files: ${Object.keys(manifest).slice(0, 15).join(", ") || "none"}`
+      `No index.html at root. Got: ${Object.keys(manifest).slice(0, 20).join(", ") || "none"}`
     );
   }
 
@@ -270,10 +262,10 @@ export async function deployToCloudflarePages(
   const deployment = await createDeployment(projectName, manifest);
 
   const pagesDevUrl = `https://${projectName}.pages.dev`;
-  let siteUrl = pagesDevUrl;
-  if (deployment.environment && deployment.environment !== "production" && deployment.url) {
-    siteUrl = deployment.url;
-  }
+  const siteUrl =
+    deployment.environment === "preview" && deployment.url
+      ? deployment.url
+      : pagesDevUrl;
 
   return {
     projectName,
@@ -286,7 +278,7 @@ export async function deployToCloudflarePages(
 
 export function isCloudflareConfigured(): boolean {
   return Boolean(
-    process.env.CLOUDFLARE_ACCOUNT_ID &&
+    process.env.CLOUDFLARE_ACCOUNT_ID?.trim() &&
       (process.env.CLOUDFLARE_API_TOKEN ||
         process.env.CF_API_TOKEN ||
         process.env.CLOUDFLARE_TOKEN)

@@ -7,26 +7,25 @@ import {
 } from "./deployToCloudflare";
 
 /**
- * After successful Paystack payment:
- * 1) Push site to private GitHub repo (source of truth / backup)
- * 2) Deploy to Cloudflare Pages (live URL for the customer)
- * Idempotent if already done.
+ * After payment: GitHub backup + Cloudflare Pages live URL.
+ * Pass force=true to re-upload even if already on pages.dev.
  */
 export async function completePaidJob(
   jobId: string,
-  username?: string
+  username?: string,
+  force = false
 ): Promise<Job> {
   const job = await getJob(jobId);
   if (!job) throw new Error(`Job ${jobId} not found`);
 
-  // Skip only if already live on Cloudflare. Re-run if still vercel.app or no siteUrl.
   const onCloudflare = Boolean(
     job.siteUrl &&
       (job.siteUrl.includes("pages.dev") ||
         (process.env.CLOUDFLARE_PAGES_DOMAIN &&
           job.siteUrl.includes(process.env.CLOUDFLARE_PAGES_DOMAIN)))
   );
-  if (onCloudflare && (job.status === "done" || job.status === "deploying")) {
+
+  if (!force && onCloudflare && (job.status === "done" || job.status === "deploying")) {
     return job;
   }
 
@@ -58,27 +57,36 @@ export async function completePaidJob(
       );
     }
 
-    // --- 1) GitHub (backup / editable source) ---
     let repoOwner = job.repoOwner;
     let repoName = job.repoName;
     let repoUrl = job.repoUrl;
     let defaultBranch = job.defaultBranch;
 
-    if (!repoUrl) {
-      const repo = await createRepoWithFiles(
-        publishFiles.map((f) => ({
-          path: f.path,
-          contentBase64: f.contentBase64,
-        })),
-        finalUsername
-      );
-      repoOwner = repo.owner;
-      repoName = repo.repoName;
-      repoUrl = repo.repoUrl;
-      defaultBranch = repo.defaultBranch;
+    if (!repoUrl || force) {
+      try {
+        if (!repoUrl) {
+          const repo = await createRepoWithFiles(
+            publishFiles.map((f) => ({
+              path: f.path,
+              contentBase64: f.contentBase64,
+            })),
+            finalUsername
+          );
+          repoOwner = repo.owner;
+          repoName = repo.repoName;
+          repoUrl = repo.repoUrl;
+          defaultBranch = repo.defaultBranch;
+        }
+      } catch (ghErr: unknown) {
+        // If repo already exists, continue to Cloudflare
+        const m = ghErr instanceof Error ? ghErr.message : String(ghErr);
+        if (!/already exists|name already taken/i.test(m) && !repoUrl) {
+          // soft: still try CF if we have a name
+          console.error("GitHub push warning:", m);
+        }
+      }
     }
 
-    // --- 2) Cloudflare Pages (live site) ---
     let siteUrl = `https://${repoName || finalUsername}.pages.dev`;
     let cfProject = repoName || finalUsername;
 
@@ -90,12 +98,9 @@ export async function completePaidJob(
       siteUrl = cf.siteUrl;
       cfProject = cf.projectName;
     } else {
-      // Fallback: GitHub only — operator imports to CF/Vercel manually
-      siteUrl =
-        process.env.FALLBACK_SITE_URL_TEMPLATE?.replace(
-          "{name}",
-          repoName || finalUsername
-        ) || `https://${repoName || finalUsername}.pages.dev`;
+      throw new Error(
+        "CLOUDFLARE_ACCOUNT_ID / CLOUDFLARE_API_TOKEN not set on Vercel"
+      );
     }
 
     return await updateJob(jobId, {
