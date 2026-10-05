@@ -15,7 +15,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ job
     return NextResponse.json({ error: "Job not found" }, { status: 404 });
   }
 
-  if (job.status === "deploying" && job.siteUrl) {
+  if ((job.status === "deploying" || job.status === "done") && job.siteUrl) {
     const isLive = await checkLive(job.siteUrl);
     if (isLive) {
       const updated = await updateJob(job.id, { status: "done" });
