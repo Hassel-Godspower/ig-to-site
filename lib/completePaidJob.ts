@@ -1,10 +1,16 @@
 import { getJob, updateJob, Job } from "./jobStore";
 import { getPublishFiles } from "./siteStore";
 import { createRepoWithFiles } from "./githubRepo";
+import {
+  deployToCloudflarePages,
+  isCloudflareConfigured,
+} from "./deployToCloudflare";
 
 /**
- * After successful Paystack payment: create GitHub repo with all site files.
- * Idempotent if already deploying/done.
+ * After successful Paystack payment:
+ * 1) Push site to private GitHub repo (source of truth / backup)
+ * 2) Deploy to Cloudflare Pages (live URL for the customer)
+ * Idempotent if already done.
  */
 export async function completePaidJob(
   jobId: string,
@@ -13,11 +19,17 @@ export async function completePaidJob(
   const job = await getJob(jobId);
   if (!job) throw new Error(`Job ${jobId} not found`);
 
-  // Already have a repo — skip. If "deploying" without repoUrl, retry publish.
-  if (job.status === "done") return job;
-  if (job.status === "deploying" && job.repoUrl) return job;
+  // Skip only if already live on Cloudflare. Re-run if still vercel.app or no siteUrl.
+  const onCloudflare = Boolean(
+    job.siteUrl &&
+      (job.siteUrl.includes("pages.dev") ||
+        (process.env.CLOUDFLARE_PAGES_DOMAIN &&
+          job.siteUrl.includes(process.env.CLOUDFLARE_PAGES_DOMAIN)))
+  );
+  if (onCloudflare && (job.status === "done" || job.status === "deploying")) {
+    return job;
+  }
 
-  // Prefer explicit username → job.username → parsedUsername
   const finalUsername =
     (username && username.trim()) ||
     job.username ||
@@ -25,16 +37,14 @@ export async function completePaidJob(
     null;
 
   if (!finalUsername) {
-    const failed = await updateJob(jobId, {
+    return await updateJob(jobId, {
       status: "failed",
       error:
         "Payment received but no site username was stored. Retry via /api/deploy with a username.",
     });
-    return failed;
   }
 
   try {
-    // Prevent double concurrent runs
     await updateJob(jobId, {
       status: "deploying",
       username: finalUsername,
@@ -44,26 +54,58 @@ export async function completePaidJob(
     const publishFiles = await getPublishFiles(jobId);
     if (publishFiles.length === 0) {
       throw new Error(
-        "No generated files found in storage for this job — nothing to push to GitHub."
+        "No generated files found in storage for this job — nothing to publish."
       );
     }
 
-    const repo = await createRepoWithFiles(
-      publishFiles.map((f) => ({
-        path: f.path,
-        contentBase64: f.contentBase64,
-      })),
-      finalUsername
-    );
+    // --- 1) GitHub (backup / editable source) ---
+    let repoOwner = job.repoOwner;
+    let repoName = job.repoName;
+    let repoUrl = job.repoUrl;
+    let defaultBranch = job.defaultBranch;
+
+    if (!repoUrl) {
+      const repo = await createRepoWithFiles(
+        publishFiles.map((f) => ({
+          path: f.path,
+          contentBase64: f.contentBase64,
+        })),
+        finalUsername
+      );
+      repoOwner = repo.owner;
+      repoName = repo.repoName;
+      repoUrl = repo.repoUrl;
+      defaultBranch = repo.defaultBranch;
+    }
+
+    // --- 2) Cloudflare Pages (live site) ---
+    let siteUrl = `https://${repoName || finalUsername}.pages.dev`;
+    let cfProject = repoName || finalUsername;
+
+    if (isCloudflareConfigured()) {
+      const cf = await deployToCloudflarePages(
+        repoName || finalUsername,
+        publishFiles
+      );
+      siteUrl = cf.siteUrl;
+      cfProject = cf.projectName;
+    } else {
+      // Fallback: GitHub only — operator imports to CF/Vercel manually
+      siteUrl =
+        process.env.FALLBACK_SITE_URL_TEMPLATE?.replace(
+          "{name}",
+          repoName || finalUsername
+        ) || `https://${repoName || finalUsername}.pages.dev`;
+    }
 
     return await updateJob(jobId, {
-      status: "deploying",
-      username: repo.repoName,
-      repoOwner: repo.owner,
-      repoName: repo.repoName,
-      repoUrl: repo.repoUrl,
-      defaultBranch: repo.defaultBranch,
-      siteUrl: `https://${repo.repoName}.vercel.app`,
+      status: "done",
+      username: cfProject,
+      repoOwner: repoOwner ?? undefined,
+      repoName: repoName ?? undefined,
+      repoUrl: repoUrl ?? undefined,
+      defaultBranch: defaultBranch ?? undefined,
+      siteUrl,
       error: undefined as unknown as string,
     });
   } catch (err: unknown) {
