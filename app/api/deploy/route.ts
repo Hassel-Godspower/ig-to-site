@@ -4,11 +4,11 @@ import { completePaidJob } from "@/lib/completePaidJob";
 import { verifyTransaction } from "@/lib/paystack";
 
 export const runtime = "nodejs";
-export const maxDuration = 60;
+export const maxDuration = 120;
 
 /**
- * POST { jobId, reference?, username? }
- * Retry GitHub repo creation after payment (failed jobs or stuck pending).
+ * POST { jobId, reference?, username?, force? }
+ * force=true re-uploads to Cloudflare even if status is done.
  */
 export async function POST(req: NextRequest) {
   try {
@@ -18,6 +18,7 @@ export async function POST(req: NextRequest) {
     const usernameOverride = body.username
       ? String(body.username)
       : undefined;
+    const force = Boolean(body.force);
 
     if (!jobId) {
       return NextResponse.json({ error: "jobId required" }, { status: 400 });
@@ -28,7 +29,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Job not found" }, { status: 404 });
     }
 
-    // If reference provided, confirm payment first
     if (reference) {
       const verified = await verifyTransaction(reference);
       if (verified.status !== "success") {
@@ -41,11 +41,11 @@ export async function POST(req: NextRequest) {
         );
       }
     } else if (
+      !force &&
       job.status !== "failed" &&
       job.status !== "pending_payment" &&
       job.status !== "deploying"
     ) {
-      // Only allow blind retry for failed / stuck
       if (job.status === "done") {
         return NextResponse.json({
           status: job.status,
@@ -55,25 +55,24 @@ export async function POST(req: NextRequest) {
       }
       return NextResponse.json(
         {
-          error: `Job status is '${job.status}'. Pass payment reference to force, or wait for payment.`,
+          error: `Job status is '${job.status}'. Pass payment reference or force:true.`,
         },
         { status: 400 }
       );
     }
 
     const username =
-      usernameOverride ||
-      job.username ||
-      job.parsedUsername ||
-      undefined;
+      usernameOverride || job.username || job.parsedUsername || undefined;
 
-    const updated = await completePaidJob(jobId, username);
+    const updated = await completePaidJob(jobId, username, force);
+
     if (updated.status === "failed") {
       return NextResponse.json(
         { error: updated.error, status: "failed" },
         { status: 500 }
       );
     }
+
     return NextResponse.json({
       status: updated.status,
       siteUrl: updated.siteUrl,
