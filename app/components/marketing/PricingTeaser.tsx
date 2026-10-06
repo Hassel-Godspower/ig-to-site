@@ -27,9 +27,9 @@ export function PricingTeaser() {
           <article className="gk-price-card featured">
             <h3>Go live</h3>
             <p className="price">
-              ₦10,000 <span>/ once</span>
+              ₦20,000 <span>/ once</span>
             </p>
-            <p className="gk-price-note">About $6 · one-time publish</p>
+            <p className="gk-price-note">About $12 · one-time publish</p>
             <ul>
               <li>Everything in Preview</li>
               <li>Deploy your site</li>
