@@ -607,7 +607,7 @@ export default function SimplePreviewPage() {
           <div style={modalCard}>
             <h3 style={{ marginTop: 0 }}>Go live</h3>
             <p style={{ fontSize: 13, color: "#9ca3af" }}>
-              Publish this multi-page site. ₦10,000 once.
+              Publish this multi-page site. ₦20,000 once.
             </p>
             <label style={fieldLabel}>
               Site username
