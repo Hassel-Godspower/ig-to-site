@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const amount = Number(process.env.PAYSTACK_AMOUNT || 1000000);
+  const amount = Number(process.env.PAYSTACK_AMOUNT || 2000000);
   const path =
     returnPath === "preview-simple"
       ? `/preview-simple/${jobId}`
