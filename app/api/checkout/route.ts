@@ -7,7 +7,8 @@ export async function POST(req: NextRequest) {
   const jobId = String(body.jobId || "");
   const username = String(body.username || "");
   const email = String(body.email || "").trim();
-  const returnPath = String(body.returnPath || "preview"); // preview | preview-simple
+  const phone = body.phone ? String(body.phone).trim() : "";
+  const returnPath = String(body.returnPath || "preview");
 
   if (!jobId || !username) {
     return NextResponse.json(
@@ -32,6 +33,7 @@ export async function POST(req: NextRequest) {
     status: "pending_payment",
     username: cleanUsername,
     email,
+    ...(phone ? { phone } : {}),
   });
 
   const baseUrl = (process.env.BASE_URL || "").replace(/\/$/, "");
@@ -42,13 +44,12 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const amount = Number(process.env.PAYSTACK_AMOUNT || 1000000); // kobo: ₦10,000
+  const amount = Number(process.env.PAYSTACK_AMOUNT || 1000000);
   const path =
     returnPath === "preview-simple"
       ? `/preview-simple/${jobId}`
       : `/preview/${jobId}`;
 
-  // metadata must be Record<string, string> per lib/paystack.ts
   const { authorizationUrl } = await initializeTransaction({
     email,
     amount,
@@ -56,6 +57,7 @@ export async function POST(req: NextRequest) {
     metadata: {
       jobId,
       username: cleanUsername,
+      ...(phone ? { phone } : {}),
     },
   });
 
