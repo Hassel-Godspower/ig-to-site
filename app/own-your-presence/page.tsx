@@ -66,7 +66,7 @@ const fills = [
   },
   {
     title: "Edit visually, then go live once",
-    body: "Refine copy, layout, and media in the editor. Free to generate and edit. Pay once (₦10,000) when you’re ready to publish — not monthly rent to keep a draft.",
+    body: "Refine copy, layout, and media in the editor. Free to generate and edit. Pay once (₦20,000) when you’re ready to publish — not monthly rent to keep a draft.",
   },
   {
     title: "A destination that isn’t a link list",
@@ -206,7 +206,7 @@ export default function OwnYourPresencePage() {
         <section className="gk-cta-band">
           <div className="gk-container">
             <h2>Turn your Instagram into a site you own</h2>
-            <p>Free to generate and edit. ₦10,000 once to go live.</p>
+            <p>Free to generate and edit. ₦20,000 once to go live.</p>
             <div className="gk-demo-actions" style={{ justifyContent: "center" }}>
               <Link href="/#start" className="gk-btn gk-btn-primary gk-btn-lg">
                 Generate my site
