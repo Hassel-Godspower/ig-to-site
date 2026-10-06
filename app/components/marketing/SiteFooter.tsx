@@ -23,6 +23,7 @@ export function SiteFooter() {
           </div>
           <div>
             <h4>Product</h4>
+            <Link href="/builders">Builders</Link>
             <Link href="/why">Why gòke</Link>
             <Link href="/own-your-presence">Own your presence</Link>
             <a href="/#how">How it works</a>

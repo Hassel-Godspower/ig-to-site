@@ -40,6 +40,9 @@ export function SiteHeader() {
           <a href="/#pricing" onClick={close}>
             Pricing
           </a>
+          <Link href="/builders" onClick={close}>
+            Builders
+          </Link>
           <Link href="/why" onClick={close}>
             Why gòke
           </Link>
