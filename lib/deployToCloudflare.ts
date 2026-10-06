@@ -1,11 +1,13 @@
 /**
- * Cloudflare Pages Direct Upload — Wrangler-compatible.
- * Hash: blake3(utf8(base64(fileBytes) + extension)).hex.slice(0, 32)
+ * Cloudflare Pages Direct Upload — Wrangler-compatible hash.
+ * Uses @noble/hashes with .js subpaths (required for Next/webpack exports).
  *
- * Required: npm install @noble/hashes
+ *   npm install @noble/hashes
  */
 
 import path from "path";
+import { blake3 } from "@noble/hashes/blake3.js";
+import { bytesToHex } from "@noble/hashes/utils.js";
 import type { PublishFile } from "./siteStore";
 
 const CF_API = "https://api.cloudflare.com/client/v4";
@@ -50,20 +52,12 @@ function sanitize(name: string): string {
   );
 }
 
+/** Wrangler: blake3(utf8(base64(file) + extension)).hex.slice(0, 32) */
 function hashAsset(bytes: Buffer, filePath: string): string {
   const base64Contents = bytes.toString("base64");
   const extension = path.extname(filePath).replace(/^\./, "");
-  const input = base64Contents + extension;
-
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { blake3 } = require("@noble/hashes/blake3") as {
-    blake3: (data: Uint8Array) => Uint8Array;
-  };
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { bytesToHex } = require("@noble/hashes/utils") as {
-    bytesToHex: (b: Uint8Array) => string;
-  };
-  return bytesToHex(blake3(new TextEncoder().encode(input))).slice(0, 32);
+  const input = new TextEncoder().encode(base64Contents + extension);
+  return bytesToHex(blake3(input)).slice(0, 32);
 }
 
 function contentTypeFor(filePath: string): string {
@@ -196,14 +190,6 @@ export async function deployToCloudflarePages(
   preferredName: string,
   files: PublishFile[]
 ): Promise<CloudflareDeployResult> {
-  try {
-    require("@noble/hashes/blake3");
-  } catch {
-    throw new Error(
-      "Missing @noble/hashes. In the project root run: npm install @noble/hashes && redeploy to Vercel"
-    );
-  }
-
   if (!files.length) throw new Error("No files to deploy");
 
   let projectName = sanitize(preferredName);
@@ -235,7 +221,6 @@ export async function deployToCloudflarePages(
     ) {
       continue;
     }
-    // strip accidental wrappers
     for (const prefix of ["dist/", "out/", "public/", "build/"]) {
       if (filePath.startsWith(prefix)) filePath = filePath.slice(prefix.length);
     }
