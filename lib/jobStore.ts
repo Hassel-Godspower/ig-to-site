@@ -6,6 +6,8 @@ export interface Job {
   username?: string;
   parsedUsername?: string;
   email?: string;
+  /** Customer WhatsApp / mobile, digits or local format */
+  phone?: string;
   siteUrl?: string;
   error?: string;
   repoOwner?: string;
@@ -45,6 +47,7 @@ function mapRow(data: any): Job {
     username: data.username ?? undefined,
     parsedUsername: data.parsed_username ?? undefined,
     email: data.email ?? undefined,
+    phone: data.phone ?? undefined,
     siteUrl: data.site_url ?? undefined,
     error: data.error ?? undefined,
     repoOwner: data.repo_owner ?? undefined,
@@ -63,6 +66,7 @@ export async function createJob(job: Job): Promise<void> {
     username: job.username ?? null,
     parsed_username: job.parsedUsername ?? null,
     email: job.email ?? null,
+    phone: job.phone ?? null,
     site_url: job.siteUrl ?? null,
     error: job.error ?? null,
     repo_owner: job.repoOwner ?? null,
@@ -98,6 +102,7 @@ export async function updateJob(id: string, patch: Partial<Job>): Promise<Job> {
   if (patch.username !== undefined) row.username = patch.username;
   if (patch.parsedUsername !== undefined) row.parsed_username = patch.parsedUsername;
   if (patch.email !== undefined) row.email = patch.email;
+  if (patch.phone !== undefined) row.phone = patch.phone;
   if (patch.siteUrl !== undefined) row.site_url = patch.siteUrl;
   if (patch.error !== undefined) row.error = patch.error;
   if (patch.repoOwner !== undefined) row.repo_owner = patch.repoOwner;

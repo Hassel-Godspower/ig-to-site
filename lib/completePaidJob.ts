@@ -5,10 +5,10 @@ import {
   deployToCloudflarePages,
   isCloudflareConfigured,
 } from "./deployToCloudflare";
+import { notifySiteReady } from "./notifySiteReady";
 
 /**
- * After payment: GitHub backup + Cloudflare Pages live URL.
- * Pass force=true to re-upload even if already on pages.dev.
+ * After payment: GitHub → Cloudflare Pages → email / WhatsApp link to customer.
  */
 export async function completePaidJob(
   jobId: string,
@@ -53,7 +53,7 @@ export async function completePaidJob(
     const publishFiles = await getPublishFiles(jobId);
     if (publishFiles.length === 0) {
       throw new Error(
-        "No generated files found in storage for this job — nothing to publish."
+        "No generated files in storage for this job — nothing to publish."
       );
     }
 
@@ -62,57 +62,66 @@ export async function completePaidJob(
     let repoUrl = job.repoUrl;
     let defaultBranch = job.defaultBranch;
 
-    if (!repoUrl || force) {
+    if (!repoUrl) {
       try {
-        if (!repoUrl) {
-          const repo = await createRepoWithFiles(
-            publishFiles.map((f) => ({
-              path: f.path,
-              contentBase64: f.contentBase64,
-            })),
-            finalUsername
-          );
-          repoOwner = repo.owner;
-          repoName = repo.repoName;
-          repoUrl = repo.repoUrl;
-          defaultBranch = repo.defaultBranch;
-        }
+        const repo = await createRepoWithFiles(
+          publishFiles.map((f) => ({
+            path: f.path,
+            contentBase64: f.contentBase64,
+          })),
+          finalUsername
+        );
+        repoOwner = repo.owner;
+        repoName = repo.repoName;
+        repoUrl = repo.repoUrl;
+        defaultBranch = repo.defaultBranch;
       } catch (ghErr: unknown) {
-        // If repo already exists, continue to Cloudflare
         const m = ghErr instanceof Error ? ghErr.message : String(ghErr);
-        if (!/already exists|name already taken/i.test(m) && !repoUrl) {
-          // soft: still try CF if we have a name
-          console.error("GitHub push warning:", m);
+        if (!/already exists|name already taken/i.test(m)) {
+          console.error("GitHub:", m);
         }
       }
     }
 
-    let siteUrl = `https://${repoName || finalUsername}.pages.dev`;
-    let cfProject = repoName || finalUsername;
-
-    if (isCloudflareConfigured()) {
-      const cf = await deployToCloudflarePages(
-        repoName || finalUsername,
-        publishFiles
-      );
-      siteUrl = cf.siteUrl;
-      cfProject = cf.projectName;
-    } else {
+    if (!isCloudflareConfigured()) {
       throw new Error(
         "CLOUDFLARE_ACCOUNT_ID / CLOUDFLARE_API_TOKEN not set on Vercel"
       );
     }
 
-    return await updateJob(jobId, {
+    const cf = await deployToCloudflarePages(
+      repoName || finalUsername,
+      publishFiles
+    );
+
+    const updated = await updateJob(jobId, {
       status: "done",
-      username: cfProject,
+      username: cf.projectName,
       repoOwner: repoOwner ?? undefined,
       repoName: repoName ?? undefined,
       repoUrl: repoUrl ?? undefined,
       defaultBranch: defaultBranch ?? undefined,
-      siteUrl,
+      siteUrl: cf.siteUrl,
       error: undefined as unknown as string,
     });
+
+    // Notify customer (non-blocking for job success)
+    try {
+      const notify = await notifySiteReady({
+        siteUrl: cf.siteUrl,
+        username: cf.projectName,
+        email: job.email,
+        phone: (job as Job & { phone?: string }).phone,
+        businessName: job.username || cf.projectName,
+      });
+      if (notify.errors.length) {
+        console.error("notifySiteReady:", notify.errors.join("; "));
+      }
+    } catch (nErr) {
+      console.error("notifySiteReady failed", nErr);
+    }
+
+    return updated;
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);
     return await updateJob(jobId, {
