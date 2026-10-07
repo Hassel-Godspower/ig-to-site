@@ -193,7 +193,7 @@ export default function SimplePreviewPage() {
       body.style.overflowX = "hidden";
       body.style.height = "auto";
       body.style.minHeight = "100%";
-      body.style.webkitOverflowScrolling = "touch";
+      body.style.setProperty("-webkit-overflow-scrolling", "touch");
       // Visible scrollbar hint inside preview (WebKit)
       if (!doc.getElementById("goke-scroll-style")) {
         const style = doc.createElement("style");
