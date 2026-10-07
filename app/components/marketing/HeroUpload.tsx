@@ -172,8 +172,21 @@ export function HeroUpload() {
               type="submit"
               className="gk-btn gk-btn-primary gk-btn-block"
               disabled={loading}
+              aria-busy={loading}
             >
-              {loading ? "Building your site…" : "Generate my site"}
+              {loading ? (
+                <GeneratingIndicator
+                  phrases={[
+                    "Generating your website",
+                    "Reading your Instagram",
+                    "Matching your niche",
+                    "Writing your pages",
+                    "Almost ready",
+                  ]}
+                />
+              ) : (
+                "Generate my site"
+              )}
             </button>
           </form>
           <p className="gk-card-footnote">
