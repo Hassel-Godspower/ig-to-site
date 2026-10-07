@@ -1488,3 +1488,82 @@ body.goke-editor-route {
     max-height: min(55dvh, 480px);
   }
 }
+
+
+/* ═══ Functional vertical scrollbars (mobile editors) ═══ */
+@media (max-width: 900px) {
+  html.goke-editor-route,
+  body.goke-editor-route {
+    overflow-y: scroll !important;
+    height: auto !important;
+    min-height: 100%;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .goke-editor {
+    height: auto !important;
+    min-height: 100dvh !important;
+    max-height: none !important;
+    overflow-y: scroll !important;
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
+  }
+
+  .goke-editor::-webkit-scrollbar { width: 8px; }
+  .goke-editor::-webkit-scrollbar-thumb {
+    background: rgba(167, 139, 250, 0.45);
+    border-radius: 8px;
+  }
+  .goke-editor::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.04);
+  }
+
+  .goke-workspace {
+    height: auto !important;
+    min-height: 60dvh;
+    overflow: visible !important;
+  }
+
+  .goke-canvas-wrap {
+    overflow-y: scroll !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+    max-height: none !important;
+    min-height: 50dvh;
+    padding-bottom: 24px !important;
+  }
+
+  .goke-canvas-wrap::-webkit-scrollbar { width: 8px; }
+  .goke-canvas-wrap::-webkit-scrollbar-thumb {
+    background: rgba(167, 139, 250, 0.4);
+    border-radius: 8px;
+  }
+
+  .goke-canvas-frame {
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  .goke-canvas-scroll {
+    flex: 1;
+    min-height: 0;
+    overflow-y: scroll !important;
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch;
+    background: #fff;
+  }
+
+  .goke-canvas-scroll::-webkit-scrollbar { width: 6px; }
+  .goke-canvas-scroll::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 6px;
+  }
+
+  .goke-canvas {
+    width: 100% !important;
+    min-height: 1200px !important;
+    height: 1200px !important;
+  }
+}
