@@ -249,6 +249,34 @@ export default function PreviewPage() {
       const doc = iframe.contentDocument;
       if (doc) {
         decorateEditableDocument(doc);
+        // Ensure generated site can scroll vertically inside the phone frame
+        const html = doc.documentElement;
+        const body = doc.body;
+        if (html && body) {
+          html.style.overflowY = "auto";
+          html.style.height = "auto";
+          body.style.overflowY = "auto";
+          body.style.height = "auto";
+          body.style.webkitOverflowScrolling = "touch";
+          if (!doc.getElementById("goke-scroll-style")) {
+            const style = doc.createElement("style");
+            style.id = "goke-scroll-style";
+            style.textContent = `
+              html, body {
+                overflow-y: auto !important;
+                height: auto !important;
+                min-height: 100% !important;
+                -webkit-overflow-scrolling: touch;
+              }
+              body::-webkit-scrollbar { width: 6px; }
+              body::-webkit-scrollbar-thumb {
+                background: rgba(0,0,0,0.35);
+                border-radius: 6px;
+              }
+            `;
+            (doc.head || html).appendChild(style);
+          }
+        }
       }
     } catch {
       /* cross-origin unlikely for same-origin api iframe */
@@ -820,7 +848,7 @@ export default function PreviewPage() {
 
   return (
     <MediaProvider jobId={jobId}>
-    <div className="goke-editor" style={{ minHeight: "100vh", height: "auto", overflowY: "scroll" }}>
+    <div className="goke-editor" style={{ minHeight: "100vh", height: "auto" }}>
       <header className="goke-toolbar">
         <div className="goke-toolbar-left">
           <span className="goke-logo">gòke</span>
@@ -1096,15 +1124,16 @@ export default function PreviewPage() {
               role="separator"
               aria-orientation="vertical"
             />
-            <div className="goke-canvas-scroll"><iframe scrolling="yes"
+            <iframe
               ref={iframeRef}
               title="Site preview"
               key={previewSrc}
               src={previewSrc}
               className="goke-canvas"
+              scrolling="yes"
               sandbox="allow-same-origin allow-scripts"
               onLoad={onIframeLoad}
-            /></div>
+            />
           </div>
           {!builderReady && (
             <div
