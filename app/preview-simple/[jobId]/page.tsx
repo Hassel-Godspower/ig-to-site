@@ -416,42 +416,48 @@ export default function SimplePreviewPage() {
           display: flex;
           flex-direction: column;
           min-height: 100dvh;
-          height: auto;
           background: #0c0a10;
           color: #f3f4f6;
           font-family: system-ui, -apple-system, sans-serif;
-          overflow-x: auto;
+          overflow-x: hidden;
           overflow-y: auto;
           -webkit-overflow-scrolling: touch;
         }
         .goke-simple-header {
           display: flex;
           align-items: center;
-          gap: 10px;
-          padding: 10px 14px;
+          gap: 8px;
+          padding: 10px 12px;
           border-bottom: 1px solid rgba(167,139,250,0.2);
           background: #121018;
           flex-wrap: wrap;
           position: sticky;
           top: 0;
-          z-index: 20;
+          z-index: 40;
         }
         .goke-simple-tabs {
           display: flex;
-          gap: 6px;
-          padding: 8px 12px;
+          gap: 8px;
+          padding: 10px 12px;
           border-bottom: 1px solid rgba(255,255,255,0.06);
           overflow-x: auto;
+          overflow-y: hidden;
           -webkit-overflow-scrolling: touch;
+          touch-action: pan-x;
           background: #0e0c12;
           position: sticky;
-          top: 52px;
-          z-index: 19;
+          top: 0;
+          z-index: 35;
           flex-shrink: 0;
+          scrollbar-width: thin;
         }
         .goke-simple-tabs button {
-          flex-shrink: 0;
+          flex: 0 0 auto;
           white-space: nowrap;
+          min-height: 36px;
+          padding: 8px 14px !important;
+          border-radius: 999px !important;
+          font-size: 13px !important;
         }
         .goke-simple-body {
           display: flex;
@@ -464,33 +470,34 @@ export default function SimplePreviewPage() {
           min-width: 0;
           display: flex;
           flex-direction: column;
-          background: #16141c;
-          padding: 12px;
+          align-items: center;
+          background: radial-gradient(ellipse at top, #1a1628 0%, #0c0a10 70%);
+          padding: 16px 12px 20px;
         }
         .goke-simple-phone {
-          margin: 0 auto;
           width: 100%;
           max-width: 390px;
           background: #0a0a0c;
-          border-radius: 20px;
-          border: 2px solid rgba(167,139,250,0.35);
-          box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+          border-radius: 24px;
+          border: 2px solid rgba(167,139,250,0.4);
+          box-shadow: 0 16px 48px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.04);
           overflow: hidden;
           display: flex;
           flex-direction: column;
-          min-height: min(72dvh, 720px);
-          height: min(72dvh, 720px);
+          height: min(68dvh, 700px);
+          min-height: 480px;
         }
         .goke-simple-phone-bar {
-          height: 28px;
+          height: 32px;
           background: #1a1625;
           display: flex;
           align-items: center;
           justify-content: center;
-          gap: 6px;
+          gap: 8px;
           flex-shrink: 0;
           font-size: 11px;
-          color: #a78bfa;
+          color: #c4b5fd;
+          letter-spacing: 0.02em;
         }
         .goke-simple-phone iframe {
           flex: 1;
@@ -501,27 +508,32 @@ export default function SimplePreviewPage() {
           min-height: 0;
         }
         .goke-simple-aside {
-          width: 340px;
+          width: 360px;
           flex-shrink: 0;
           border-left: 1px solid rgba(255,255,255,0.08);
           background: #121018;
           display: flex;
           flex-direction: column;
           overflow: hidden;
-          max-height: calc(100dvh - 100px);
+          max-height: calc(100dvh - 110px);
         }
         .goke-simple-aside-scroll {
           flex: 1;
           overflow-y: auto;
           -webkit-overflow-scrolling: touch;
-          padding: 0 14px 20px;
+          padding: 0 14px 24px;
         }
-        /* Mobile: stack canvas THEN edit — scroll the whole page */
+        /* Mobile: Wix/Canva — phone centered, edit below, page tabs always usable */
         @media (max-width: 900px) {
           .goke-simple-root {
             height: auto !important;
-            overflow-x: auto !important;
             overflow-y: auto !important;
+          }
+          .goke-simple-tabs {
+            top: 0;
+            z-index: 36;
+            padding: 10px 12px 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.35);
           }
           .goke-simple-body {
             flex-direction: column;
@@ -529,31 +541,30 @@ export default function SimplePreviewPage() {
           }
           .goke-simple-canvas-col {
             flex: none;
-            padding: 12px 12px 8px;
-            min-height: auto;
+            width: 100%;
+            padding: 12px 16px 8px;
           }
           .goke-simple-phone {
-            max-width: min(390px, 100%);
-            width: min(390px, 100%);
-            height: min(68dvh, 640px);
+            max-width: 390px;
+            width: min(390px, calc(100vw - 32px));
+            height: min(62dvh, 620px);
             min-height: 420px;
+            margin: 0 auto;
           }
           .goke-simple-aside {
             width: 100% !important;
             max-width: 100%;
             max-height: none !important;
             border-left: none;
-            border-top: 1px solid rgba(167,139,250,0.2);
+            border-top: 1px solid rgba(167,139,250,0.25);
+            border-radius: 16px 16px 0 0;
             overflow: visible;
             flex: none;
+            padding-bottom: 24px;
           }
           .goke-simple-aside-scroll {
             overflow: visible;
             max-height: none;
-          }
-          .goke-simple-header,
-          .goke-simple-tabs {
-            position: sticky;
           }
         }
         @media (min-width: 901px) {
@@ -565,8 +576,12 @@ export default function SimplePreviewPage() {
             min-height: 0;
             overflow: hidden;
           }
+          .goke-simple-tabs {
+            position: relative;
+            top: auto;
+          }
         }
-      `}</style>
+`}</style>
 
       <header className="goke-simple-header">
         <Link href="/" style={{ color: "#c4b5fd", textDecoration: "none", fontWeight: 700 }}>
