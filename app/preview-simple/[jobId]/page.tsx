@@ -94,6 +94,9 @@ export default function SimplePreviewPage() {
 
   useEffect(() => {
     document.documentElement.classList.add("goke-editor-route");
+    document.documentElement.style.overflowY = "scroll";
+    document.body.style.overflowY = "scroll";
+    document.body.style.height = "auto";
     document.body.classList.add("goke-editor-route");
     document.documentElement.style.setProperty(
       "--goke-page-min-width",
@@ -102,6 +105,9 @@ export default function SimplePreviewPage() {
     return () => {
       document.documentElement.classList.remove("goke-editor-route");
       document.body.classList.remove("goke-editor-route");
+      document.documentElement.style.overflowY = "";
+      document.body.style.overflowY = "";
+      document.body.style.height = "";
       document.documentElement.style.removeProperty("--goke-page-min-width");
     };
   }, [frameWidthPx]);
@@ -416,12 +422,25 @@ export default function SimplePreviewPage() {
           display: flex;
           flex-direction: column;
           min-height: 100dvh;
+          height: auto;
           background: #0c0a10;
           color: #f3f4f6;
           font-family: system-ui, -apple-system, sans-serif;
           overflow-x: hidden;
-          overflow-y: auto;
+          overflow-y: scroll; /* always allow vertical scrollbar on mobile */
           -webkit-overflow-scrolling: touch;
+          overscroll-behavior-y: contain;
+          scrollbar-gutter: stable;
+        }
+        .goke-simple-root::-webkit-scrollbar {
+          width: 8px;
+        }
+        .goke-simple-root::-webkit-scrollbar-thumb {
+          background: rgba(167, 139, 250, 0.45);
+          border-radius: 8px;
+        }
+        .goke-simple-root::-webkit-scrollbar-track {
+          background: rgba(255, 255, 255, 0.04);
         }
         .goke-simple-header {
           display: flex;
@@ -499,13 +518,31 @@ export default function SimplePreviewPage() {
           color: #c4b5fd;
           letter-spacing: 0.02em;
         }
-        .goke-simple-phone iframe {
+        .goke-simple-phone-frame {
           flex: 1;
+          min-height: 0;
+          overflow-y: scroll;
+          overflow-x: hidden;
+          -webkit-overflow-scrolling: touch;
+          overscroll-behavior: contain;
+          background: #fff;
+          scrollbar-gutter: stable;
+        }
+        .goke-simple-phone-frame::-webkit-scrollbar {
+          width: 6px;
+        }
+        .goke-simple-phone-frame::-webkit-scrollbar-thumb {
+          background: rgba(0,0,0,0.25);
+          border-radius: 6px;
+        }
+        .goke-simple-phone iframe {
           width: 100%;
           border: none;
           background: #fff;
           display: block;
-          min-height: 0;
+          /* tall enough that outer frame scrolls the preview on mobile */
+          min-height: 100%;
+          height: 1200px;
         }
         .goke-simple-aside {
           width: 360px;
@@ -527,7 +564,9 @@ export default function SimplePreviewPage() {
         @media (max-width: 900px) {
           .goke-simple-root {
             height: auto !important;
-            overflow-y: auto !important;
+            max-height: none !important;
+            overflow-y: scroll !important;
+            -webkit-overflow-scrolling: touch;
           }
           .goke-simple-tabs {
             top: 0;
@@ -635,13 +674,16 @@ export default function SimplePreviewPage() {
               <span>● ● ●</span>
               <span>Mobile preview · {currentPage}</span>
             </div>
-            <iframe
-              key={previewSrc}
-              ref={iframeRef}
-              title="Site preview"
-              src={previewSrc}
-              onLoad={onIframeLoad}
-            />
+            <div className="goke-simple-phone-frame">
+              <iframe
+                key={previewSrc}
+                ref={iframeRef}
+                title="Site preview"
+                src={previewSrc}
+                onLoad={onIframeLoad}
+                scrolling="yes"
+              />
+            </div>
           </div>
         </section>
 
