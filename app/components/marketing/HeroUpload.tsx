@@ -3,6 +3,7 @@
 import { useCallback, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import GeneratingIndicator from "@/app/components/GeneratingIndicator";
 
 const MAX_FILE_BYTES = 4 * 1024 * 1024;
 
@@ -69,7 +70,7 @@ export function HeroUpload() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Generation failed");
-      router.push(`/preview-simple/${data.jobId}`);
+      router.push(`/preview/${data.jobId}?mode=simple`);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Something went wrong");
       setLoading(false);
@@ -233,8 +234,21 @@ export function HeroUpload() {
               type="submit"
               className="gk-btn gk-btn-primary gk-btn-block"
               disabled={loading || !file}
+              aria-busy={loading}
             >
-              {loading ? "Generating…" : "Generate with full editor"}
+              {loading ? (
+                <GeneratingIndicator
+                  phrases={[
+                    "Generating your website",
+                    "Parsing your export",
+                    "Structuring the site",
+                    "Loading the editor",
+                    "Almost ready",
+                  ]}
+                />
+              ) : (
+                "Generate with full editor"
+              )}
             </button>
           </form>
           <p className="gk-card-footnote">
