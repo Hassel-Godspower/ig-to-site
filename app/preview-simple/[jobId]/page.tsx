@@ -90,7 +90,22 @@ export default function SimplePreviewPage() {
   ]);
   const [currentPage, setCurrentPage] = useState("index.html");
   const [items, setItems] = useState<EditableItem[]>([]);
-  const [frameWidthPct, setFrameWidthPct] = useState(100);
+  const [frameWidthPx, setFrameWidthPx] = useState(1200);
+
+  useEffect(() => {
+    document.documentElement.classList.add("goke-editor-route");
+    document.body.classList.add("goke-editor-route");
+    document.documentElement.style.setProperty(
+      "--goke-page-min-width",
+      `${Math.max(frameWidthPx + 32, typeof window !== "undefined" ? window.innerWidth : 390)}px`
+    );
+    return () => {
+      document.documentElement.classList.remove("goke-editor-route");
+      document.body.classList.remove("goke-editor-route");
+      document.documentElement.style.removeProperty("--goke-page-min-width");
+    };
+  }, [frameWidthPx]);
+
   const [brandColor, setBrandColor] = useState("#3b82f6");
   const [saved, setSaved] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -502,20 +517,21 @@ export default function SimplePreviewPage() {
             <span>Frame</span>
             <input
               type="range"
-              min={40}
-              max={100}
-              value={Math.round(frameWidthPct)}
-              onChange={(e) => setFrameWidthPct(Number(e.target.value))}
+              min={320}
+              max={1440}
+              step={10}
+              value={frameWidthPx}
+              onChange={(e) => setFrameWidthPx(Number(e.target.value))}
               style={{ flex: 1 }}
             />
-            <span>{Math.round(frameWidthPct)}%</span>
+            <span>{frameWidthPx}px</span>
           </div>
           <div
             className="goke-simple-frame"
             style={{
               height: "calc(100% - 36px)",
-              width: `${frameWidthPct}%`,
-              maxWidth: "100%",
+              width: `${frameWidthPx}px`,
+              maxWidth: "none",
               margin: "0 auto",
               background: "#fff",
               borderRadius: 10,
