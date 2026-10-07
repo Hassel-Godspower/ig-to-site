@@ -1409,3 +1409,82 @@ body.goke-editor-route {
     z-index: 29;
   }
 }
+
+/* ═══ Multipage tabs (full editor) ═══ */
+.goke-page-tabs {
+  display: flex;
+  gap: 8px;
+  padding: 8px 12px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x;
+  flex-shrink: 0;
+  background: #0e0c12;
+  border-bottom: 1px solid rgba(167, 139, 250, 0.2);
+  scrollbar-width: thin;
+}
+.goke-page-tabs button {
+  flex: 0 0 auto;
+  white-space: nowrap;
+  min-height: 34px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(167, 139, 250, 0.25);
+  background: #15121c;
+  color: #9ca3af;
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+}
+.goke-page-tabs button.active {
+  background: rgba(167, 139, 250, 0.22);
+  border-color: #a78bfa;
+  color: #ede9fe;
+  font-weight: 600;
+}
+
+/* ═══ Mobile: Wix/Canva — centered phone canvas + usable edit ═══ */
+@media (max-width: 900px) {
+  .goke-page-tabs {
+    position: sticky;
+    top: 0;
+    z-index: 28;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+  }
+
+  .goke-canvas-wrap {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: flex-start !important;
+    padding: 12px 8px 80px !important;
+    overflow: auto !important;
+    background: radial-gradient(ellipse at top, #1a1628 0%, #12141c 65%) !important;
+  }
+
+  .goke-canvas-frame {
+    width: 390px !important;
+    max-width: min(390px, calc(100vw - 24px)) !important;
+    min-height: min(70dvh, 640px) !important;
+    border-radius: 20px !important;
+    border: 2px solid rgba(167, 139, 250, 0.35) !important;
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5) !important;
+    margin: 0 auto !important;
+    overflow: hidden !important;
+  }
+
+  .goke-canvas {
+    min-height: min(70dvh, 640px) !important;
+  }
+
+  /* Hide frame resize handle on pure phone layout */
+  .goke-frame-resize {
+    display: none;
+  }
+
+  /* Sheets stay usable above bottom nav */
+  .goke-left-stack.goke-sheet-open,
+  .goke-properties.goke-sheet-open {
+    max-height: min(55dvh, 480px);
+  }
+}
