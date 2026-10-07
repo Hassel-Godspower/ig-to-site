@@ -104,6 +104,9 @@ export default function PreviewPage() {
   const [canUndo, setCanUndo] = useState(false);
   const [canRedo, setCanRedo] = useState(false);
   const [device, setDevice] = useState<Breakpoint>("desktop");
+  const [mobileSheet, setMobileSheet] = useState<"none" | "left" | "right">("none");
+  const [frameWidthPct, setFrameWidthPct] = useState(100);
+
   const [tree, setTree] = useState<NavNode[]>([]);
   const [rightTab, setRightTab] = useState<"content" | "design" | "globals">("content");
   const [leftTab, setLeftTab] = useState<"structure" | "components" | "templates" | "media">("components");
@@ -697,6 +700,25 @@ export default function PreviewPage() {
     mobile: "390px",
   };
 
+  function onFrameResizePointerDown(e: React.PointerEvent) {
+    e.preventDefault();
+    const startX = e.clientX;
+    const startPct = frameWidthPct;
+    const wrap = (e.target as HTMLElement).closest(".goke-canvas-wrap") as HTMLElement | null;
+    const wrapW = wrap?.clientWidth || window.innerWidth;
+    const move = (ev: PointerEvent) => {
+      const dx = ev.clientX - startX;
+      setFrameWidthPct(Math.min(100, Math.max(40, startPct + (dx / wrapW) * 100)));
+    };
+    const up = () => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+  }
+
+
   return (
     <MediaProvider jobId={jobId}>
     <div className="goke-editor" style={{ height: "100vh" }}>
@@ -798,9 +820,40 @@ export default function PreviewPage() {
         </div>
       )}
 
+      <div className="goke-frame-width-bar" aria-label="Canvas width">
+        <span>Frame</span>
+        <input
+          type="range"
+          min={40}
+          max={100}
+          value={Math.round(frameWidthPct)}
+          onChange={(e) => {
+            setFrameWidthPct(Number(e.target.value));
+            setDevice("desktop");
+          }}
+        />
+        <span>{Math.round(frameWidthPct)}%</span>
+        <button type="button" onClick={() => setFrameWidthPct(100)}>
+          Fit
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            setDevice("mobile");
+            setFrameWidthPct(100);
+          }}
+        >
+          Phone
+        </button>
+      </div>
+      <div
+        className={`goke-panel-backdrop${mobileSheet !== "none" ? " is-visible" : ""}`}
+        onClick={() => setMobileSheet("none")}
+        aria-hidden={mobileSheet === "none"}
+      />
       <div className="goke-workspace">
         {/* Left: structure + components */}
-        <div className="goke-left-stack">
+        <div className={`goke-left-stack${mobileSheet === "left" ? " goke-sheet-open" : ""}`}>
           <div className="goke-left-tabs">
             <button
               type="button"
@@ -895,12 +948,19 @@ export default function PreviewPage() {
           <div
             className="goke-canvas-frame"
             style={{
-              width: deviceWidths[device],
+              width: device === "desktop" ? `${frameWidthPct}%` : deviceWidths[device],
               maxWidth: "100%",
               margin: "0 auto",
               transition: "width 0.25s ease",
             }}
           >
+            <div
+              className="goke-frame-resize"
+              onPointerDown={onFrameResizePointerDown}
+              title="Drag to resize width"
+              role="separator"
+              aria-orientation="vertical"
+            />
             <iframe
               ref={iframeRef}
               title="Site preview"
@@ -928,7 +988,7 @@ export default function PreviewPage() {
         </main>
 
         {/* Right: content props + design panel */}
-        <aside className="goke-properties" data-tour="tour-properties">
+        <aside className={`goke-properties${mobileSheet === "right" ? " goke-sheet-open" : ""}`} data-tour="tour-properties">
           <div className="goke-properties-header">
             <h2>{selectedComponent?.name || "Properties"}</h2>
             <div className="goke-device-switch" style={{ marginTop: 8 }}>
@@ -1112,6 +1172,34 @@ export default function PreviewPage() {
           </div>
         </div>
       )}
+
+      
+      <nav className="goke-mobile-nav" aria-label="Editor panels">
+        <button
+          type="button"
+          className={mobileSheet === "left" ? "active" : ""}
+          onClick={() => setMobileSheet((s) => (s === "left" ? "none" : "left"))}
+        >
+          <span className="ico">☰</span>
+          Layers
+        </button>
+        <button
+          type="button"
+          className={mobileSheet === "none" ? "active" : ""}
+          onClick={() => setMobileSheet("none")}
+        >
+          <span className="ico">▢</span>
+          Canvas
+        </button>
+        <button
+          type="button"
+          className={mobileSheet === "right" ? "active" : ""}
+          onClick={() => setMobileSheet((s) => (s === "right" ? "none" : "right"))}
+        >
+          <span className="ico">✎</span>
+          Edit
+        </button>
+      </nav>
 
       <EditorTour
         open={tourOpen && phase === "editing"}
