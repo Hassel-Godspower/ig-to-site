@@ -257,7 +257,7 @@ export default function PreviewPage() {
           html.style.height = "auto";
           body.style.overflowY = "auto";
           body.style.height = "auto";
-          body.style.webkitOverflowScrolling = "touch";
+          body.style.setProperty("-webkit-overflow-scrolling", "touch");
           if (!doc.getElementById("goke-scroll-style")) {
             const style = doc.createElement("style");
             style.id = "goke-scroll-style";
