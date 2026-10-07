@@ -227,12 +227,17 @@
 
 .goke-canvas-wrap {
   flex: 1;
-  overflow: auto;
+  min-width: 0;
+  min-height: 0;
+  overflow-x: auto !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x pan-y;
+  overscroll-behavior: contain;
   background: #1a1d27;
   padding: 24px;
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
+  display: block; /* NOT flex-center — flex was preventing horizontal overflow scroll */
+  text-align: center;
 }
 
 .goke-canvas-frame {
@@ -242,6 +247,12 @@
   border-radius: 4px;
   overflow: hidden;
   min-height: 640px;
+  /* Width set in px via inline style — must be able to exceed wrap width */
+  display: inline-block;
+  vertical-align: top;
+  text-align: left;
+  flex-shrink: 0;
+  max-width: none !important;
 }
 
 .goke-canvas {
@@ -1023,15 +1034,15 @@
 
 /* Allow horizontal pan of canvas on all sizes when frame is wider */
 .goke-canvas-wrap {
-  overflow: auto;
+  overflow-x: auto !important;
+  overflow-y: auto !important;
   -webkit-overflow-scrolling: touch;
   touch-action: pan-x pan-y;
   overscroll-behavior: contain;
 }
 
 .goke-canvas-frame {
-  width: var(--goke-frame-width, 100%);
-  max-width: none;
+  max-width: none !important;
   transition: width 0.15s ease;
   position: relative;
 }
@@ -1178,16 +1189,27 @@
   .goke-canvas-wrap {
     flex: 1;
     width: 100%;
+    min-width: 0;
+    min-height: 0;
     padding: 8px 8px 12px;
-    justify-content: flex-start;
-    align-items: flex-start;
-    overflow: auto;
+    overflow-x: auto !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-x pan-y;
+    /* block layout so wide frame creates real scrollWidth */
+    display: block !important;
+    text-align: center;
   }
 
   .goke-canvas-frame {
     min-height: calc(100vh - 160px);
-    min-width: min(100%, 320px);
+    /* Never force 100% — fixed px width from JS so user can pan L/R */
+    max-width: none !important;
+    width: auto;
     margin: 0 auto;
+    display: inline-block;
+    vertical-align: top;
+    text-align: left;
   }
 
   .goke-canvas {
@@ -1300,5 +1322,90 @@
     min-width: 320px;
     width: var(--goke-frame-width, 100%);
     margin: 0 auto;
+  }
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   Whole PAGE scroll (not only canvas) — phones & small tablets
+   User can pan the entire editor chrome left/right and up/down
+   ═══════════════════════════════════════════════════════════ */
+
+html.goke-editor-route,
+body.goke-editor-route {
+  overflow: auto !important;
+  overflow-x: auto !important;
+  overflow-y: auto !important;
+  height: auto !important;
+  min-height: 100%;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x pan-y;
+  overscroll-behavior: auto;
+}
+
+@media (max-width: 900px) {
+  html.goke-editor-route,
+  body.goke-editor-route {
+    width: 100%;
+    /* allow horizontal page scroll when content is wider */
+    min-width: 100%;
+  }
+
+  .goke-editor {
+    height: auto !important;
+    min-height: 100dvh;
+    min-width: 100%;
+    /* critical: was overflow:hidden which locked the whole page */
+    overflow: visible !important;
+    overflow-x: auto !important;
+    overflow-y: auto !important;
+  }
+
+  .goke-workspace {
+    flex-direction: column;
+    height: auto !important;
+    min-height: 70dvh;
+    overflow: visible !important;
+    /* wide enough that user can pan the page L/R if needed */
+    min-width: max(100%, var(--goke-page-min-width, 100%));
+  }
+
+  .goke-canvas-wrap {
+    /* participate in page flow; still scroll internally if frame is huge */
+    height: auto !important;
+    min-height: 70dvh;
+    max-height: none !important;
+    overflow: auto !important;
+    overflow-x: auto !important;
+    overflow-y: auto !important;
+  }
+
+  .goke-canvas-frame {
+    /* fixed px width from JS — wider than phone → page/canvas pans L/R */
+    max-width: none !important;
+  }
+
+  .goke-canvas {
+    min-height: 70dvh;
+  }
+
+  /* Bottom nav stays reachable while page scrolls */
+  .goke-mobile-nav {
+    position: sticky;
+    bottom: 0;
+    /* sticky inside scrolling editor; fallback fixed still ok */
+  }
+
+  /* Toolbar scrolls away with page (or sticky top) */
+  .goke-toolbar {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+  }
+
+  .goke-frame-width-bar {
+    position: sticky;
+    top: 48px;
+    z-index: 29;
   }
 }
