@@ -1,0 +1,292 @@
+/* ═══════════════════════════════════════════════════════════
+   Mobile / tablet editor chrome (phones + small tablets)
+   Loaded after editor.css — import in preview page
+   ═══════════════════════════════════════════════════════════ */
+
+:root {
+  --goke-frame-width: 100%;
+  --goke-mobile-nav-h: 56px;
+  --goke-sheet-h: min(52vh, 440px);
+}
+
+/* Allow horizontal pan of canvas on all sizes when frame is wider */
+.goke-canvas-wrap {
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x pan-y;
+  overscroll-behavior: contain;
+}
+
+.goke-canvas-frame {
+  width: var(--goke-frame-width, 100%);
+  max-width: none;
+  transition: width 0.15s ease;
+  position: relative;
+}
+
+/* Drag handle on frame edge (desktop + mobile) */
+.goke-frame-resize {
+  position: absolute;
+  top: 0;
+  right: -6px;
+  width: 12px;
+  height: 100%;
+  cursor: ew-resize;
+  z-index: 5;
+  touch-action: none;
+}
+.goke-frame-resize::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 3px;
+  width: 4px;
+  height: 48px;
+  margin-top: -24px;
+  border-radius: 4px;
+  background: rgba(167, 139, 250, 0.55);
+}
+
+.goke-frame-width-bar {
+  display: none;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background: var(--goke-surface);
+  border-bottom: 1px solid var(--goke-border);
+  font-size: 12px;
+  color: var(--goke-text-muted);
+  flex-shrink: 0;
+}
+.goke-frame-width-bar input[type="range"] {
+  flex: 1;
+  accent-color: var(--goke-accent, #a78bfa);
+}
+.goke-frame-width-bar button {
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--goke-border);
+  background: var(--goke-surface-2);
+  color: var(--goke-text);
+  cursor: pointer;
+}
+
+.goke-mobile-nav {
+  display: none;
+}
+
+.goke-panel-backdrop {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .goke-kbd-hint {
+    display: none !important;
+  }
+
+  .goke-toolbar {
+    height: auto;
+    min-height: 48px;
+    flex-wrap: wrap;
+    padding: 6px 8px;
+    gap: 6px;
+  }
+  .goke-toolbar-left,
+  .goke-toolbar-center,
+  .goke-toolbar-right {
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  .goke-toolbar button {
+    padding: 6px 8px;
+    font-size: 12px;
+  }
+  .goke-device-switch button {
+    padding: 4px 6px;
+    font-size: 11px;
+  }
+  .goke-toolbar-left button:not(.goke-btn-primary) {
+    /* keep undo/redo compact */
+  }
+
+  .goke-frame-width-bar {
+    display: flex;
+  }
+
+  .goke-workspace {
+    flex-direction: column;
+    position: relative;
+    padding-bottom: var(--goke-mobile-nav-h);
+  }
+
+  /* Side panels become bottom sheets */
+  .goke-left-stack,
+  .goke-properties {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: var(--goke-mobile-nav-h);
+    height: var(--goke-sheet-h);
+    max-height: 70vh;
+    width: 100% !important;
+    z-index: 50;
+    transform: translateY(110%);
+    transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+    border-radius: 16px 16px 0 0;
+    border-right: none !important;
+    border-left: none !important;
+    border-top: 1px solid var(--goke-border);
+    box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.45);
+    background: var(--goke-surface);
+  }
+
+  .goke-left-stack.goke-sheet-open,
+  .goke-properties.goke-sheet-open {
+    transform: translateY(0);
+  }
+
+  .goke-panel-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    bottom: var(--goke-mobile-nav-h);
+    background: rgba(0, 0, 0, 0.45);
+    z-index: 45;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+  }
+  .goke-panel-backdrop.is-visible {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  /* Canvas fills remaining space; pan left–right when frame is wider */
+  .goke-canvas-wrap {
+    flex: 1;
+    width: 100%;
+    padding: 8px 8px 12px;
+    justify-content: flex-start;
+    align-items: flex-start;
+    overflow: auto;
+  }
+
+  .goke-canvas-frame {
+    min-height: calc(100vh - 160px);
+    min-width: min(100%, 320px);
+    margin: 0 auto;
+  }
+
+  .goke-canvas {
+    min-height: calc(100vh - 160px);
+  }
+
+  /* Sheet drag affordance */
+  .goke-sheet-handle {
+    display: flex;
+    justify-content: center;
+    padding: 8px 0 4px;
+    flex-shrink: 0;
+  }
+  .goke-sheet-handle span {
+    width: 36px;
+    height: 4px;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.2);
+  }
+
+  .goke-mobile-nav {
+    display: flex;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: var(--goke-mobile-nav-h);
+    z-index: 60;
+    background: #121018;
+    border-top: 1px solid rgba(167, 139, 250, 0.25);
+    align-items: stretch;
+    justify-content: space-around;
+    padding: env(safe-area-inset-bottom, 0) 0 0;
+  }
+  .goke-mobile-nav button {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    border: none;
+    background: transparent;
+    color: #9ca3af;
+    font-size: 10px;
+    font-family: inherit;
+    cursor: pointer;
+    padding: 6px 4px;
+  }
+  .goke-mobile-nav button.active {
+    color: #c4b5fd;
+  }
+  .goke-mobile-nav button .ico {
+    font-size: 18px;
+    line-height: 1;
+  }
+
+  /* Page tabs: horizontal scroll */
+  .goke-page-tabs {
+    display: flex !important;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    gap: 6px;
+    padding: 6px 8px;
+    flex-shrink: 0;
+    border-bottom: 1px solid var(--goke-border);
+    background: var(--goke-surface);
+  }
+  .goke-page-tabs button {
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 480px) {
+  .goke-toolbar-center .goke-device-switch button {
+    font-size: 0;
+    padding: 6px 10px;
+  }
+  .goke-toolbar-center .goke-device-switch button::first-letter {
+    font-size: 12px;
+  }
+  /* Use short labels via data attributes if present */
+  .goke-logo {
+    margin-right: 4px;
+  }
+}
+
+/* Simple editor mobile */
+.goke-simple-editor {
+  min-height: 100dvh;
+}
+@media (max-width: 900px) {
+  .goke-simple-shell {
+    flex-direction: column !important;
+  }
+  .goke-simple-aside {
+    width: 100% !important;
+    max-height: 45vh;
+    border-left: none !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+  }
+  .goke-simple-canvas-outer {
+    min-height: 50vh;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-x pan-y;
+  }
+  .goke-simple-frame {
+    min-width: 320px;
+    width: var(--goke-frame-width, 100%);
+    margin: 0 auto;
+  }
+}
