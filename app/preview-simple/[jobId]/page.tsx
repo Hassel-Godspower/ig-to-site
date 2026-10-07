@@ -94,9 +94,6 @@ export default function SimplePreviewPage() {
 
   useEffect(() => {
     document.documentElement.classList.add("goke-editor-route");
-    document.documentElement.style.overflowY = "scroll";
-    document.body.style.overflowY = "scroll";
-    document.body.style.height = "auto";
     document.body.classList.add("goke-editor-route");
     document.documentElement.style.setProperty(
       "--goke-page-min-width",
@@ -105,9 +102,6 @@ export default function SimplePreviewPage() {
     return () => {
       document.documentElement.classList.remove("goke-editor-route");
       document.body.classList.remove("goke-editor-route");
-      document.documentElement.style.overflowY = "";
-      document.body.style.overflowY = "";
-      document.body.style.height = "";
       document.documentElement.style.removeProperty("--goke-page-min-width");
     };
   }, [frameWidthPx]);
@@ -186,7 +180,39 @@ export default function SimplePreviewPage() {
     }
   }, []);
 
+  function enablePreviewScroll(doc: Document) {
+    try {
+      const html = doc.documentElement;
+      const body = doc.body;
+      if (!html || !body) return;
+      html.style.overflowY = "auto";
+      html.style.overflowX = "hidden";
+      html.style.height = "auto";
+      html.style.minHeight = "100%";
+      body.style.overflowY = "auto";
+      body.style.overflowX = "hidden";
+      body.style.height = "auto";
+      body.style.minHeight = "100%";
+      body.style.webkitOverflowScrolling = "touch";
+      // Visible scrollbar hint inside preview (WebKit)
+      if (!doc.getElementById("goke-scroll-style")) {
+        const style = doc.createElement("style");
+        style.id = "goke-scroll-style";
+        style.textContent = `
+          html, body { overflow-y: auto !important; height: auto !important; min-height: 100% !important; -webkit-overflow-scrolling: touch; }
+          body::-webkit-scrollbar { width: 6px; }
+          body::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.35); border-radius: 6px; }
+        `;
+        doc.head.appendChild(style);
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+
   function onIframeLoad() {
+    const doc = iframeRef.current?.contentDocument;
+    if (doc) enablePreviewScroll(doc);
     rescan();
   }
 
@@ -422,25 +448,12 @@ export default function SimplePreviewPage() {
           display: flex;
           flex-direction: column;
           min-height: 100dvh;
-          height: auto;
           background: #0c0a10;
           color: #f3f4f6;
           font-family: system-ui, -apple-system, sans-serif;
           overflow-x: hidden;
-          overflow-y: scroll; /* always allow vertical scrollbar on mobile */
+          overflow-y: auto;
           -webkit-overflow-scrolling: touch;
-          overscroll-behavior-y: contain;
-          scrollbar-gutter: stable;
-        }
-        .goke-simple-root::-webkit-scrollbar {
-          width: 8px;
-        }
-        .goke-simple-root::-webkit-scrollbar-thumb {
-          background: rgba(167, 139, 250, 0.45);
-          border-radius: 8px;
-        }
-        .goke-simple-root::-webkit-scrollbar-track {
-          background: rgba(255, 255, 255, 0.04);
         }
         .goke-simple-header {
           display: flex;
@@ -506,6 +519,19 @@ export default function SimplePreviewPage() {
           height: min(68dvh, 700px);
           min-height: 480px;
         }
+        .goke-simple-root::-webkit-scrollbar,
+        .goke-simple-aside-scroll::-webkit-scrollbar {
+          width: 8px;
+        }
+        .goke-simple-root::-webkit-scrollbar-thumb,
+        .goke-simple-aside-scroll::-webkit-scrollbar-thumb {
+          background: rgba(167,139,250,0.45);
+          border-radius: 8px;
+        }
+        .goke-simple-root {
+          scrollbar-width: thin;
+          scrollbar-color: rgba(167,139,250,0.45) transparent;
+        }
         .goke-simple-phone-bar {
           height: 32px;
           background: #1a1625;
@@ -518,31 +544,17 @@ export default function SimplePreviewPage() {
           color: #c4b5fd;
           letter-spacing: 0.02em;
         }
-        .goke-simple-phone-frame {
-          flex: 1;
-          min-height: 0;
-          overflow-y: scroll;
-          overflow-x: hidden;
-          -webkit-overflow-scrolling: touch;
-          overscroll-behavior: contain;
-          background: #fff;
-          scrollbar-gutter: stable;
-        }
-        .goke-simple-phone-frame::-webkit-scrollbar {
-          width: 6px;
-        }
-        .goke-simple-phone-frame::-webkit-scrollbar-thumb {
-          background: rgba(0,0,0,0.25);
-          border-radius: 6px;
-        }
         .goke-simple-phone iframe {
+          flex: 1;
           width: 100%;
           border: none;
           background: #fff;
           display: block;
-          /* tall enough that outer frame scrolls the preview on mobile */
-          min-height: 100%;
-          height: 1200px;
+          min-height: 0;
+          /* Site content scrolls inside the phone frame */
+          overflow: auto !important;
+          -webkit-overflow-scrolling: touch;
+          touch-action: pan-y;
         }
         .goke-simple-aside {
           width: 360px;
@@ -564,9 +576,7 @@ export default function SimplePreviewPage() {
         @media (max-width: 900px) {
           .goke-simple-root {
             height: auto !important;
-            max-height: none !important;
-            overflow-y: scroll !important;
-            -webkit-overflow-scrolling: touch;
+            overflow-y: auto !important;
           }
           .goke-simple-tabs {
             top: 0;
@@ -674,16 +684,14 @@ export default function SimplePreviewPage() {
               <span>● ● ●</span>
               <span>Mobile preview · {currentPage}</span>
             </div>
-            <div className="goke-simple-phone-frame">
-              <iframe
-                key={previewSrc}
-                ref={iframeRef}
-                title="Site preview"
-                src={previewSrc}
-                onLoad={onIframeLoad}
-                scrolling="yes"
-              />
-            </div>
+            <iframe
+              key={previewSrc}
+              ref={iframeRef}
+              title="Site preview"
+              src={previewSrc}
+              onLoad={onIframeLoad}
+              scrolling="yes"
+            />
           </div>
         </section>
 
