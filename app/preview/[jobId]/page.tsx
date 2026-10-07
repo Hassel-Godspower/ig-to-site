@@ -820,7 +820,7 @@ export default function PreviewPage() {
 
   return (
     <MediaProvider jobId={jobId}>
-    <div className="goke-editor" style={{ minHeight: "100vh", height: "auto" }}>
+    <div className="goke-editor" style={{ minHeight: "100vh", height: "auto", overflowY: "scroll" }}>
       <header className="goke-toolbar">
         <div className="goke-toolbar-left">
           <span className="goke-logo">gòke</span>
@@ -1096,7 +1096,7 @@ export default function PreviewPage() {
               role="separator"
               aria-orientation="vertical"
             />
-            <iframe
+            <div className="goke-canvas-scroll"><iframe scrolling="yes"
               ref={iframeRef}
               title="Site preview"
               key={previewSrc}
@@ -1104,7 +1104,7 @@ export default function PreviewPage() {
               className="goke-canvas"
               sandbox="allow-same-origin allow-scripts"
               onLoad={onIframeLoad}
-            />
+            /></div>
           </div>
           {!builderReady && (
             <div
