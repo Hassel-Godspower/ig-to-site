@@ -410,54 +410,179 @@ export default function SimplePreviewPage() {
   }, [phase, jobId]);
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        height: "100vh",
-        background: "#0c0a10",
-        color: "#f3f4f6",
-        fontFamily: "system-ui, sans-serif",
-      }}
-    >
-      {/* Top bar */}
-      <header
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 12,
-          padding: "10px 16px",
-          borderBottom: "1px solid rgba(167,139,250,0.2)",
-          background: "#121018",
-          flexWrap: "wrap",
-        }}
-      >
+    <div className="goke-simple-root">
+      <style>{`
+        .goke-simple-root {
+          display: flex;
+          flex-direction: column;
+          min-height: 100dvh;
+          height: auto;
+          background: #0c0a10;
+          color: #f3f4f6;
+          font-family: system-ui, -apple-system, sans-serif;
+          overflow-x: auto;
+          overflow-y: auto;
+          -webkit-overflow-scrolling: touch;
+        }
+        .goke-simple-header {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          padding: 10px 14px;
+          border-bottom: 1px solid rgba(167,139,250,0.2);
+          background: #121018;
+          flex-wrap: wrap;
+          position: sticky;
+          top: 0;
+          z-index: 20;
+        }
+        .goke-simple-tabs {
+          display: flex;
+          gap: 6px;
+          padding: 8px 12px;
+          border-bottom: 1px solid rgba(255,255,255,0.06);
+          overflow-x: auto;
+          -webkit-overflow-scrolling: touch;
+          background: #0e0c12;
+          position: sticky;
+          top: 52px;
+          z-index: 19;
+          flex-shrink: 0;
+        }
+        .goke-simple-tabs button {
+          flex-shrink: 0;
+          white-space: nowrap;
+        }
+        .goke-simple-body {
+          display: flex;
+          flex: 1;
+          min-height: 0;
+          align-items: stretch;
+        }
+        .goke-simple-canvas-col {
+          flex: 1;
+          min-width: 0;
+          display: flex;
+          flex-direction: column;
+          background: #16141c;
+          padding: 12px;
+        }
+        .goke-simple-phone {
+          margin: 0 auto;
+          width: 100%;
+          max-width: 390px;
+          background: #0a0a0c;
+          border-radius: 20px;
+          border: 2px solid rgba(167,139,250,0.35);
+          box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+          overflow: hidden;
+          display: flex;
+          flex-direction: column;
+          min-height: min(72dvh, 720px);
+          height: min(72dvh, 720px);
+        }
+        .goke-simple-phone-bar {
+          height: 28px;
+          background: #1a1625;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 6px;
+          flex-shrink: 0;
+          font-size: 11px;
+          color: #a78bfa;
+        }
+        .goke-simple-phone iframe {
+          flex: 1;
+          width: 100%;
+          border: none;
+          background: #fff;
+          display: block;
+          min-height: 0;
+        }
+        .goke-simple-aside {
+          width: 340px;
+          flex-shrink: 0;
+          border-left: 1px solid rgba(255,255,255,0.08);
+          background: #121018;
+          display: flex;
+          flex-direction: column;
+          overflow: hidden;
+          max-height: calc(100dvh - 100px);
+        }
+        .goke-simple-aside-scroll {
+          flex: 1;
+          overflow-y: auto;
+          -webkit-overflow-scrolling: touch;
+          padding: 0 14px 20px;
+        }
+        /* Mobile: stack canvas THEN edit — scroll the whole page */
+        @media (max-width: 900px) {
+          .goke-simple-root {
+            height: auto !important;
+            overflow-x: auto !important;
+            overflow-y: auto !important;
+          }
+          .goke-simple-body {
+            flex-direction: column;
+            min-height: auto;
+          }
+          .goke-simple-canvas-col {
+            flex: none;
+            padding: 12px 12px 8px;
+            min-height: auto;
+          }
+          .goke-simple-phone {
+            max-width: min(390px, 100%);
+            width: min(390px, 100%);
+            height: min(68dvh, 640px);
+            min-height: 420px;
+          }
+          .goke-simple-aside {
+            width: 100% !important;
+            max-width: 100%;
+            max-height: none !important;
+            border-left: none;
+            border-top: 1px solid rgba(167,139,250,0.2);
+            overflow: visible;
+            flex: none;
+          }
+          .goke-simple-aside-scroll {
+            overflow: visible;
+            max-height: none;
+          }
+          .goke-simple-header,
+          .goke-simple-tabs {
+            position: sticky;
+          }
+        }
+        @media (min-width: 901px) {
+          .goke-simple-root {
+            height: 100vh;
+            overflow: hidden;
+          }
+          .goke-simple-body {
+            min-height: 0;
+            overflow: hidden;
+          }
+        }
+      `}</style>
+
+      <header className="goke-simple-header">
         <Link href="/" style={{ color: "#c4b5fd", textDecoration: "none", fontWeight: 700 }}>
           gòke
         </Link>
         <span style={{ color: "#6b7280", fontSize: 13 }}>Simple editor</span>
-        {handle && (
-          <span style={{ color: "#9ca3af", fontSize: 13 }}>@{handle}</span>
-        )}
+        {handle && <span style={{ color: "#9ca3af", fontSize: 13 }}>@{handle}</span>}
         <div style={{ flex: 1 }} />
         <span style={{ fontSize: 12, color: saved ? "#6ee7b7" : "#fbbf24" }}>
           {saved ? "Saved" : "Unsaved"}
         </span>
-        <button
-          type="button"
-          onClick={() => void savePage()}
-          disabled={busy || saved}
-          style={btnSecondary}
-        >
+        <button type="button" onClick={() => void savePage()} disabled={busy || saved} style={btnSecondary}>
           Save page
         </button>
         {phase === "live" && siteUrl ? (
-          <a
-            href={siteUrl}
-            target="_blank"
-            rel="noreferrer"
-            style={{ ...btnPrimary, textDecoration: "none" }}
-          >
+          <a href={siteUrl} target="_blank" rel="noreferrer" style={{ ...btnPrimary, textDecoration: "none" }}>
             Open live site
           </a>
         ) : (
@@ -467,33 +592,19 @@ export default function SimplePreviewPage() {
         )}
       </header>
 
-      {/* Page tabs */}
-      <div
-        style={{
-          display: "flex",
-          gap: 6,
-          padding: "8px 16px",
-          borderBottom: "1px solid rgba(255,255,255,0.06)",
-          overflowX: "auto",
-          background: "#0e0c12",
-        }}
-      >
+      <div className="goke-simple-tabs" role="tablist" aria-label="Site pages">
         {pages.map((p) => (
           <button
             key={p.file}
             type="button"
+            role="tab"
+            aria-selected={currentPage === p.file}
             onClick={() => void switchPage(p.file)}
             style={{
               ...btnSecondary,
-              background:
-                currentPage === p.file
-                  ? "rgba(167,139,250,0.25)"
-                  : "transparent",
-              borderColor:
-                currentPage === p.file
-                  ? "#a78bfa"
-                  : "rgba(255,255,255,0.1)",
-              color: currentPage === p.file ? "#ede9fe" : "#9ca3af",
+              background: currentPage === p.file ? "rgba(167,139,250,0.25)" : btnSecondary.background,
+              borderColor: currentPage === p.file ? "#a78bfa" : "rgba(167,139,250,0.3)",
+              color: currentPage === p.file ? "#ede9fe" : "#e5e7eb",
             }}
           >
             {p.title}
@@ -501,74 +612,31 @@ export default function SimplePreviewPage() {
         ))}
       </div>
 
-      <div className="goke-simple-shell" style={{ display: "flex", flex: 1, minHeight: 0 }}>
-        {/* Canvas */}
-        <main className="goke-simple-canvas-outer" style={{ flex: 1, minWidth: 0, background: "#1a1a22", padding: 12 }}>
-          <div
-            style={{
-              marginBottom: 8,
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-              fontSize: 12,
-              color: "#9ca3af",
-            }}
-          >
-            <span>Frame</span>
-            <input
-              type="range"
-              min={320}
-              max={1440}
-              step={10}
-              value={frameWidthPx}
-              onChange={(e) => setFrameWidthPx(Number(e.target.value))}
-              style={{ flex: 1 }}
-            />
-            <span>{frameWidthPx}px</span>
-          </div>
-          <div
-            className="goke-simple-frame"
-            style={{
-              height: "calc(100% - 36px)",
-              width: `${frameWidthPx}px`,
-              maxWidth: "none",
-              margin: "0 auto",
-              background: "#fff",
-              borderRadius: 10,
-              overflow: "auto",
-              boxShadow: "0 8px 40px rgba(0,0,0,0.4)",
-              WebkitOverflowScrolling: "touch",
-            }}
-          >
+      <div className="goke-simple-body">
+        {/* 1) Mobile preview first */}
+        <section className="goke-simple-canvas-col" aria-label="Phone preview">
+          <div className="goke-simple-phone">
+            <div className="goke-simple-phone-bar">
+              <span>● ● ●</span>
+              <span>Mobile preview · {currentPage}</span>
+            </div>
             <iframe
               key={previewSrc}
               ref={iframeRef}
-              title="Simple site preview"
+              title="Site preview"
               src={previewSrc}
               onLoad={onIframeLoad}
-              style={{ width: "100%", height: "100%", border: "none" }}
             />
           </div>
-        </main>
+        </section>
 
-        {/* Edit panel */}
-        <aside
-          className="goke-simple-aside"
-          style={{
-            width: 320,
-            flexShrink: 0,
-            borderLeft: "1px solid rgba(255,255,255,0.08)",
-            background: "#121018",
-            display: "flex",
-            flexDirection: "column",
-            overflow: "hidden",
-          }}
-        >
+        {/* 2) Edit section — below on phone, side on desktop */}
+        <aside className="goke-simple-aside" aria-label="Edit this page">
           <div style={{ padding: "14px 14px 8px" }}>
-            <h2 style={{ margin: 0, fontSize: 15 }}>Edit this page</h2>
-            <p style={{ margin: "6px 0 0", fontSize: 12, color: "#9ca3af", lineHeight: 1.4 }}>
-              Change text, image links, and brand color. Switch pages above. Full
-              drag-and-drop designer is separate (JSON export path).
+            <h2 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>Edit this page</h2>
+            <p style={{ margin: "6px 0 0", fontSize: 12, color: "#9ca3af", lineHeight: 1.45 }}>
+              Scroll down to edit text, images, and brand color. Switch pages with the tabs above.
+              Swipe left/right on page tabs for more pages.
             </p>
           </div>
 
@@ -579,16 +647,14 @@ export default function SimplePreviewPage() {
                 type="color"
                 value={/^#/.test(brandColor) ? brandColor : "#3b82f6"}
                 onChange={(e) => applyBrandColor(e.target.value)}
-                style={{ width: "100%", height: 36, border: "none", background: "transparent" }}
+                style={{ width: "100%", height: 40, border: "none", background: "transparent", cursor: "pointer" }}
               />
             </label>
           </div>
 
-          <div style={{ flex: 1, overflowY: "auto", padding: "0 14px 16px" }}>
+          <div className="goke-simple-aside-scroll">
             {items.length === 0 && (
-              <p style={{ fontSize: 12, color: "#6b7280" }}>
-                Loading page content…
-              </p>
+              <p style={{ fontSize: 12, color: "#6b7280" }}>Loading page content…</p>
             )}
             {items.map((it) => (
               <label key={it.id} style={fieldLabel}>
@@ -690,6 +756,7 @@ export default function SimplePreviewPage() {
     </div>
   );
 }
+
 
 const btnPrimary: CSSProperties = {
   background: "linear-gradient(135deg,#8b5cf6,#a78bfa)",
