@@ -103,10 +103,15 @@ export default function PreviewPage() {
     useState<ComponentDefinition | null>(null);
   const [canUndo, setCanUndo] = useState(false);
   const [canRedo, setCanRedo] = useState(false);
-  const [device, setDevice] = useState<Breakpoint>("desktop");
+  const [device, setDevice] = useState<Breakpoint>("mobile");
   const [mobileSheet, setMobileSheet] = useState<"none" | "left" | "right">("none");
-  /** Canvas frame width in px — must exceed phone width to allow L/R pan */
-  const [frameWidthPx, setFrameWidthPx] = useState(1200);
+  /** Canvas frame width in px — phone-first; desktop can widen */
+  const [frameWidthPx, setFrameWidthPx] = useState(390);
+  type SitePage = { file: string; title: string };
+  const [pages, setPages] = useState<SitePage[]>([
+    { file: "index.html", title: "Home" },
+  ]);
+  const [currentPage, setCurrentPage] = useState("index.html");
 
   // Unlock whole-page scroll on mobile (html/body otherwise often overflow:hidden from app layout)
   useEffect(() => {
@@ -116,6 +121,52 @@ export default function PreviewPage() {
       document.documentElement.classList.remove("goke-editor-route");
       document.body.classList.remove("goke-editor-route");
     };
+  }, []);
+
+  // Multipage manifest
+  useEffect(() => {
+    if (!jobId) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(`/api/site/${jobId}/pages.json`);
+        if (!res.ok) return;
+        const data = await res.json();
+        const list = Array.isArray(data?.pages) ? data.pages : [];
+        if (!cancelled && list.length) {
+          setPages(
+            list.map((p: { file?: string; title?: string }) => ({
+              file: p.file || "index.html",
+              title: p.title || p.file || "Page",
+            }))
+          );
+          const files = list.map((p: { file?: string }) => p.file).filter(Boolean);
+          if (files.length && !files.includes(currentPage)) {
+            setCurrentPage(files[0] as string);
+          }
+        }
+      } catch {
+        /* single-page sites ok */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [jobId]);
+
+  // Phone-first on small viewports
+  useEffect(() => {
+    const apply = () => {
+      if (typeof window === "undefined") return;
+      if (window.innerWidth <= 900) {
+        setDevice("mobile");
+        setFrameWidthPx(390);
+      }
+    };
+    apply();
+    window.addEventListener("resize", apply);
+    return () => window.removeEventListener("resize", apply);
   }, []);
 
   // Page min-width tracks canvas frame so the WHOLE page can scroll horizontally
@@ -144,7 +195,7 @@ export default function PreviewPage() {
   const [tourOpen, setTourOpen] = useState(false);
 
 
-  const previewSrc = `/api/site/${jobId}/index.html`;
+  const previewSrc = `/api/site/${jobId}/${currentPage}`;
 
   // Guidance popups: 1 min → redo generation; 3 min → publish help
   useEffect(() => {
@@ -460,6 +511,22 @@ export default function PreviewPage() {
     refreshTree();
   }, [refreshTree]);
 
+  async function switchPage(file: string) {
+    if (file === currentPage) return;
+    try {
+      // Persist current page before leaving
+      if (builderRef.current && iframeRef.current?.contentDocument) {
+        await saveEdits();
+      }
+    } catch {
+      /* still switch */
+    }
+    setCurrentPage(file);
+    setSelectedElement(null);
+    setSelectedComponent(null);
+    setBuilderReady(false);
+  }
+
   async function saveEdits() {
     const builder = builderRef.current;
     const doc = iframeRef.current?.contentDocument;
@@ -471,7 +538,7 @@ export default function PreviewPage() {
       builder?.getHtml() ||
       "<!DOCTYPE html>\n" + doc.documentElement.outerHTML;
 
-    await fetch(`/api/site/${jobId}/index.html`, {
+    await fetch(`/api/site/${jobId}/${currentPage}`, {
       method: "PUT",
       body: html,
     });
@@ -904,6 +971,21 @@ export default function PreviewPage() {
         onClick={() => setMobileSheet("none")}
         aria-hidden={mobileSheet === "none"}
       />
+      {/* Multipage switcher — always visible, horizontal scroll on mobile */}
+      <div className="goke-page-tabs" role="tablist" aria-label="Site pages">
+        {pages.map((p) => (
+          <button
+            key={p.file}
+            type="button"
+            role="tab"
+            aria-selected={currentPage === p.file}
+            className={currentPage === p.file ? "active" : ""}
+            onClick={() => void switchPage(p.file)}
+          >
+            {p.title}
+          </button>
+        ))}
+      </div>
       <div className="goke-workspace">
         {/* Left: structure + components */}
         <div className={`goke-left-stack${mobileSheet === "left" ? " goke-sheet-open" : ""}`}>
@@ -1017,6 +1099,7 @@ export default function PreviewPage() {
             <iframe
               ref={iframeRef}
               title="Site preview"
+              key={previewSrc}
               src={previewSrc}
               className="goke-canvas"
               sandbox="allow-same-origin allow-scripts"
