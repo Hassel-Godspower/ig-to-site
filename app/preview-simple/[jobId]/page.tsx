@@ -90,6 +90,7 @@ export default function SimplePreviewPage() {
   ]);
   const [currentPage, setCurrentPage] = useState("index.html");
   const [items, setItems] = useState<EditableItem[]>([]);
+  const [frameWidthPct, setFrameWidthPct] = useState(100);
   const [brandColor, setBrandColor] = useState("#3b82f6");
   const [saved, setSaved] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -485,16 +486,42 @@ export default function SimplePreviewPage() {
         ))}
       </div>
 
-      <div style={{ display: "flex", flex: 1, minHeight: 0 }}>
+      <div className="goke-simple-shell" style={{ display: "flex", flex: 1, minHeight: 0 }}>
         {/* Canvas */}
-        <main style={{ flex: 1, minWidth: 0, background: "#1a1a22", padding: 12 }}>
+        <main className="goke-simple-canvas-outer" style={{ flex: 1, minWidth: 0, background: "#1a1a22", padding: 12 }}>
           <div
             style={{
-              height: "100%",
+              marginBottom: 8,
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              fontSize: 12,
+              color: "#9ca3af",
+            }}
+          >
+            <span>Frame</span>
+            <input
+              type="range"
+              min={40}
+              max={100}
+              value={Math.round(frameWidthPct)}
+              onChange={(e) => setFrameWidthPct(Number(e.target.value))}
+              style={{ flex: 1 }}
+            />
+            <span>{Math.round(frameWidthPct)}%</span>
+          </div>
+          <div
+            className="goke-simple-frame"
+            style={{
+              height: "calc(100% - 36px)",
+              width: `${frameWidthPct}%`,
+              maxWidth: "100%",
+              margin: "0 auto",
               background: "#fff",
               borderRadius: 10,
-              overflow: "hidden",
+              overflow: "auto",
               boxShadow: "0 8px 40px rgba(0,0,0,0.4)",
+              WebkitOverflowScrolling: "touch",
             }}
           >
             <iframe
@@ -510,6 +537,7 @@ export default function SimplePreviewPage() {
 
         {/* Edit panel */}
         <aside
+          className="goke-simple-aside"
           style={{
             width: 320,
             flexShrink: 0,
