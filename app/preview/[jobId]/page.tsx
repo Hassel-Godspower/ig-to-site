@@ -105,7 +105,33 @@ export default function PreviewPage() {
   const [canRedo, setCanRedo] = useState(false);
   const [device, setDevice] = useState<Breakpoint>("desktop");
   const [mobileSheet, setMobileSheet] = useState<"none" | "left" | "right">("none");
-  const [frameWidthPct, setFrameWidthPct] = useState(100);
+  /** Canvas frame width in px — must exceed phone width to allow L/R pan */
+  const [frameWidthPx, setFrameWidthPx] = useState(1200);
+
+  // Unlock whole-page scroll on mobile (html/body otherwise often overflow:hidden from app layout)
+  useEffect(() => {
+    document.documentElement.classList.add("goke-editor-route");
+    document.body.classList.add("goke-editor-route");
+    return () => {
+      document.documentElement.classList.remove("goke-editor-route");
+      document.body.classList.remove("goke-editor-route");
+    };
+  }, []);
+
+  // Page min-width tracks canvas frame so the WHOLE page can scroll horizontally
+  useEffect(() => {
+    const w =
+      device === "desktop"
+        ? frameWidthPx
+        : device === "tablet"
+          ? 768
+          : 390;
+    document.documentElement.style.setProperty(
+      "--goke-page-min-width",
+      `${Math.max(w + 32, window.innerWidth)}px`
+    );
+  }, [device, frameWidthPx]);
+
 
   const [tree, setTree] = useState<NavNode[]>([]);
   const [rightTab, setRightTab] = useState<"content" | "design" | "globals">("content");
@@ -703,12 +729,11 @@ export default function PreviewPage() {
   function onFrameResizePointerDown(e: React.PointerEvent) {
     e.preventDefault();
     const startX = e.clientX;
-    const startPct = frameWidthPct;
-    const wrap = (e.target as HTMLElement).closest(".goke-canvas-wrap") as HTMLElement | null;
-    const wrapW = wrap?.clientWidth || window.innerWidth;
+    const startW = frameWidthPx;
     const move = (ev: PointerEvent) => {
       const dx = ev.clientX - startX;
-      setFrameWidthPct(Math.min(100, Math.max(40, startPct + (dx / wrapW) * 100)));
+      setFrameWidthPx(Math.min(1440, Math.max(320, startW + dx)));
+      setDevice("desktop");
     };
     const up = () => {
       window.removeEventListener("pointermove", move);
@@ -718,10 +743,17 @@ export default function PreviewPage() {
     window.addEventListener("pointerup", up);
   }
 
+  const frameWidthStyle =
+    device === "desktop"
+      ? `${frameWidthPx}px`
+      : device === "tablet"
+        ? "768px"
+        : "390px";
+
 
   return (
     <MediaProvider jobId={jobId}>
-    <div className="goke-editor" style={{ height: "100vh" }}>
+    <div className="goke-editor" style={{ minHeight: "100vh", height: "auto" }}>
       <header className="goke-toolbar">
         <div className="goke-toolbar-left">
           <span className="goke-logo">gòke</span>
@@ -752,7 +784,12 @@ export default function PreviewPage() {
                 key={id}
                 type="button"
                 className={device === id ? "active" : ""}
-                onClick={() => setDevice(id)}
+                onClick={() => {
+                  setDevice(id);
+                  if (id === "desktop") setFrameWidthPx(1200);
+                  else if (id === "tablet") setFrameWidthPx(768);
+                  else setFrameWidthPx(390);
+                }}
               >
                 {label}
               </button>
@@ -824,23 +861,39 @@ export default function PreviewPage() {
         <span>Frame</span>
         <input
           type="range"
-          min={40}
-          max={100}
-          value={Math.round(frameWidthPct)}
+          min={320}
+          max={1440}
+          step={10}
+          value={frameWidthPx}
           onChange={(e) => {
-            setFrameWidthPct(Number(e.target.value));
+            setFrameWidthPx(Number(e.target.value));
             setDevice("desktop");
           }}
         />
-        <span>{Math.round(frameWidthPct)}%</span>
-        <button type="button" onClick={() => setFrameWidthPct(100)}>
-          Fit
+        <span>{frameWidthPx}px</span>
+        <button
+          type="button"
+          onClick={() => {
+            setDevice("desktop");
+            setFrameWidthPx(1200);
+          }}
+        >
+          Desktop
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            setDevice("tablet");
+            setFrameWidthPx(768);
+          }}
+        >
+          Tablet
         </button>
         <button
           type="button"
           onClick={() => {
             setDevice("mobile");
-            setFrameWidthPct(100);
+            setFrameWidthPx(390);
           }}
         >
           Phone
@@ -948,10 +1001,10 @@ export default function PreviewPage() {
           <div
             className="goke-canvas-frame"
             style={{
-              width: device === "desktop" ? `${frameWidthPct}%` : deviceWidths[device],
-              maxWidth: "100%",
+              width: frameWidthStyle,
+              maxWidth: "none",
               margin: "0 auto",
-              transition: "width 0.25s ease",
+              transition: "width 0.15s ease",
             }}
           >
             <div
