@@ -7,15 +7,48 @@ import GeneratingIndicator from "@/app/components/GeneratingIndicator";
 
 const MAX_FILE_BYTES = 4 * 1024 * 1024;
 
-const NICHES = [
-  { id: "spa_wellness", label: "Spa / Wellness" },
-  { id: "fitness_gym", label: "Fitness / Coaching" },
-  { id: "beauty_salon", label: "Beauty / Hair" },
-  { id: "ecommerce_retail", label: "Shop / Retail" },
-  { id: "restaurant_food", label: "Food / Restaurant" },
-  { id: "creative_portfolio", label: "Creative / Portfolio" },
-  { id: "real_estate", label: "Real estate" },
-  { id: "general_business", label: "Other business" },
+const NICHES: { id: string; label: string; group: string }[] = [
+  // Food & hospitality
+  { id: "restaurant_dining", label: "Restaurant / Dining", group: "Food & hospitality" },
+  { id: "fast_food_qsr", label: "Fast food / QSR / Cloud kitchen", group: "Food & hospitality" },
+  { id: "cafe_coffee", label: "Café / Coffee / Juice bar", group: "Food & hospitality" },
+  { id: "bakery_pastry", label: "Bakery / Pastry / Cake studio", group: "Food & hospitality" },
+  { id: "bar_lounge", label: "Bar / Lounge / Nightlife", group: "Food & hospitality" },
+  // Travel & stay
+  { id: "hotel_stay", label: "Hotel / Lodge", group: "Travel & stay" },
+  { id: "event_centre", label: "Event centre / Hall", group: "Travel & stay" },
+  { id: "short_let", label: "Short-let / Airbnb host", group: "Travel & stay" },
+  // Commerce & style
+  { id: "fashion_boutique", label: "Fashion boutique / RTW", group: "Commerce & style" },
+  { id: "african_wear", label: "Ankara / African wear / Tailoring", group: "Commerce & style" },
+  { id: "jewelry", label: "Jewelry / Beads / Accessories", group: "Commerce & style" },
+  // Beauty & wellness
+  { id: "hair_salon", label: "Hair salon / Glam studio", group: "Beauty & wellness" },
+  { id: "barber_shop", label: "Barber shop", group: "Beauty & wellness" },
+  { id: "spa_wellness", label: "Spa / Wellness / Massage", group: "Beauty & wellness" },
+  { id: "fitness_gym", label: "Gym / Fitness / PT", group: "Beauty & wellness" },
+  // Health & professional
+  { id: "healthcare_clinic", label: "Clinic / Healthcare", group: "Health & professional" },
+  { id: "dental_clinic", label: "Dental clinic", group: "Health & professional" },
+  { id: "pharmacy", label: "Pharmacy", group: "Health & professional" },
+  { id: "law_firm", label: "Law firm", group: "Health & professional" },
+  { id: "accounting", label: "Accounting / Tax / Audit", group: "Health & professional" },
+  // Property & auto
+  { id: "real_estate", label: "Real estate agency", group: "Property & auto" },
+  { id: "auto_dealership", label: "Car dealership", group: "Property & auto" },
+  { id: "auto_mechanic", label: "Auto mechanic / Workshop", group: "Property & auto" },
+  // Services & ops
+  { id: "logistics", label: "Logistics / Courier / Dispatch", group: "Services & ops" },
+  { id: "tech_saas", label: "Tech / Software / SaaS", group: "Services & ops" },
+  // Creative & brand
+  { id: "creative_agency", label: "Marketing / Creative agency", group: "Creative & brand" },
+  { id: "photography", label: "Photography / Videography", group: "Creative & brand" },
+  { id: "coach_consultant", label: "Coach / Consultant / Personal brand", group: "Creative & brand" },
+  // Community
+  { id: "school_education", label: "School / Lesson centre", group: "Community & learning" },
+  { id: "church_faith", label: "Church / Ministry", group: "Community & learning" },
+  // General
+  { id: "general_business", label: "Other business", group: "General" },
 ];
 
 type Path = "handle" | "export";
@@ -160,10 +193,14 @@ export function HeroUpload() {
                 onChange={(e) => setNiche(e.target.value)}
                 disabled={loading}
               >
-                {NICHES.map((n) => (
-                  <option key={n.id} value={n.id}>
-                    {n.label}
-                  </option>
+                {Array.from(new Set(NICHES.map((n) => n.group))).map((group) => (
+                  <optgroup key={group} label={group}>
+                    {NICHES.filter((n) => n.group === group).map((n) => (
+                      <option key={n.id} value={n.id}>
+                        {n.label}
+                      </option>
+                    ))}
+                  </optgroup>
                 ))}
               </select>
             </label>
