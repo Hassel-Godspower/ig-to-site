@@ -67,6 +67,7 @@ import "@/src/goke-editor/components/site-markers";
 import "@/src/goke-editor/components/section-kits";
 import "@/src/goke-editor/data/icons";
 import "@/src/goke-editor/styles/editor.css";
+import "@/src/goke-editor/styles/editor-scroll-override.css";
 
 type Phase =
   | "editing"
@@ -1016,7 +1017,7 @@ export default function PreviewPage() {
       </div>
       <div className="goke-workspace">
         {/* Left: structure + components */}
-        <div className={`goke-left-stack${mobileSheet === "left" ? " goke-sheet-open" : ""}`}>
+        <div className={`goke-left-stack${mobileSheet === "left" ? " goke-sheet-open" : ""}`} style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0, overflow: "hidden" }}>
           <div className="goke-left-tabs">
             <button
               type="button"
@@ -1059,7 +1060,18 @@ export default function PreviewPage() {
             />
           )}
           {leftTab === "components" && (
-            <div data-tour="tour-components-panel" style={{ flex: 1, minHeight: 0, overflow: "auto" }}>
+            <div
+              data-tour="tour-components-panel"
+              style={{
+                flex: "1 1 auto",
+                minHeight: 0,
+                height: "100%",
+                maxHeight: "100%",
+                display: "flex",
+                flexDirection: "column",
+                overflow: "hidden",
+              }}
+            >
               <ComponentPalette onDragStart={startDrag} />
             </div>
           )}
@@ -1153,8 +1165,18 @@ export default function PreviewPage() {
         </main>
 
         {/* Right: content props + design panel */}
-        <aside className={`goke-properties${mobileSheet === "right" ? " goke-sheet-open" : ""}`} data-tour="tour-properties">
-          <div className="goke-properties-header">
+        <aside
+          className={`goke-properties${mobileSheet === "right" ? " goke-sheet-open" : ""}`}
+          data-tour="tour-properties"
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            height: "100%",
+            minHeight: 0,
+            overflow: "hidden",
+          }}
+        >
+          <div className="goke-properties-header" style={{ flexShrink: 0 }}>
             <h2>{selectedComponent?.name || "Properties"}</h2>
             <div className="goke-device-switch" style={{ marginTop: 8 }}>
               <button
@@ -1180,7 +1202,18 @@ export default function PreviewPage() {
               </button>
             </div>
           </div>
-          <div className="goke-properties-body">
+          <div
+            className="goke-properties-body"
+            style={{
+              flex: "1 1 auto",
+              minHeight: 0,
+              overflowY: "scroll",
+              overflowX: "hidden",
+              WebkitOverflowScrolling: "touch",
+              maxHeight: "calc(100vh - 160px)",
+              paddingBottom: 28,
+            }}
+          >
             {rightTab === "globals" ? (
               <GlobalsPanel tokens={tokens} onChange={handleTokensChange} />
             ) : !selectedElement ? (
