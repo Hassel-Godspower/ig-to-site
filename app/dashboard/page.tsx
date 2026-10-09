@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type CSSProperties, type FormEvent } from "react";
 import Link from "next/link";
 
 type SiteRow = {
@@ -15,6 +15,108 @@ type SiteRow = {
   editorMode: string;
 };
 
+const page: CSSProperties = {
+  minHeight: "100dvh",
+  background: "#0b0d12",
+  color: "#f3f4f6",
+  fontFamily: "system-ui, sans-serif",
+  padding: "24px 16px 48px",
+};
+
+const wrap: CSSProperties = {
+  maxWidth: 720,
+  margin: "0 auto",
+};
+
+const formRow: CSSProperties = {
+  display: "flex",
+  flexWrap: "wrap",
+  gap: "10px",
+  marginBottom: 28,
+};
+
+const inputStyle: CSSProperties = {
+  flex: "1 1 220px",
+  padding: "12px 14px",
+  borderRadius: 10,
+  border: "1px solid rgba(167,139,250,0.35)",
+  background: "#12151c",
+  color: "#f3f4f6",
+  fontSize: 15,
+};
+
+const btnPrimary: CSSProperties = {
+  padding: "12px 20px",
+  borderRadius: 10,
+  border: "none",
+  background: "#a78bfa",
+  color: "#0b0d12",
+  fontWeight: 700,
+  cursor: "pointer",
+};
+
+const list: CSSProperties = {
+  listStyle: "none",
+  margin: 0,
+  padding: 0,
+  display: "flex",
+  flexDirection: "column",
+  gap: "12px",
+};
+
+const card: CSSProperties = {
+  background: "#12151c",
+  border: "1px solid rgba(255,255,255,0.08)",
+  borderRadius: 14,
+  padding: 16,
+};
+
+const cardHead: CSSProperties = {
+  display: "flex",
+  flexWrap: "wrap",
+  gap: "8px",
+  alignItems: "center",
+};
+
+const actions: CSSProperties = {
+  marginTop: 12,
+  display: "flex",
+  flexWrap: "wrap",
+  gap: "8px",
+};
+
+const btnEdit: CSSProperties = {
+  display: "inline-block",
+  padding: "8px 14px",
+  borderRadius: 8,
+  background: "rgba(167,139,250,0.2)",
+  color: "#ede9fe",
+  textDecoration: "none",
+  fontSize: 13,
+  fontWeight: 600,
+};
+
+const btnLive: CSSProperties = {
+  display: "inline-block",
+  padding: "8px 14px",
+  borderRadius: 8,
+  background: "#a78bfa",
+  color: "#0b0d12",
+  textDecoration: "none",
+  fontSize: 13,
+  fontWeight: 700,
+};
+
+function badgeStyle(isLive: boolean): CSSProperties {
+  return {
+    fontSize: 12,
+    padding: "2px 8px",
+    borderRadius: 999,
+    background: isLive ? "rgba(52,211,153,0.15)" : "rgba(251,191,36,0.12)",
+    color: isLive ? "#6ee7b7" : "#fbbf24",
+  };
+}
+
 export default function DashboardPage() {
   const [email, setEmail] = useState("");
   const [sites, setSites] = useState<SiteRow[]>([]);
@@ -22,7 +124,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(false);
   const [lookedUp, setLookedUp] = useState(false);
 
-  async function load(e?: React.FormEvent) {
+  async function load(e?: FormEvent) {
     e?.preventDefault();
     setError(null);
     setLoading(true);
@@ -43,65 +145,36 @@ export default function DashboardPage() {
   }
 
   return (
-    <div
-      style={{
-        minHeight: "100dvh",
-        background: "#0b0d12",
-        color: "#f3f4f6",
-        fontFamily: "system-ui, sans-serif",
-        padding: "24px 16px 48px",
-      }}
-    >
-      <div style={{ maxWidth: 720, margin: "0 auto" }}>
+    <div style={page}>
+      <div style={wrap}>
         <p style={{ margin: "0 0 8px" }}>
-          <Link href="/" style={{ color: "#c4b5fd", textDecoration: "none", fontWeight: 700 }}>
+          <Link
+            href="/"
+            style={{
+              color: "#c4b5fd",
+              textDecoration: "none",
+              fontWeight: 700,
+            }}
+          >
             gòke
           </Link>
         </p>
         <h1 style={{ fontSize: 28, margin: "0 0 8px" }}>Your sites</h1>
         <p style={{ color: "#9ca3af", margin: "0 0 24px", lineHeight: 1.5 }}>
-          Enter the email you used at checkout to open your published site or continue editing
-          in the visual editor.
+          Enter the email you used at checkout to open your published site or
+          continue editing in the visual editor.
         </p>
 
-        <form
-          onSubmit={load}
-          style={{
-            display: "flex",
-            flexWrap: "wrap",
-            gap: "10px",
-            marginBottom: 28,
-          }}
-        >
+        <form onSubmit={load} style={formRow}>
           <input
             type="email"
             required
             placeholder="you@email.com"
             value={email}
             onChange={(ev) => setEmail(ev.target.value)}
-            style={{
-              flex: "1 1 220px",
-              padding: "12px 14px",
-              borderRadius: 10,
-              border: "1px solid rgba(167,139,250,0.35)",
-              background: "#12151c",
-              color: "#f3f4f6",
-              fontSize: 15,
-            }}
+            style={inputStyle}
           />
-          <button
-            type="submit"
-            disabled={loading}
-            style={{
-              padding: "12px 20px",
-              borderRadius: 10,
-              border: "none",
-              background: "#a78bfa",
-              color: "#0b0d12",
-              fontWeight: 700,
-              cursor: "pointer",
-            }}
-          >
+          <button type="submit" disabled={loading} style={btnPrimary}>
             {loading ? "Loading…" : "Find my sites"}
           </button>
         </form>
@@ -112,54 +185,23 @@ export default function DashboardPage() {
 
         {lookedUp && !loading && sites.length === 0 && !error && (
           <p style={{ color: "#9ca3af" }}>
-            No sites found for this email. Use the same address from your Paystack receipt.
+            No sites found for this email. Use the same address from your
+            Paystack receipt.
           </p>
         )}
 
-        <ul style={{ listStyle: "none", margin: 0, padding: 0, rowGap: "12px" }}>
+        <ul style={list}>
           {sites.map((s) => (
-            <li
-              key={s.jobId}
-              style={{
-                background: "#12151c",
-                border: "1px solid rgba(255,255,255,0.08)",
-                borderRadius: 14,
-                padding: 16,
-              }}
-            >
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", alignItems: "center" }}>
+            <li key={s.jobId} style={card}>
+              <div style={cardHead}>
                 <strong style={{ fontSize: 16 }}>
                   {s.username ? `@${s.username}` : s.jobId.slice(0, 10)}
                 </strong>
-                <span
-                  style={{
-                    fontSize: 12,
-                    padding: "2px 8px",
-                    borderRadius: 999,
-                    background: s.isLive
-                      ? "rgba(52,211,153,0.15)"
-                      : "rgba(251,191,36,0.12)",
-                    color: s.isLive ? "#6ee7b7" : "#fbbf24",
-                  }}
-                >
-                  {s.status}
-                </span>
+                <span style={badgeStyle(s.isLive)}>{s.status}</span>
               </div>
-              <div style={{ marginTop: 12, display: 8, displayWrap: "wrap" }}>
+              <div style={actions}>
                 {s.canEdit && (
-                  <a
-                    href={s.editorUrl}
-                    style={{
-                      display: "inline-block",
-                      padding: "8px 14px",
-                      borderRadius: 8,
-                      background: "rgba(167,139,250,0.2)",
-                      color: "#ede9fe",
-                      textDecoration: "none",
-                      fontSize: 13,
-                      fontWeight: 600,
-                    }}
-                  >
+                  <a href={s.editorUrl} style={btnEdit}>
                     Edit site
                   </a>
                 )}
@@ -168,16 +210,7 @@ export default function DashboardPage() {
                     href={s.siteUrl}
                     target="_blank"
                     rel="noreferrer"
-                    style={{
-                      display: "inline-block",
-                      padding: "8px 14px",
-                      borderRadius: 8,
-                      background: "#a78bfa",
-                      color: "#0b0d12",
-                      textDecoration: "none",
-                      fontSize: 13,
-                      fontWeight: 700,
-                    }}
+                    style={btnLive}
                   >
                     Open live site
                   </a>
