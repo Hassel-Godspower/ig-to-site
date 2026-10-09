@@ -357,6 +357,55 @@ export function extractWhatsAppNumber(profile: InstagramProfile): string | null 
   return null;
 }
 
+
+/** Deterministic SEO + a11y fixes on generated HTML (does not rely on model luck). */
+function ensurePageSeo(html: string, opts: { title: string; description: string; pageName?: string }): string {
+  let h = html;
+  if (!/lang\s*=/i.test(h)) {
+    h = h.replace(/<html\b/i, '<html lang="en"');
+  }
+  if (!/<meta[^>]+charset=/i.test(h)) {
+    h = h.replace(/<head([^>]*)>/i, '<head$1>\n<meta charset="utf-8"/>');
+  }
+  if (!/<meta[^>]+name=["']viewport["']/i.test(h)) {
+    h = h.replace(
+      /<head([^>]*)>/i,
+      '<head$1>\n<meta name="viewport" content="width=device-width, initial-scale=1"/>'
+    );
+  }
+  const title = opts.title.slice(0, 70);
+  const desc = opts.description.slice(0, 160);
+  if (!/<title>/i.test(h)) {
+    h = h.replace(/<head([^>]*)>/i, `<head$1>\n<title>${title}</title>`);
+  }
+  if (!/<meta[^>]+name=["']description["']/i.test(h)) {
+    h = h.replace(
+      /<head([^>]*)>/i,
+      `<head$1>\n<meta name="description" content="${desc.replace(/"/g, "&quot;")}"/>`
+    );
+  }
+  if (!/property=["']og:title["']/i.test(h)) {
+    h = h.replace(
+      /<head([^>]*)>/i,
+      `<head$1>\n<meta property="og:title" content="${title.replace(/"/g, "&quot;")}"/>\n<meta property="og:description" content="${desc.replace(/"/g, "&quot;")}"/>`
+    );
+  }
+  // Ensure images have alt if missing
+  h = h.replace(/<img(?![^>]*\balt=)([^>]*)>/gi, '<img alt=""$1>');
+  return h;
+}
+
+function buildSitemap(pages: { file: string }[]): string {
+  const urls = pages
+    .map((p) => {
+      const loc = p.file === "index.html" ? "/" : `/${p.file}`;
+      return `  <url><loc>${loc}</loc></url>`;
+    })
+    .join("\n");
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>\n`;
+}
+
+
 export async function generateSite(
   profile: InstagramProfile
 ): Promise<Record<string, string>> {
@@ -400,10 +449,38 @@ export async function generateSite(
   const data = await res.json();
   const raw: string = data.choices?.[0]?.message?.content ?? "";
   const files = parseMultiPage(raw, profile, waNumber);
+
+  // Deterministic SEO pass on every HTML page
+  const brand = profile.name || profile.username || "Business";
+  const baseDesc = (profile.bio || `${brand} — official website`).replace(/\s+/g, " ").slice(0, 160);
+  for (const [name, content] of Object.entries(files)) {
+    if (!name.endsWith(".html") || typeof content !== "string") continue;
+    const pageLabel = name.replace(/\.html$/i, "").replace(/index/i, "Home");
+    files[name] = ensurePageSeo(content, {
+      title: name === "index.html" ? brand : `${pageLabel} · ${brand}`,
+      description: baseDesc,
+      pageName: pageLabel,
+    });
+  }
+
+  // robots + sitemap for static host
+  try {
+    const pagesMeta = files["pages.json"]
+      ? (JSON.parse(files["pages.json"]).pages as { file: string }[])
+      : [{ file: "index.html" }];
+    files["sitemap.xml"] = buildSitemap(Array.isArray(pagesMeta) ? pagesMeta : [{ file: "index.html" }]);
+    files["robots.txt"] = "User-agent: *\nAllow: /\nSitemap: /sitemap.xml\n";
+  } catch {
+    files["robots.txt"] = "User-agent: *\nAllow: /\n";
+  }
+
   files["niche.json"] = JSON.stringify(
     {
-      id: niche.id,
-      label: niche.label,
+      id: bp.id,
+      label: bp.label,
+      legacyId: niche.id,
+      primaryCTA: bp.primaryCTA,
+      primaryGoal: bp.primaryGoal,
       whatsapp: waNumber,
       detectedAt: new Date().toISOString(),
     },

@@ -10,6 +10,26 @@ import { notifySiteReady } from "./notifySiteReady";
 /**
  * After payment: GitHub → Cloudflare Pages → email / WhatsApp link to customer.
  */
+
+async function verifyLiveUrl(url: string, attempts = 4): Promise<boolean> {
+  for (let i = 0; i < attempts; i++) {
+    try {
+      const res = await fetch(url, {
+        method: "GET",
+        redirect: "follow",
+        signal: AbortSignal.timeout(12000),
+        headers: { "User-Agent": "goke-deploy-check/1.0" },
+      });
+      if (res.ok) return true;
+    } catch {
+      /* retry */
+    }
+    await new Promise((r) => setTimeout(r, 2000 * (i + 1)));
+  }
+  return false;
+}
+
+
 export async function completePaidJob(
   jobId: string,
   username?: string,
