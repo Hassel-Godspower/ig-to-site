@@ -6,6 +6,7 @@ import {
 } from "./lagosNicheImages";
 import { blueprintPromptSection, resolveNicheBlueprint, pagesJsonFromBlueprint } from "./blueprintPrompt";
 import { toLegacyNicheId } from "./nicheCompat";
+import { chatWithFallback } from "./ai";
 
 /**
  * Multi-page niche-aware static site via Groq.
@@ -445,35 +446,33 @@ export async function generateSite(
   const galleryUrls = resolveGalleryUrls(profile, imageNicheId);
   const titles = captionTitles(profile);
 
-  const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: "openai/gpt-oss-120b",
-      max_tokens: 16000,
-      temperature: 0.4,
-      messages: [
-        {
-          role: "system",
-          content:
-            "You are a Principal Frontend Engineer shipping production static multi-page sites at the quality of Club One Africa and Pax & Pearl Body Works: real logo in header, CSS design tokens, sticky horizontal nav, mobile hamburger panel, multi-column footer, mobile app-style bottom tab bar, scroll-reveal sections, dual CTAs, and niche-accurate photography. Output ONLY HTML5. CRITICAL SEO (every HTML page): unique <title>, meta name='description', meta name='viewport', Open Graph og:title/og:description, semantic landmarks (header/main/footer), one H1 per page, img alt text, lang='en' on <html>.  Output ONLY HTML5 pages + one styles.css + one script.js. No React, no Tailwind CDN, no Bootstrap. No markdown, no lorem, no TODO.",
-        },
-        { role: "user", content: buildPrompt(profile, niche, waNumber, galleryUrls, titles) + "\n\n" + intel },
-      ],
-    }),
+  const systemPrompt =
+    "You are a Principal Frontend Engineer shipping production static multi-page sites at the quality of Club One Africa and Pax & Pearl Body Works: real logo in header, CSS design tokens, sticky horizontal nav, mobile hamburger panel, multi-column footer, mobile app-style bottom tab bar, scroll-reveal sections, dual CTAs, and niche-accurate photography. Output ONLY HTML5. CRITICAL SEO (every HTML page): unique <title>, meta name='description', meta name='viewport', Open Graph og:title/og:description, semantic landmarks (header/main/footer), one H1 per page, img alt text, lang='en' on <html>.  Output ONLY HTML5 pages + one styles.css + one script.js. No React, no Tailwind CDN, no Bootstrap. No markdown, no lorem, no TODO.";
+  const userPrompt =
+    buildPrompt(profile, niche, waNumber, galleryUrls, titles) + "\n\n" + intel;
+
+  // Provider router: Groq → Gemini → Cerebras → OpenRouter (configured keys only)
+  const ai = await chatWithFallback({
+    messages: [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userPrompt },
+    ],
+    maxTokens: 16000,
+    temperature: 0.4,
   });
 
-  if (!res.ok) {
-    const errText = await res.text();
-    throw new Error(`Groq request failed (${res.status}): ${errText}`);
-  }
-
-  const data = await res.json();
-  const raw: string = data.choices?.[0]?.message?.content ?? "";
+  const raw: string = ai.content ?? "";
   const files = parseMultiPage(raw, profile, waNumber);
+  // Optional debug: which provider produced this site
+  try {
+    files["ai-provider.json"] = JSON.stringify(
+      { provider: ai.provider, model: ai.model, at: new Date().toISOString() },
+      null,
+      2
+    );
+  } catch {
+    /* optional */
+  }
 
   // Deterministic SEO pass on every HTML page
   const brand = profile.name || profile.username || "Business";
