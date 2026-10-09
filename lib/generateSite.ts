@@ -1,5 +1,7 @@
 import type { InstagramProfile } from "./parseInstagramExport";
 import { buildNicheCuratedImages } from "./lagosNicheImages";
+import { blueprintPromptSection, resolveNicheBlueprint, pagesJsonFromBlueprint } from "./blueprintPrompt";
+import { toLegacyNicheId } from "./nicheCompat";
 
 /**
  * Multi-page niche-aware static site via Groq.
@@ -358,9 +360,15 @@ export function extractWhatsAppNumber(profile: InstagramProfile): string | null 
 export async function generateSite(
   profile: InstagramProfile
 ): Promise<Record<string, string>> {
+  const bp = resolveNicheBlueprint(profile as InstagramProfile & { nicheHint?: string });
+  const intel = blueprintPromptSection(profile as InstagramProfile & { nicheHint?: string });
+  // Map blueprint → legacy guide id for Lagos image packs
+  const legacyId = toLegacyNicheId(bp.id);
   const niche = detectNiche(profile);
+  // Prefer legacy mapping when user picked a fine-grained niche
+  const imageNicheId = legacyId !== "general_business" ? legacyId : niche.id;
   const waNumber = extractWhatsAppNumber(profile);
-  const galleryUrls = resolveGalleryUrls(profile, niche.id);
+  const galleryUrls = resolveGalleryUrls(profile, imageNicheId);
   const titles = captionTitles(profile);
 
   const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
@@ -377,9 +385,9 @@ export async function generateSite(
         {
           role: "system",
           content:
-            "You are a Principal Frontend Engineer shipping production static multi-page sites at the quality of Club One Africa and Pax & Pearl Body Works: real logo in header, CSS design tokens, sticky horizontal nav, mobile hamburger panel, multi-column footer, mobile app-style bottom tab bar, scroll-reveal sections, dual CTAs, and niche-accurate photography. Output ONLY HTML5 pages + one styles.css + one script.js. No React, no Tailwind CDN, no Bootstrap. No markdown, no lorem, no TODO.",
+            "You are a Principal Frontend Engineer shipping production static multi-page sites at the quality of Club One Africa and Pax & Pearl Body Works: real logo in header, CSS design tokens, sticky horizontal nav, mobile hamburger panel, multi-column footer, mobile app-style bottom tab bar, scroll-reveal sections, dual CTAs, and niche-accurate photography. Output ONLY HTML5. CRITICAL SEO (every HTML page): unique <title>, meta name="description", meta name="viewport", Open Graph og:title/og:description, semantic landmarks (header/main/footer), one H1 per page, img alt text, lang="en" on <html>.  Output ONLY HTML5 pages + one styles.css + one script.js. No React, no Tailwind CDN, no Bootstrap. No markdown, no lorem, no TODO.",
         },
-        { role: "user", content: buildPrompt(profile, niche, waNumber, galleryUrls, titles) },
+        { role: "user", content: buildPrompt(profile, niche, waNumber, galleryUrls, titles) + "\n\n" + intel },
       ],
     }),
   });
@@ -402,6 +410,27 @@ export async function generateSite(
     null,
     2
   );
+  if (!files["pages.json"]) {
+    try {
+      files["pages.json"] = pagesJsonFromBlueprint(bp);
+    } catch {
+      /* optional */
+    }
+  }
+  try {
+    files["niche.json"] = JSON.stringify(
+      {
+        id: bp.id,
+        label: bp.label,
+        primaryCTA: bp.primaryCTA,
+        primaryGoal: bp.primaryGoal,
+      },
+      null,
+      2
+    );
+  } catch {
+    /* optional */
+  }
   return files;
 }
 
