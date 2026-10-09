@@ -7,6 +7,8 @@ import { EditorShowcase } from "./components/marketing/EditorShowcase";
 import { TemplatesStrip } from "./components/marketing/TemplatesStrip";
 import { PricingTeaser } from "./components/marketing/PricingTeaser";
 import { TrustOwnership } from "./components/marketing/TrustOwnership";
+import { AfterGoLive } from "./components/marketing/AfterGoLive";
+import { AboutGoke } from "./components/marketing/AboutGoke";
 import { SiteFooter } from "./components/marketing/SiteFooter";
 import Link from "next/link";
 
@@ -88,6 +90,8 @@ export default function HomePage() {
 
         {/* What ₦20k includes */}
         <TrustOwnership />
+        <AfterGoLive />
+        <AboutGoke />
 
         {/* Final CTA band — from original main page */}
         <section className="gk-cta-band">
