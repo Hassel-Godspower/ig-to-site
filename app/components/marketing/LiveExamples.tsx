@@ -23,7 +23,7 @@ export function LiveExamples() {
         <div className="gk-section-head">
           <h2 id="live-examples-title">Live sites from gòke</h2>
           <p>
-            Real publishes — not mockups. Open them, scroll on your phone, then generate yours.
+            Real publishes — not mockups. Open them, scroll on your phone, then generate yours. (Add every new customer URL to this list — proof compounds.)
           </p>
         </div>
         <div style={{ display: "grid", gap: "1rem", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))" }}>
