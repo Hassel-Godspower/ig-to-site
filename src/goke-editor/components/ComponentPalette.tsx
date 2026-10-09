@@ -1,5 +1,6 @@
 /**
  * Left sidebar – searchable 2-column component palette (Elementor-style)
+ * Scroll: dedicated body viewport (does not rely on fragile flex ancestors)
  */
 
 "use client";
@@ -34,11 +35,21 @@ export function ComponentPalette({ onDragStart }: ComponentPaletteProps) {
   }, [categories, query]);
 
   return (
-    <aside className="goke-palette">
-      <div className="goke-palette-header">
+    <aside
+      className="goke-palette"
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        height: "100%",
+        maxHeight: "100%",
+        minHeight: 0,
+        overflow: "hidden",
+      }}
+    >
+      <div className="goke-palette-header" style={{ flexShrink: 0 }}>
         <h2>Components</h2>
       </div>
-      <div className="goke-palette-search-wrap">
+      <div className="goke-palette-search-wrap" style={{ flexShrink: 0 }}>
         <input
           type="search"
           className="goke-palette-search"
@@ -48,7 +59,21 @@ export function ComponentPalette({ onDragStart }: ComponentPaletteProps) {
           aria-label="Search components"
         />
       </div>
-      <div className="goke-palette-body">
+      {/* Explicit scrollport — always scrollable when content exceeds viewport */}
+      <div
+        className="goke-palette-body"
+        style={{
+          flex: "1 1 auto",
+          minHeight: 0,
+          overflowY: "scroll",
+          overflowX: "hidden",
+          WebkitOverflowScrolling: "touch",
+          overscrollBehavior: "contain",
+          paddingBottom: 28,
+          /* fallback when parent height is indefinite */
+          maxHeight: "calc(100vh - 160px)",
+        }}
+      >
         {filtered.map(({ cat, items }) => (
           <div key={cat} className="goke-palette-group">
             <div className="goke-palette-group-title">{cat}</div>

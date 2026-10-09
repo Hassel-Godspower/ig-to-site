@@ -77,11 +77,32 @@ function NodeRow({
 
 export function Navigator({ tree, selectedElement, onSelect }: NavigatorProps) {
   return (
-    <div className="goke-navigator">
-      <div className="goke-palette-header">
+    <div
+      className="goke-navigator"
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        height: "100%",
+        maxHeight: "100%",
+        minHeight: 0,
+        overflow: "hidden",
+      }}
+    >
+      <div className="goke-palette-header" style={{ flexShrink: 0 }}>
         <h2>Structure</h2>
       </div>
-      <div className="goke-navigator-body">
+      <div
+        className="goke-navigator-body"
+        style={{
+          flex: "1 1 auto",
+          minHeight: 0,
+          overflowY: "scroll",
+          overflowX: "hidden",
+          WebkitOverflowScrolling: "touch",
+          maxHeight: "calc(100vh - 160px)",
+          paddingBottom: 28,
+        }}
+      >
         {tree.length === 0 ? (
           <p className="goke-properties-empty">Page is empty</p>
         ) : (
