@@ -69,7 +69,7 @@ export default function DashboardPage() {
           style={{
             display: "flex",
             flexWrap: "wrap",
-            gap: 10,
+            gap: "10px",
             marginBottom: 28,
           }}
         >
@@ -116,7 +116,7 @@ export default function DashboardPage() {
           </p>
         )}
 
-        <ul style={{ listStyle: "none", margin: 0, padding: 0, display: 12 }}>
+        <ul style={{ listStyle: "none", margin: 0, padding: 0, rowGap: "12px" }}>
           {sites.map((s) => (
             <li
               key={s.jobId}
@@ -127,7 +127,7 @@ export default function DashboardPage() {
                 padding: 16,
               }}
             >
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", alignItems: "center" }}>
                 <strong style={{ fontSize: 16 }}>
                   {s.username ? `@${s.username}` : s.jobId.slice(0, 10)}
                 </strong>
