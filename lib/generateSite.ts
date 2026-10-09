@@ -1,5 +1,9 @@
 import type { InstagramProfile } from "./parseInstagramExport";
-import { buildNicheCuratedImages } from "./lagosNicheImages";
+import {
+  buildNicheCuratedImages,
+  resolveImagesForNiche,
+  detectImagePackId,
+} from "./lagosNicheImages";
 import { blueprintPromptSection, resolveNicheBlueprint, pagesJsonFromBlueprint } from "./blueprintPrompt";
 import { toLegacyNicheId } from "./nicheCompat";
 
@@ -275,14 +279,21 @@ function resolveGalleryUrls(profile: InstagramProfile, nicheId: string): string[
       typeof u === "string" &&
       /^https?:\/\//i.test(u) &&
       !u.includes("example.com") &&
-      !u.includes("picsum.photos")
+      !u.includes("picsum.photos") &&
+      !u.includes("placehold")
   );
-  const curated =
-    NICHE_CURATED_IMAGES[nicheId] || NICHE_CURATED_IMAGES.general_business;
+  // Exclusive niche pack only — never mix e.g. café images into restaurant
+  const curated = resolveImagesForNiche(nicheId);
+  const fallback =
+    curated.length > 0
+      ? curated
+      : NICHE_CURATED_IMAGES[nicheId] ||
+        NICHE_CURATED_IMAGES.general_business ||
+        [];
   const out = [...fromIg];
   let i = 0;
-  while (out.length < 8) {
-    out.push(curated[i % curated.length]);
+  while (out.length < 8 && fallback.length > 0) {
+    out.push(fallback[i % fallback.length]);
     i++;
   }
   return out.slice(0, 12);
@@ -414,8 +425,22 @@ export async function generateSite(
   // Map blueprint → legacy guide id for Lagos image packs
   const legacyId = toLegacyNicheId(bp.id);
   const niche = detectNiche(profile);
-  // Prefer legacy mapping when user picked a fine-grained niche
-  const imageNicheId = legacyId !== "general_business" ? legacyId : niche.id;
+  // Prefer fine-grained exclusive pack from bio/captions, then blueprint id, then legacy
+  const textBlob = [
+    profile.name || "",
+    profile.username || "",
+    profile.bio || "",
+    ...profile.posts.map((p) => p.caption || ""),
+  ].join(" ");
+  const fromCaptions = detectImagePackId(textBlob);
+  const imageNicheId =
+    fromCaptions !== "general_business"
+      ? fromCaptions
+      : bp.id && bp.id !== "general_business"
+        ? bp.id
+        : legacyId !== "general_business"
+          ? legacyId
+          : niche.id;
   const waNumber = extractWhatsAppNumber(profile);
   const galleryUrls = resolveGalleryUrls(profile, imageNicheId);
   const titles = captionTitles(profile);
@@ -479,6 +504,7 @@ export async function generateSite(
       id: bp.id,
       label: bp.label,
       legacyId: niche.id,
+      imagePackId: imageNicheId,
       primaryCTA: bp.primaryCTA,
       primaryGoal: bp.primaryGoal,
       whatsapp: waNumber,
