@@ -1,7 +1,15 @@
 /**
- * Lightweight handle enrichment for gòke.
- * Best-effort public fetch → name, bio, avatar, posts, brand color.
- * No Apify/RapidAPI required. Falls back silently.
+ * Handle enrichment for gòke — best-effort public sources.
+ * Goal: real name, bio, post captions, media URLs, brand color from avatar.
+ *
+ * Sources (in order):
+ * 1) IG_SELFHOST_URL worker (recommended for production reliability)
+ * 2) Instagram web_profile_info (public, rate-limited)
+ * 3) HTML scrape of instagram.com/{handle}/ (meta + shared data)
+ * 4) Optional IG_HTML_PROXY template
+ *
+ * Meta Graph API OAuth is the long-term official path; this keeps the
+ * “type @handle” UX working without shipping keys to the browser.
  */
 
 import type { InstagramPost, InstagramProfile } from "./parseInstagramExport";
@@ -14,13 +22,17 @@ function sanitizeHandle(raw: string): string {
     .slice(0, 30);
 }
 
-/** Approximate dominant color from image bytes (JPEG/PNG-ish sampling). */
+const UA_DESKTOP =
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36";
+const UA_MOBILE =
+  "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1";
+
+/** Approximate dominant color from image bytes. */
 export async function colorFromImageUrl(url: string): Promise<string | null> {
   try {
     const res = await fetch(url, {
       headers: {
-        "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
+        "User-Agent": UA_DESKTOP,
         Accept: "image/*,*/*;q=0.8",
       },
       signal: AbortSignal.timeout(10000),
@@ -49,7 +61,6 @@ export async function colorFromImageUrl(url: string): Promise<string | null> {
     r = Math.min(255, Math.round((r / n) * 1.12));
     g = Math.min(255, Math.round((g / n) * 1.12));
     b = Math.min(255, Math.round((b / n) * 1.12));
-    // Avoid muddy greys as brand accent
     if (Math.max(r, g, b) - Math.min(r, g, b) < 28) return null;
     return `#${[r, g, b].map((x) => x.toString(16).padStart(2, "0")).join("")}`;
   } catch {
@@ -58,33 +69,42 @@ export async function colorFromImageUrl(url: string): Promise<string | null> {
 }
 
 function mapUser(u: any, handle: string): InstagramProfile {
-  const edges = u.edge_owner_to_timeline_media?.edges || u.edges || [];
-  const posts: InstagramPost[] = edges.slice(0, 18).map((e: any) => {
+  const edges =
+    u.edge_owner_to_timeline_media?.edges ||
+    u.edge_felix_video_timeline?.edges ||
+    u.edges ||
+    u.media?.nodes ||
+    [];
+  const posts: InstagramPost[] = edges.slice(0, 24).map((e: any) => {
     const node = e.node || e;
     const caption =
       node.edge_media_to_caption?.edges?.[0]?.node?.text ||
+      node.caption?.text ||
       node.caption ||
+      node.accessibility_caption ||
       "";
     const url =
       node.display_url ||
       node.thumbnail_src ||
       node.displayUrl ||
+      node.image_versions2?.candidates?.[0]?.url ||
       "";
     return {
       caption: String(caption).trim(),
-      imageUrls: url ? [url] : [],
+      imageUrls: url ? [String(url)] : [],
     };
   });
 
   const mediaUrls = posts
     .flatMap((p) => p.imageUrls || [])
     .filter((x) => /^https?:\/\//i.test(x))
-    .slice(0, 20);
+    .slice(0, 24);
 
   const pic =
     u.profile_pic_url_hd ||
     u.profile_pic_url ||
     u.profilePicUrl ||
+    u.hd_profile_pic_url_info?.url ||
     undefined;
 
   return {
@@ -101,15 +121,13 @@ function mapUser(u: any, handle: string): InstagramProfile {
   };
 }
 
-/** Instagram mobile web_profile_info (public profiles, no login — may rate-limit). */
 async function fetchWebProfile(handle: string): Promise<InstagramProfile | null> {
   try {
     const res = await fetch(
       `https://i.instagram.com/api/v1/users/web_profile_info/?username=${encodeURIComponent(handle)}`,
       {
         headers: {
-          "User-Agent":
-            "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
+          "User-Agent": UA_MOBILE,
           "X-IG-App-ID": "936619743392459",
           Accept: "*/*",
           "Accept-Language": "en-US,en;q=0.9",
@@ -129,10 +147,6 @@ async function fetchWebProfile(handle: string): Promise<InstagramProfile | null>
   }
 }
 
-/**
- * Optional self-hosted worker: set IG_SELFHOST_URL=https://your-worker
- * Worker should respond GET /profile/:username → JSON with full_name, biography, etc.
- */
 async function fetchSelfHost(handle: string): Promise<InstagramProfile | null> {
   const base = process.env.IG_SELFHOST_URL?.replace(/\/$/, "");
   if (!base) return null;
@@ -148,6 +162,136 @@ async function fetchSelfHost(handle: string): Promise<InstagramProfile | null> {
   }
 }
 
+/** Optional: IG_HTML_PROXY="https://r.jina.ai/http://www.instagram.com/{handle}/" */
+async function fetchViaProxyTemplate(handle: string): Promise<InstagramProfile | null> {
+  const tpl = process.env.IG_HTML_PROXY?.trim();
+  if (!tpl) return null;
+  const url = tpl.replace("{handle}", encodeURIComponent(handle));
+  try {
+    const res = await fetch(url, {
+      headers: { "User-Agent": UA_DESKTOP, Accept: "text/html,*/*" },
+      signal: AbortSignal.timeout(18000),
+    });
+    if (!res.ok) return null;
+    const html = await res.text();
+    return profileFromHtml(html, handle);
+  } catch {
+    return null;
+  }
+}
+
+function profileFromHtml(html: string, handle: string): InstagramProfile | null {
+  // og:title often "Name (@handle) • Instagram photos..."
+  const ogTitle =
+    html.match(/property="og:title"\s+content="([^"]+)"/i)?.[1] ||
+    html.match(/content="([^"]+)"\s+property="og:title"/i)?.[1] ||
+    "";
+  const ogDesc =
+    html.match(/property="og:description"\s+content="([^"]+)"/i)?.[1] ||
+    html.match(/content="([^"]+)"\s+property="og:description"/i)?.[1] ||
+    "";
+  const ogImage =
+    html.match(/property="og:image"\s+content="([^"]+)"/i)?.[1] ||
+    html.match(/content="([^"]+)"\s+property="og:image"/i)?.[1] ||
+    "";
+
+  let name = handle;
+  const titleMatch = ogTitle.match(/^(.+?)\s*\(@/i);
+  if (titleMatch) name = decodeHtml(titleMatch[1]).trim();
+
+  // Captions sometimes appear in description as "X Followers, Y Following, Z Posts - Bio"
+  let bio = decodeHtml(ogDesc);
+  // Strip follower noise prefix if present
+  bio = bio.replace(/^[\d.,KMB]+\s*Followers?,[^-]*-\s*/i, "").trim();
+
+  const posts: InstagramPost[] = [];
+  if (bio) {
+    posts.push({ caption: bio.slice(0, 500), imageUrls: ogImage ? [ogImage] : [] });
+  }
+
+  // Try embedded shared data JSON for more captions
+  const shared =
+    html.match(/window\._sharedData\s*=\s*(\{.+?\});<\/script>/s)?.[1] ||
+    html.match(/"ProfilePage"\s*:\s*\[(\{.+?\})\]/s)?.[1];
+  if (shared) {
+    try {
+      const data = JSON.parse(shared.length > 2 && shared[0] === "{" ? shared : `{"x":${shared}}`);
+      const user =
+        data?.entry_data?.ProfilePage?.[0]?.graphql?.user ||
+        data?.graphql?.user ||
+        null;
+      if (user) return mapUser(user, handle);
+    } catch {
+      /* ignore */
+    }
+  }
+
+  if (!name && !bio && !ogImage) return null;
+
+  return {
+    username: handle,
+    name: name || handle,
+    bio,
+    posts,
+    mediaUrls: ogImage ? [ogImage] : [],
+    profilePicUrl: ogImage || undefined,
+    logoUrl: ogImage || undefined,
+  };
+}
+
+function decodeHtml(s: string): string {
+  return s
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/\\u0026/g, "&");
+}
+
+async function fetchInstagramHtml(handle: string): Promise<InstagramProfile | null> {
+  try {
+    const res = await fetch(`https://www.instagram.com/${encodeURIComponent(handle)}/`, {
+      headers: {
+        "User-Agent": UA_DESKTOP,
+        Accept: "text/html,application/xhtml+xml",
+        "Accept-Language": "en-US,en;q=0.9",
+      },
+      signal: AbortSignal.timeout(14000),
+      redirect: "follow",
+    });
+    if (!res.ok) return null;
+    const html = await res.text();
+    return profileFromHtml(html, handle);
+  } catch {
+    return null;
+  }
+}
+
+function mergeProfiles(
+  primary: InstagramProfile,
+  secondary: InstagramProfile | null
+): InstagramProfile {
+  if (!secondary) return primary;
+  const posts =
+    (primary.posts?.length || 0) >= (secondary.posts?.length || 0)
+      ? primary.posts
+      : secondary.posts;
+  return {
+    ...primary,
+    name: primary.name || secondary.name,
+    bio: primary.bio || secondary.bio,
+    posts: posts || [],
+    mediaUrls: [
+      ...new Set([...(primary.mediaUrls || []), ...(secondary.mediaUrls || [])]),
+    ].slice(0, 24),
+    profilePicUrl: primary.profilePicUrl || secondary.profilePicUrl,
+    logoUrl: primary.logoUrl || secondary.logoUrl,
+    externalUrl: primary.externalUrl || secondary.externalUrl,
+    brandColor: primary.brandColor || secondary.brandColor,
+  };
+}
+
 /**
  * Enrich handle → profile with real text + color when possible.
  */
@@ -157,30 +301,68 @@ export async function enrichFromHandle(
   const handle = sanitizeHandle(rawHandle);
   if (handle.length < 2) return null;
 
-  let profile =
-    (await fetchSelfHost(handle)) || (await fetchWebProfile(handle));
+  const sources: string[] = [];
+  let profile: InstagramProfile | null = null;
+
+  const selfHost = await fetchSelfHost(handle);
+  if (selfHost) {
+    profile = selfHost;
+    sources.push("selfhost");
+  }
+
+  const web = await fetchWebProfile(handle);
+  if (web) {
+    profile = profile ? mergeProfiles(profile, web) : web;
+    sources.push("web_profile");
+  }
+
+  if (!profile || !(profile.posts?.length) || !profile.bio) {
+    const htmlP = await fetchInstagramHtml(handle);
+    if (htmlP) {
+      profile = profile ? mergeProfiles(profile, htmlP) : htmlP;
+      sources.push("html");
+    }
+  }
+
+  if (!profile || !(profile.posts?.length)) {
+    const prox = await fetchViaProxyTemplate(handle);
+    if (prox) {
+      profile = profile ? mergeProfiles(profile, prox) : prox;
+      sources.push("proxy");
+    }
+  }
 
   if (!profile) return null;
 
-  // Brand color from avatar
-  const pic = profile.profilePicUrl || profile.logoUrl;
-  if (pic) {
+  // Brand color from avatar (or first media)
+  const pic = profile.profilePicUrl || profile.logoUrl || profile.mediaUrls?.[0];
+  if (pic && !profile.brandColor) {
     const color = await colorFromImageUrl(pic);
     if (color) profile.brandColor = color;
   }
 
-  // Ensure media list includes avatar if posts empty
   if ((!profile.mediaUrls || profile.mediaUrls.length === 0) && pic) {
     profile.mediaUrls = [pic];
   }
 
-  // Ensure at least one caption-like post so generator has text
-  if (!profile.posts?.length && profile.bio) {
+  // Ensure generator has caption text
+  if (!profile.posts?.length) {
+    const line =
+      profile.bio?.split("\n").find((l) => l.trim().length > 2) ||
+      profile.name ||
+      handle;
     profile.posts = [
-      { caption: profile.bio.split("\n")[0] || profile.name, imageUrls: pic ? [pic] : [] },
+      { caption: line, imageUrls: pic ? [pic] : [] },
     ];
   }
 
-  const source = process.env.IG_SELFHOST_URL ? "selfhost_or_web" : "web_profile";
-  return { profile, source };
+  // Keep only posts that have some caption or image
+  profile.posts = (profile.posts || []).filter(
+    (p) => (p.caption && p.caption.trim()) || (p.imageUrls && p.imageUrls.length)
+  );
+
+  return {
+    profile,
+    source: sources.join("+") || "unknown",
+  };
 }

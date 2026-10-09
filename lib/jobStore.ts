@@ -118,3 +118,17 @@ export async function updateJob(id: string, patch: Partial<Job>): Promise<Job> {
   if (!updated) throw new Error(`Job ${id} not found after update`);
   return updated;
 }
+
+/** Sites for a customer dashboard — match checkout email (case-insensitive). */
+export async function listJobsByEmail(email: string, limit = 50): Promise<Job[]> {
+  const normalized = email.trim().toLowerCase();
+  if (!normalized.includes("@")) return [];
+  const { data, error } = await getSupabase()
+    .from("jobs")
+    .select("*")
+    .ilike("email", normalized)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  if (error) throw new Error(`Supabase list by email failed: ${error.message}`);
+  return (data ?? []).map(mapRow);
+}
