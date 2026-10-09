@@ -7,14 +7,17 @@ import type { InstagramProfile } from "@/lib/parseInstagramExport";
 import { enrichFromHandle } from "@/lib/instagramEnrich";
 
 const NICHES = [
-  "spa_wellness",
-  "fitness_gym",
-  "beauty_salon",
-  "ecommerce_retail",
-  "restaurant_food",
-  "creative_portfolio",
-  "real_estate",
-  "general_business",
+  // legacy ids
+  "spa_wellness", "fitness_gym", "beauty_salon", "ecommerce_retail",
+  "restaurant_food", "creative_portfolio", "real_estate", "general_business",
+  "legal_professional", "healthcare_clinic", "auto_dealership", "hotel_stay",
+  "education", "church_faith", "tech_saas",
+  // 30-niche blueprint ids
+  "restaurant_dining", "fast_food_qsr", "cafe_coffee", "bakery_pastry", "bar_lounge",
+  "event_centre", "short_let", "fashion_boutique", "african_wear", "jewelry",
+  "hair_salon", "barber_shop", "dental_clinic", "pharmacy", "law_firm", "accounting",
+  "auto_mechanic", "logistics", "creative_agency", "photography", "coach_consultant",
+  "school_education",
 ] as const;
 
 function sanitizeHandle(raw: string): string {
@@ -113,6 +116,8 @@ export async function POST(req: NextRequest) {
       profile.brandColor = String(body.brandColor);
     }
 
+    // Prefer user-selected niche for blueprint detection
+    (profile as InstagramProfile & { nicheHint?: string }).nicheHint = niche;
     const files = await generateSite(profile);
     for (const [k, v] of Object.entries(files)) {
       if (k.endsWith(".html") && typeof v === "string") {
