@@ -564,13 +564,31 @@ export default function SimplePreviewPage() {
           display: flex;
           flex-direction: column;
           overflow: hidden;
+          min-height: 0;
+          height: calc(100dvh - 110px);
           max-height: calc(100dvh - 110px);
         }
         .goke-simple-aside-scroll {
-          flex: 1;
-          overflow-y: auto;
+          flex: 1 1 auto;
+          min-height: 0;
+          overflow-x: hidden;
+          overflow-y: scroll;
           -webkit-overflow-scrolling: touch;
-          padding: 0 14px 24px;
+          overscroll-behavior: contain;
+          padding: 0 14px 28px;
+          max-height: calc(100dvh - 220px);
+          scrollbar-width: thin;
+          scrollbar-color: rgba(167,139,250,0.55) rgba(0,0,0,0.25);
+        }
+        .goke-simple-aside-scroll::-webkit-scrollbar {
+          width: 10px;
+        }
+        .goke-simple-aside-scroll::-webkit-scrollbar-track {
+          background: rgba(0,0,0,0.25);
+        }
+        .goke-simple-aside-scroll::-webkit-scrollbar-thumb {
+          background: rgba(167,139,250,0.55);
+          border-radius: 6px;
         }
         /* Mobile: Wix/Canva — phone centered, edit below, page tabs always usable */
         @media (max-width: 900px) {
@@ -603,17 +621,25 @@ export default function SimplePreviewPage() {
           .goke-simple-aside {
             width: 100% !important;
             max-width: 100%;
-            max-height: none !important;
+            height: auto !important;
+            max-height: min(55dvh, 480px) !important;
             border-left: none;
             border-top: 1px solid rgba(167,139,250,0.25);
             border-radius: 16px 16px 0 0;
-            overflow: visible;
+            overflow: hidden;
             flex: none;
-            padding-bottom: 24px;
+            display: flex;
+            flex-direction: column;
+            padding-bottom: 0;
           }
           .goke-simple-aside-scroll {
-            overflow: visible;
-            max-height: none;
+            flex: 1 1 auto;
+            min-height: 0;
+            overflow-x: hidden;
+            overflow-y: scroll;
+            -webkit-overflow-scrolling: touch;
+            max-height: min(48dvh, 420px);
+            padding-bottom: 28px;
           }
         }
         @media (min-width: 901px) {
@@ -717,7 +743,18 @@ export default function SimplePreviewPage() {
             </label>
           </div>
 
-          <div className="goke-simple-aside-scroll">
+          <div
+            className="goke-simple-aside-scroll"
+            style={{
+              flex: "1 1 auto",
+              minHeight: 0,
+              overflowY: "scroll",
+              overflowX: "hidden",
+              WebkitOverflowScrolling: "touch",
+              maxHeight: "calc(100dvh - 220px)",
+              paddingBottom: 28,
+            }}
+          >
             {items.length === 0 && (
               <p style={{ fontSize: 12, color: "#6b7280" }}>Loading page content…</p>
             )}
