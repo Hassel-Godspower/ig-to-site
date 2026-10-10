@@ -115,6 +115,7 @@ export default function SimplePreviewPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
+  const [customerName, setCustomerName] = useState("");
   const [handle, setHandle] = useState("");
 
   const previewSrc = `/api/site/${jobId}/${currentPage}`;
@@ -341,6 +342,7 @@ export default function SimplePreviewPage() {
           jobId,
           username: username || handle || "site",
           email,
+          customerName: customerName.trim(),
           returnPath: "preview-simple",
         }),
       });
@@ -831,12 +833,23 @@ export default function SimplePreviewPage() {
               />
             </label>
             <label style={fieldLabel}>
+              Your name
+              <input
+                style={inputStyle}
+                type="text"
+                value={customerName}
+                onChange={(e) => setCustomerName(e.target.value)}
+                placeholder="Ada Okafor"
+              />
+            </label>
+            <label style={fieldLabel}>
               Email (receipt)
               <input
                 style={inputStyle}
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@email.com"
               />
             </label>
             <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
