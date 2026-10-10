@@ -1,7 +1,9 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import "./theme.css";
 import { CodeCascadePreloader } from "./components/CodeCascadePreloader";
 import { PwaInstallPrompt } from "./components/PwaInstallPrompt";
+import { ThemeProvider } from "./components/ThemeProvider";
 
 export const metadata: Metadata = {
   title: {
@@ -45,8 +47,14 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var k='goke-theme';var t=localStorage.getItem(k);if(t!=='light'&&t!=='dark'){t=window.matchMedia('(prefers-color-scheme: light)').matches?'light':'dark'}document.documentElement.setAttribute('data-theme',t);document.documentElement.style.colorScheme=t}catch(e){document.documentElement.setAttribute('data-theme','dark')}})();`,
+          }}
+        />
+
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
@@ -61,9 +69,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="mobile-web-app-capable" content="yes" />
       </head>
       <body>
-        <CodeCascadePreloader />
-        {children}
-        <PwaInstallPrompt />
+        <ThemeProvider>
+          <CodeCascadePreloader />
+          {children}
+          <PwaInstallPrompt />
+        </ThemeProvider>
       </body>
     </html>
   );
