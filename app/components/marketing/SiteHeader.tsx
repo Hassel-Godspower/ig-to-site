@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { ThemeToggle } from "../ThemeToggle";
 
 export function SiteHeader() {
   const [open, setOpen] = useState(false);
@@ -58,6 +59,7 @@ export function SiteHeader() {
         </nav>
 
         <div className="gk-nav-actions">
+          <ThemeToggle />
           <a href="/#start" className="gk-btn gk-btn-primary">
             Generate site
           </a>
