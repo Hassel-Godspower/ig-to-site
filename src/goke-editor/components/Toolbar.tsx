@@ -6,6 +6,7 @@
 
 import React from "react";
 import type { EditorState } from "../types";
+import { ThemeToggle } from "@/app/components/ThemeToggle";
 
 interface ToolbarProps {
   canUndo: boolean;
@@ -76,6 +77,7 @@ export function Toolbar({
       </div>
 
       <div className="goke-toolbar-right">
+        <ThemeToggle variant="compact" />
         <button
           type="button"
           className={mode === "preview" ? "active" : ""}
