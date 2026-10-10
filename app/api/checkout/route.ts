@@ -8,6 +8,11 @@ export async function POST(req: NextRequest) {
   const username = String(body.username || "");
   const email = String(body.email || "").trim();
   const phone = body.phone ? String(body.phone).trim() : "";
+  const customerName = body.customerName
+    ? String(body.customerName).trim().slice(0, 80)
+    : body.name
+      ? String(body.name).trim().slice(0, 80)
+      : "";
   const returnPath = String(body.returnPath || "preview");
 
   if (!jobId || !username) {
@@ -34,6 +39,7 @@ export async function POST(req: NextRequest) {
     username: cleanUsername,
     email,
     ...(phone ? { phone } : {}),
+    ...(customerName ? { customerName } : {}),
   });
 
   const baseUrl = (process.env.BASE_URL || "").replace(/\/$/, "");
@@ -58,6 +64,7 @@ export async function POST(req: NextRequest) {
       jobId,
       username: cleanUsername,
       ...(phone ? { phone } : {}),
+      ...(customerName ? { customerName } : {}),
     },
   });
 
