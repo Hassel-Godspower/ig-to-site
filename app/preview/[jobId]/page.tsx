@@ -26,6 +26,7 @@ import { StylePanel } from "@/src/goke-editor/components/StylePanel";
 import { GlobalsPanel } from "@/src/goke-editor/components/GlobalsPanel";
 import { TemplatesPanel } from "@/src/goke-editor/components/TemplatesPanel";
 import { MediaPanel } from "@/src/goke-editor/components/MediaPanel";
+import { ThemeToggle } from "@/app/components/ThemeToggle";
 import { loadStarterHtml } from "@/src/goke-editor/core/load-starter";
 import { loadGokeMainHtml } from "@/src/goke-editor/core/load-goke-template";
 import type { StarterTemplate } from "@/src/goke-editor/data/starter-templates";
@@ -896,6 +897,7 @@ export default function PreviewPage() {
         </div>
 
         <div className="goke-toolbar-right">
+          <ThemeToggle variant="compact" />
           {phase === "live" && siteUrl ? (
             <a
               href={siteUrl}
