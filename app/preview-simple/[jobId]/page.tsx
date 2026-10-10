@@ -1,5 +1,7 @@
 "use client";
 
+import { ThemeToggle } from "@/app/components/ThemeToggle";
+
 /**
  * Simple multi-page editor for handle-generated sites.
  * Separate from the full JSON/export builder at /preview/[jobId].
