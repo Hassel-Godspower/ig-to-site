@@ -94,6 +94,7 @@ export default function PreviewPage() {
   const [phase, setPhase] = useState<Phase>(paid ? "verifying" : "editing");
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
+  const [customerName, setCustomerName] = useState("");
   const [siteUrl, setSiteUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [builderReady, setBuilderReady] = useState(false);
@@ -791,6 +792,7 @@ export default function PreviewPage() {
         jobId,
         username: username.trim(),
         email: email.trim(),
+        customerName: customerName.trim(),
       }),
     });
     const data = await res.json();
@@ -1270,6 +1272,16 @@ export default function PreviewPage() {
                 />
                 <span style={s.usernameSuffix}>.vercel.app</span>
               </div>
+            </label>
+            <label style={{ ...s.fieldLabel, marginTop: 12 }}>
+              Your name
+              <input
+                type="text"
+                value={customerName}
+                onChange={(e) => setCustomerName(e.target.value)}
+                placeholder="Ada Okafor"
+                style={s.emailInput}
+              />
             </label>
             <label style={{ ...s.fieldLabel, marginTop: 12 }}>
               Email
