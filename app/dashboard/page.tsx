@@ -15,6 +15,12 @@ type SiteRow = {
   canPushLive: boolean;
   isLive: boolean;
   editorMode: string;
+  commerceTier?: string;
+  bookingTier?: string;
+  isPro?: boolean;
+  manageUrl?: string | null;
+  canUnlockCommerce?: boolean;
+  canUnlockBooking?: boolean;
 };
 
 const page: CSSProperties = {
@@ -241,6 +247,61 @@ export default function DashboardPage() {
     setInfo(null);
   }
 
+
+  async function unlockPro(jobId: string, product: "commerce" | "booking" | "both") {
+    setError(null);
+    setInfo(null);
+    try {
+      const res = await fetch("/api/commerce/upgrade", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ jobId, email, product }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(data.error || "Upgrade failed");
+        return;
+      }
+      if (data.checkoutUrl) {
+        window.location.href = data.checkoutUrl;
+        return;
+      }
+      setError("No checkout URL returned");
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : String(e));
+    }
+  }
+
+  // After Paystack return: ?upgrade=1&jobId=&reference= or trxref
+  useEffect(() => {
+    const upgrade = search.get("upgrade");
+    const jobId = search.get("jobId");
+    const reference =
+      search.get("reference") || search.get("trxref") || search.get("ref") || "";
+    const product = (search.get("product") || "commerce") as string;
+    if (upgrade && jobId && reference) {
+      void (async () => {
+        const res = await fetch("/api/commerce/verify-upgrade", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ jobId, reference, product }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (res.ok) {
+          setInfo("Gòke Pro unlocked. Open Business admin below.");
+          const token =
+            accessFromUrl ||
+            (typeof window !== "undefined"
+              ? sessionStorage.getItem("goke_dash_access")
+              : null);
+          if (token) void loadWithAccess(token);
+        } else {
+          setError(data.error || "Could not verify upgrade payment");
+        }
+      })();
+    }
+  }, [search, accessFromUrl, loadWithAccess]);
+
   return (
     <div style={page}>
       <div style={wrap}>
@@ -333,10 +394,34 @@ export default function DashboardPage() {
                     {pushing === s.jobId ? "Publishing…" : "Push live updates"}
                   </button>
                 )}
+                {s.isPro && s.manageUrl && (
+                  <a href={s.manageUrl} style={btnLive}>
+                    Business admin
+                  </a>
+                )}
+                {s.canUnlockCommerce && (
+                  <button
+                    type="button"
+                    style={btnEdit}
+                    onClick={() => void unlockPro(s.jobId, "commerce")}
+                  >
+                    Unlock Commerce Pro
+                  </button>
+                )}
+                {s.canUnlockBooking && (
+                  <button
+                    type="button"
+                    style={btnEdit}
+                    onClick={() => void unlockPro(s.jobId, "booking")}
+                  >
+                    Unlock Booking Pro
+                  </button>
+                )}
               </div>
               <p style={{ margin: "10px 0 0", fontSize: 11, color: "#6b7280" }}>
                 Job {s.jobId} · {s.editorMode} editor
                 {s.customerName ? ` · ${s.customerName}` : ""}
+                {` · shop ${s.commerceTier || "lite"} · book ${s.bookingTier || "lite"}`}
               </p>
             </li>
           ))}
