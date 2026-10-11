@@ -202,7 +202,7 @@ export function CodeCascadePreloader() {
         gòke
       </div>
       <canvas ref={canvasRef} className="goke-preloader-canvas" />
-      <p className="goke-preloader-caption">Scale forward, upward</p>
+      <p className="goke-preloader-caption">Instagram → a real website</p>
     </div>
   );
 }
