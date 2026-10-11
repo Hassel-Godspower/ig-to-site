@@ -3,7 +3,6 @@
 import { useTheme } from "./ThemeProvider";
 
 type Props = {
-  /** compact = icon-only (editor toolbar); default = header chip */
   variant?: "header" | "compact";
   className?: string;
 };
@@ -35,7 +34,9 @@ export function ThemeToggle({ variant = "header", className = "" }: Props) {
       aria-label={label}
       title={label}
     >
-      <span aria-hidden="true">{isDark ? "☀" : "☾"}</span>
+      <span aria-hidden="true" style={{ fontSize: "1.05rem", lineHeight: 1 }}>
+        {isDark ? "☀" : "☾"}
+      </span>
       <span className="gk-theme-toggle-label">{isDark ? "Light" : "Dark"}</span>
     </button>
   );
