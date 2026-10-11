@@ -6,6 +6,7 @@ import { LiveExamples } from "./components/marketing/LiveExamples";
 import { EditorShowcase } from "./components/marketing/EditorShowcase";
 import { TemplatesStrip } from "./components/marketing/TemplatesStrip";
 import { PricingTeaser } from "./components/marketing/PricingTeaser";
+import { CommerceBookingStrip } from "./components/marketing/CommerceBookingStrip";
 import { TrustOwnership } from "./components/marketing/TrustOwnership";
 import { AfterGoLive } from "./components/marketing/AfterGoLive";
 import { AboutGoke } from "./components/marketing/AboutGoke";
@@ -86,6 +87,7 @@ export default function HomePage() {
 
         <EditorShowcase />
         <TemplatesStrip />
+        <CommerceBookingStrip />
         <PricingTeaser />
 
         {/* What ₦20k includes */}
