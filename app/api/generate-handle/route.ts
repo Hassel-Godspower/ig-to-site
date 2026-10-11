@@ -1,3 +1,4 @@
+import { NICHE_BLUEPRINTS, type NicheId } from "@/lib/nicheBlueprints";
 import { NextRequest, NextResponse } from "next/server";
 import { nanoid } from "nanoid";
 import { createJob } from "@/lib/jobStore";
@@ -6,19 +7,8 @@ import { saveSiteFiles, saveSiteFile } from "@/lib/siteStore";
 import type { InstagramProfile } from "@/lib/parseInstagramExport";
 import { enrichFromHandle } from "@/lib/instagramEnrich";
 
-const NICHES = [
-  // legacy ids
-  "spa_wellness", "fitness_gym", "beauty_salon", "ecommerce_retail",
-  "restaurant_food", "creative_portfolio", "real_estate", "general_business",
-  "legal_professional", "healthcare_clinic", "auto_dealership", "hotel_stay",
-  "education", "church_faith", "tech_saas",
-  // 30-niche blueprint ids
-  "restaurant_dining", "fast_food_qsr", "cafe_coffee", "bakery_pastry", "bar_lounge",
-  "event_centre", "short_let", "fashion_boutique", "african_wear", "jewelry",
-  "hair_salon", "barber_shop", "dental_clinic", "pharmacy", "law_firm", "accounting",
-  "auto_mechanic", "logistics", "creative_agency", "photography", "coach_consultant",
-  "school_education",
-] as const;
+const NICHES = NICHE_BLUEPRINTS.map((b) => b.id) as readonly NicheId[];
+const NICHES_SET = new Set<string>(NICHES as unknown as string[]);
 
 function sanitizeHandle(raw: string): string {
   return raw
@@ -89,7 +79,7 @@ export async function POST(req: NextRequest) {
     }
 
     const nicheRaw = String(body.niche || "general_business");
-    const niche = NICHES.includes(nicheRaw as (typeof NICHES)[number])
+    const niche = NICHES_SET.has(String(nicheRaw))
       ? nicheRaw
       : "general_business";
 
