@@ -5,8 +5,8 @@ import { verifyDashboardToken } from "@/lib/dashboardAuth";
 export const runtime = "nodejs";
 
 /**
- * GET /api/dashboard/sites?email=
  * GET /api/dashboard/sites?access=TOKEN
+ * Returns sites + commerce/booking tiers + manage URL for pro admin.
  */
 export async function GET(req: NextRequest) {
   try {
@@ -43,6 +43,9 @@ export async function GET(req: NextRequest) {
         j.editorMode === "simple"
           ? `/preview-simple/${j.id}`
           : `/preview/${j.id}`;
+      const commerceTier = j.commerceTier || "lite";
+      const bookingTier = j.bookingTier || "lite";
+      const isPro = commerceTier === "pro" || bookingTier === "pro";
       return {
         jobId: j.id,
         status: j.status,
@@ -56,6 +59,15 @@ export async function GET(req: NextRequest) {
         canEdit: true,
         canPushLive: j.status === "done" || j.status === "failed",
         isLive: live,
+        commerceTier,
+        bookingTier,
+        isPro,
+        /** Merchant backend (orders, products, bookings) */
+        manageUrl: isPro
+          ? `/manage/${j.id}?access=${encodeURIComponent(access || "")}`
+          : null,
+        canUnlockCommerce: live && commerceTier !== "pro",
+        canUnlockBooking: live && bookingTier !== "pro",
       };
     });
 
@@ -64,6 +76,7 @@ export async function GET(req: NextRequest) {
       displayName,
       sites,
       authenticated: Boolean(access),
+      access: access || null,
     });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);
