@@ -39,7 +39,10 @@ export interface Job {
 // );
 //
 // If you already created this table before the admin dashboard was added,
-// just run:  alter table jobs add column email text;
+// alter table jobs add column if not exists email text;
+// alter table jobs add column if not exists customer_name text;
+// alter table jobs add column if not exists commerce_tier text default 'lite';
+// alter table jobs add column if not exists booking_tier text default 'lite';
 //   alter table jobs add column customer_name text;
 // alter table jobs add column editor_mode text;
 
@@ -79,6 +82,8 @@ export async function createJob(job: Job): Promise<void> {
     repo_url: job.repoUrl ?? null,
     default_branch: job.defaultBranch ?? null,
     editor_mode: job.editorMode ?? null,
+    commerce_tier: job.commerceTier ?? "lite",
+    booking_tier: job.bookingTier ?? "lite",
   });
   if (error) throw new Error(`Supabase insert failed: ${error.message}`);
 }
@@ -116,6 +121,8 @@ export async function updateJob(id: string, patch: Partial<Job>): Promise<Job> {
   if (patch.repoUrl !== undefined) row.repo_url = patch.repoUrl;
   if (patch.defaultBranch !== undefined) row.default_branch = patch.defaultBranch;
   if (patch.editorMode !== undefined) row.editor_mode = patch.editorMode;
+  if (patch.commerceTier !== undefined) row.commerce_tier = patch.commerceTier;
+  if (patch.bookingTier !== undefined) row.booking_tier = patch.bookingTier;
 
   const { error } = await getSupabase().from("jobs").update(row).eq("id", id);
   if (error) throw new Error(`Supabase update failed: ${error.message}`);

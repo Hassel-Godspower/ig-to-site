@@ -7,6 +7,7 @@ import {
 import { blueprintPromptSection, resolveNicheBlueprint, pagesJsonFromBlueprint } from "./blueprintPrompt";
 import { toLegacyNicheId } from "./nicheCompat";
 import { chatWithFallback } from "./ai";
+import { ensureCommerceBookingScript } from "./staticCommerceRuntime";
 
 /**
  * Multi-page niche-aware static site via Groq.
@@ -825,6 +826,20 @@ Mobile <768px — APP-STYLE FLOATING TAB FOOTER:
 
 <link rel="stylesheet" href="styles.css"> and <script src="script.js" defer></script> on every page.
 
+
+=== LAYER 6b — SHOP & BOOKING (when niche is retail/shop OR services/spa/salon/clinic/hotel) ===
+If ecommerce / shop / fashion / retail:
+- Include Shop or product grid with .goke-product cards:
+  data-product-id, data-product-name, data-product-price (numeric Naira in attribute, no ₦ symbol)
+- Buttons class="goke-add-cart"
+- Floating cart: .goke-cart-count and .goke-cart-checkout
+- Order completes via script.js → WhatsApp (data-wa on body). No fake payment gateways.
+
+If spa / salon / clinic / hotel / appointments:
+- Book section with form.goke-booking-form (name, phone, service, date, time, notes)
+- Service cards may use href="#book"
+- Submit → WhatsApp via script.js
+
 === LAYER 6 — script.js (site must feel ALIVE, not static) ===
 1) Mobile nav dropdown: .nav-toggle toggles #site-nav hidden/is-open + aria-expanded; close on link click when width < 768px
 2) #contact-form preventDefault → wa.me when data-wa set
@@ -1082,6 +1097,7 @@ function ensureLiveScript(js: string, waNumber: string | null): string {
 })();
 `;
   }
+  out = ensureCommerceBookingScript(out);
   return out;
 }
 
