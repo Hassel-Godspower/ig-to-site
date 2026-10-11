@@ -13,6 +13,8 @@ import { PropertiesPanel } from "./PropertiesPanel";
 
 // Side-effect: register all gòke components
 import "./goke-components";
+import "./commerce-kits";
+import "./booking-kits";
 
 const DEFAULT_HTML = `<!DOCTYPE html>
 <html lang="en">
