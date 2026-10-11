@@ -18,6 +18,10 @@ export interface Job {
   defaultBranch?: string;
   /** simple = handle path; advanced = full editor */
   editorMode?: "simple" | "advanced";
+  /** lite = static WhatsApp cart; pro = Gòke Commerce API */
+  commerceTier?: "lite" | "pro";
+  /** lite = static WhatsApp booking; pro = stored requests */
+  bookingTier?: "lite" | "pro";
   createdAt?: string;
 }
 
@@ -62,6 +66,8 @@ function mapRow(data: any): Job {
     repoUrl: data.repo_url ?? undefined,
     defaultBranch: data.default_branch ?? undefined,
     editorMode: data.editor_mode === "simple" ? "simple" : data.editor_mode === "advanced" ? "advanced" : undefined,
+    commerceTier: data.commerce_tier === "pro" ? "pro" : "lite",
+    bookingTier: data.booking_tier === "pro" ? "pro" : "lite",
     createdAt: data.created_at ?? undefined,
   };
 }
