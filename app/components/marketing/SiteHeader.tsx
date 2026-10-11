@@ -24,16 +24,6 @@ export function SiteHeader() {
           <span className="gk-logo-word">gòke</span>
         </Link>
 
-        <button
-          type="button"
-          className="gk-nav-toggle"
-          aria-label="Menu"
-          aria-expanded={open}
-          onClick={() => setOpen((v) => !v)}
-        >
-          {open ? "Close" : "Menu"}
-        </button>
-
         <nav className={`gk-nav${open ? " open" : ""}`} aria-label="Primary">
           <a href="/#how" onClick={close}>
             How it works
@@ -53,16 +43,32 @@ export function SiteHeader() {
           <Link href="/how-to-export" onClick={close}>
             Export guide
           </Link>
-          <a href="/#start" className="gk-nav-mobile-cta gk-btn gk-btn-primary" onClick={close}>
+          <a
+            href="/#start"
+            className="gk-nav-mobile-cta gk-btn gk-btn-primary"
+            onClick={close}
+          >
             Generate site
           </a>
         </nav>
 
-        <div className="gk-nav-actions">
+        {/* Always visible: theme + menu (mobile) + desktop CTA */}
+        <div className="gk-header-tools">
           <ThemeToggle />
-          <a href="/#start" className="gk-btn gk-btn-primary">
-            Generate site
-          </a>
+          <button
+            type="button"
+            className="gk-nav-toggle"
+            aria-label="Menu"
+            aria-expanded={open}
+            onClick={() => setOpen((v) => !v)}
+          >
+            {open ? "Close" : "Menu"}
+          </button>
+          <div className="gk-nav-actions">
+            <a href="/#start" className="gk-btn gk-btn-primary">
+              Generate site
+            </a>
+          </div>
         </div>
       </div>
     </header>

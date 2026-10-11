@@ -42,8 +42,8 @@ export function LiveExamples() {
                 display: "block",
                 padding: "1.25rem",
                 borderRadius: 12,
-                border: "1px solid rgba(167,139,250,0.25)",
-                background: "#121018",
+                border: "1px solid var(--gk-border-strong)",
+                background: "var(--gk-surface)",
                 textDecoration: "none",
                 color: "inherit",
               }}
@@ -53,16 +53,29 @@ export function LiveExamples() {
                   margin: 0,
                   fontSize: 11,
                   letterSpacing: "0.06em",
-                  color: "#a78bfa",
+                  color: "var(--gk-accent)",
                   textTransform: "uppercase",
                 }}
               >
                 {ex.niche}
               </p>
-              <h3 style={{ margin: "0.35rem 0", fontSize: "1.1rem", color: "#f3f4f6" }}>
+              <h3
+                style={{
+                  margin: "0.35rem 0",
+                  fontSize: "1.1rem",
+                  color: "var(--gk-text)",
+                }}
+              >
                 {ex.name}
               </h3>
-              <p style={{ margin: 0, fontSize: 14, color: "#9ca3af", lineHeight: 1.5 }}>
+              <p
+                style={{
+                  margin: 0,
+                  fontSize: 14,
+                  color: "var(--gk-muted)",
+                  lineHeight: 1.5,
+                }}
+              >
                 {ex.blurb}
               </p>
               <span
@@ -70,7 +83,7 @@ export function LiveExamples() {
                   display: "inline-block",
                   marginTop: 12,
                   fontSize: 13,
-                  color: "#c4b5fd",
+                  color: "var(--gk-accent-hover)",
                 }}
               >
                 Open live site →
@@ -78,7 +91,13 @@ export function LiveExamples() {
             </a>
           ))}
         </div>
-        <p style={{ marginTop: "1.25rem", fontSize: 13, color: "#6b7280" }}>
+        <p
+          style={{
+            marginTop: "1.25rem",
+            fontSize: 13,
+            color: "var(--gk-faint)",
+          }}
+        >
           More customer sites land here as they go live. Yours can be next.
         </p>
       </div>
