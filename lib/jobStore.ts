@@ -18,9 +18,9 @@ export interface Job {
   defaultBranch?: string;
   /** simple = handle path; advanced = full editor */
   editorMode?: "simple" | "advanced";
-  /** lite = static WhatsApp cart; pro = Gòke Commerce API */
+  /** lite = WhatsApp cart; pro = Gòke Commerce admin */
   commerceTier?: "lite" | "pro";
-  /** lite = static WhatsApp booking; pro = stored requests */
+  /** lite = WhatsApp booking; pro = booking inbox */
   bookingTier?: "lite" | "pro";
   createdAt?: string;
 }
