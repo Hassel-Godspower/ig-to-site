@@ -1,122 +1,297 @@
-/* ── Theme tokens: dark is default on :root (globals.css) ── */
+/* ═══════════════════════════════════════════════════════════
+   gòke theme — contrast-aware light / dark
+   Dark: light & grey text on dark surfaces
+   Light: dark & ash text on light surfaces
+   ═══════════════════════════════════════════════════════════ */
 
 :root {
-  --gk-header-bg: rgba(12, 10, 16, 0.88);
+  --gk-header-bg: rgba(12, 10, 16, 0.92);
   --gk-overlay: rgba(0, 0, 0, 0.55);
+  --gk-on-accent: #ffffff;
   color-scheme: dark;
 }
 
-/* ── Light mode ─────────────────────────────────────────── */
+/* Ensure body inherits tokens in both modes */
+html[data-theme="dark"],
+html:not([data-theme]) {
+  color-scheme: dark;
+}
+
+html[data-theme="dark"] body,
+html:not([data-theme]) body {
+  color: var(--gk-text, #f5f3ff);
+}
+
+html[data-theme="dark"] h1,
+html[data-theme="dark"] h2,
+html[data-theme="dark"] h3,
+html[data-theme="dark"] h4,
+html:not([data-theme]) h1,
+html:not([data-theme]) h2,
+html:not([data-theme]) h3,
+html:not([data-theme]) h4 {
+  color: var(--gk-text, #f5f3ff);
+}
+
+html[data-theme="dark"] p,
+html[data-theme="dark"] li,
+html:not([data-theme]) p,
+html:not([data-theme]) li {
+  color: inherit;
+}
+
+/* ── Light mode tokens ───────────────────────────────────── */
 
 html[data-theme="light"] {
   color-scheme: light;
 
-  --gk-bg: #f6f4fb;
+  --gk-bg: #f4f2f8;
   --gk-bg-elevated: #ffffff;
   --gk-surface: #ffffff;
-  --gk-surface-2: #f0ecf7;
-  --gk-border: rgba(15, 10, 30, 0.1);
-  --gk-border-strong: rgba(109, 40, 217, 0.28);
-  --gk-text: #1a1528;
-  --gk-muted: #5c5670;
-  --gk-faint: #8b849c;
-  --gk-accent: #7c3aed;
-  --gk-accent-hover: #6d28d9;
-  --gk-accent-soft: rgba(124, 58, 237, 0.12);
+  --gk-surface-2: #ebe7f4;
+  --gk-border: rgba(20, 12, 40, 0.12);
+  --gk-border-strong: rgba(109, 40, 217, 0.32);
+  /* Primary text: near-black for max contrast on white */
+  --gk-text: #14101f;
+  /* Secondary: readable grey/ash on light bg */
+  --gk-muted: #4b455c;
+  /* Tertiary: softer ash */
+  --gk-faint: #6f687f;
+  --gk-accent: #6d28d9;
+  --gk-accent-hover: #5b21b6;
+  --gk-accent-soft: rgba(109, 40, 217, 0.12);
   --gk-ig: linear-gradient(135deg, #f9ce34 0%, #ee2a7b 45%, #a337f8 75%, #7b2ff7 100%);
-  --gk-ig-soft: linear-gradient(135deg, rgba(249, 206, 52, 0.15), rgba(238, 42, 123, 0.1), rgba(124, 58, 237, 0.12));
-  --gk-success: #059669;
-  --gk-danger: #dc2626;
-  --gk-header-bg: rgba(246, 244, 251, 0.92);
-  --gk-overlay: rgba(15, 10, 30, 0.4);
+  --gk-ig-soft: linear-gradient(
+    135deg,
+    rgba(249, 206, 52, 0.12),
+    rgba(238, 42, 123, 0.08),
+    rgba(109, 40, 217, 0.1)
+  );
+  --gk-success: #047857;
+  --gk-danger: #b91c1c;
+  --gk-header-bg: rgba(244, 242, 248, 0.94);
+  --gk-overlay: rgba(15, 10, 30, 0.45);
+  --gk-on-accent: #ffffff;
 
-  /* Editor chrome (shared when data-theme is on html) */
-  --goke-bg: #f3f4f6;
+  --goke-bg: #eef0f4;
   --goke-surface: #ffffff;
-  --goke-surface-2: #eef0f4;
-  --goke-border: rgba(15, 23, 42, 0.1);
+  --goke-surface-2: #e8eaef;
+  --goke-border: rgba(15, 23, 42, 0.12);
   --goke-text: #0f172a;
-  --goke-text-muted: #64748b;
-  --goke-accent: #7c3aed;
-  --goke-accent-hover: #6d28d9;
-  --goke-accent-soft: rgba(124, 58, 237, 0.12);
-  --goke-danger: #dc2626;
+  --goke-text-muted: #475569;
+  --goke-accent: #6d28d9;
+  --goke-accent-hover: #5b21b6;
+  --goke-accent-soft: rgba(109, 40, 217, 0.12);
+  --goke-danger: #b91c1c;
 }
 
 html[data-theme="light"] body {
   background:
-    radial-gradient(ellipse 100% 80% at 50% -30%, rgba(124, 58, 237, 0.08), transparent 55%),
+    radial-gradient(ellipse 100% 80% at 50% -30%, rgba(109, 40, 217, 0.07), transparent 55%),
     radial-gradient(ellipse 60% 40% at 100% 0%, rgba(238, 42, 123, 0.04), transparent 45%),
     var(--gk-bg);
   color: var(--gk-text);
 }
 
+/* Headings & copy: force readable contrast in light mode */
+html[data-theme="light"] h1,
+html[data-theme="light"] h2,
+html[data-theme="light"] h3,
+html[data-theme="light"] h4,
+html[data-theme="light"] h5 {
+  color: var(--gk-text);
+}
+
+html[data-theme="light"] p,
+html[data-theme="light"] li,
+html[data-theme="light"] label,
+html[data-theme="light"] .gk-muted,
+html[data-theme="light"] .gk-lead,
+html[data-theme="light"] .gk-hero-lead,
+html[data-theme="light"] .gk-section-head p {
+  color: var(--gk-muted);
+}
+
+html[data-theme="light"] .gk-section-head h2,
+html[data-theme="light"] .gk-section-head h1 {
+  color: var(--gk-text);
+}
+
+html[data-theme="light"] a:not(.gk-btn):not(.gk-card) {
+  color: inherit;
+}
+
 html[data-theme="light"] .gk-header {
   background: var(--gk-header-bg);
   border-bottom-color: var(--gk-border);
+  color: var(--gk-text);
 }
 
-html[data-theme="light"] .gk-logo-mark {
-  background: #1a1528;
-  color: #fff;
+html[data-theme="light"] .gk-nav a {
+  color: var(--gk-muted);
+}
+html[data-theme="light"] .gk-nav a:hover {
+  color: var(--gk-text);
 }
 
-/* Buttons that force dark text on accent stay readable */
+html[data-theme="light"] .gk-logo-word {
+  color: var(--gk-text);
+}
+
 html[data-theme="light"] .gk-btn-primary {
-  color: #fff;
+  color: var(--gk-on-accent);
 }
 
-/* Theme toggle control */
+html[data-theme="light"] .gk-btn-ghost {
+  color: var(--gk-text);
+  border-color: var(--gk-border);
+}
+
+/* Cards / surfaces in light mode */
+html[data-theme="light"] .gk-card,
+html[data-theme="light"] .gk-panel,
+html[data-theme="light"] .gk-modal {
+  background: var(--gk-surface);
+  color: var(--gk-text);
+  border-color: var(--gk-border);
+}
+
+html[data-theme="light"] .gk-input,
+html[data-theme="light"] input.gk-input,
+html[data-theme="light"] textarea.gk-input,
+html[data-theme="light"] select.gk-input {
+  background: var(--gk-bg-elevated);
+  color: var(--gk-text);
+  border-color: var(--gk-border);
+}
+
+/* Override common hard-coded dark-theme inline colors when in light mode
+   (marketing sections that still use #f3f4f6 / #9ca3af inline) */
+html[data-theme="light"] .gk-section [style*="color: #f3f4f6"],
+html[data-theme="light"] .gk-section [style*="color:#f3f4f6"],
+html[data-theme="light"] .gk-section [style*="color: #e5e7eb"],
+html[data-theme="light"] .gk-section [style*="color:#e5e7eb"] {
+  color: var(--gk-text) !important;
+}
+
+html[data-theme="light"] .gk-section [style*="color: #9ca3af"],
+html[data-theme="light"] .gk-section [style*="color:#9ca3af"],
+html[data-theme="light"] .gk-section [style*="color: #6b7280"],
+html[data-theme="light"] .gk-section [style*="color:#6b7280"] {
+  color: var(--gk-muted) !important;
+}
+
+html[data-theme="light"] .gk-section [style*="background: #121018"],
+html[data-theme="light"] .gk-section [style*="background:#121018"],
+html[data-theme="light"] .gk-section [style*="background: #0b0d12"],
+html[data-theme="light"] .gk-section [style*="background:#0b0d12"] {
+  background: var(--gk-surface) !important;
+  border-color: var(--gk-border) !important;
+}
+
+/* ── Theme toggle ────────────────────────────────────────── */
+
 .gk-theme-toggle {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
+  min-height: 36px;
   padding: 6px 12px;
   border-radius: 999px;
-  border: 1px solid var(--gk-border);
+  border: 1px solid var(--gk-border-strong, var(--gk-border));
   background: var(--gk-surface-2);
   color: var(--gk-text);
   font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.15s ease, border-color 0.15s ease;
+  transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+  flex-shrink: 0;
 }
+
 .gk-theme-toggle:hover {
-  border-color: var(--gk-border-strong);
+  border-color: var(--gk-accent);
   background: var(--gk-accent-soft);
 }
+
 .gk-theme-toggle-label {
   font-size: 0.8rem;
 }
-.gk-nav-mobile-theme {
-  padding: 0.5rem 0;
+
+/* Always-visible header tool cluster (mobile + desktop) */
+.gk-header-tools {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
 }
-@media (max-width: 768px) {
-  .gk-nav-actions .gk-theme-toggle-label {
-    /* keep label on mobile actions if space allows */
+
+/* Mobile: high-visibility pill so toggle is not lost */
+@media (max-width: 960px) {
+  .gk-header-tools {
+    order: 2;
+  }
+
+  .gk-theme-toggle {
+    min-width: 42px;
+    min-height: 40px;
+    padding: 8px 12px;
+    background: var(--gk-accent-soft);
+    border: 1.5px solid var(--gk-accent);
+    box-shadow:
+      0 0 0 1px rgba(167, 139, 250, 0.15),
+      0 4px 14px rgba(0, 0, 0, 0.2);
+  }
+
+  html[data-theme="light"] .gk-theme-toggle {
+    background: #fff;
+    border-color: var(--gk-accent);
+    color: var(--gk-text);
+    box-shadow:
+      0 0 0 1px rgba(109, 40, 217, 0.12),
+      0 4px 12px rgba(15, 10, 30, 0.1);
+  }
+
+  /* Icon-only on very small screens is fine; keep a short label when space allows */
+  .gk-theme-toggle-label {
+    display: none;
   }
 }
 
-/* Editor compact toggle */
+@media (min-width: 420px) and (max-width: 960px) {
+  .gk-theme-toggle-label {
+    display: inline;
+  }
+}
+
+/* Desktop: toggle stays in tools; nav-actions keeps Generate CTA */
+@media (min-width: 961px) {
+  .gk-header-tools .gk-nav-toggle {
+    display: none;
+  }
+}
+
+/* Editor compact */
 .goke-theme-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  border: 1px solid var(--goke-border, var(--gk-border));
-  background: var(--goke-surface-2, var(--gk-surface-2));
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  border: 1.5px solid var(--goke-accent, var(--gk-accent));
+  background: var(--goke-accent-soft, var(--gk-accent-soft));
   color: var(--goke-text, var(--gk-text));
   cursor: pointer;
-  font-size: 14px;
+  font-size: 15px;
   line-height: 1;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 .goke-theme-btn:hover {
-  background: var(--goke-accent-soft, var(--gk-accent-soft));
+  background: var(--goke-surface-2, var(--gk-surface-2));
 }
 
-/* Light editor shell */
 html[data-theme="light"] .goke-editor {
   background: var(--goke-bg);
   color: var(--goke-text);
@@ -128,21 +303,8 @@ html[data-theme="light"] .goke-properties {
   border-color: var(--goke-border);
   color: var(--goke-text);
 }
-
-
-/* Extra light-mode surfaces that were hard-coded dark in globals */
-html[data-theme="light"] .gk-modal,
-html[data-theme="light"] .gk-card,
-html[data-theme="light"] .gk-panel {
-  background: var(--gk-surface);
-  color: var(--gk-text);
-  border-color: var(--gk-border);
-}
-
-html[data-theme="light"] .gk-input,
-html[data-theme="light"] input.gk-input,
-html[data-theme="light"] textarea.gk-input {
-  background: var(--gk-bg-elevated);
-  color: var(--gk-text);
-  border-color: var(--gk-border);
+html[data-theme="light"] .goke-toolbar button,
+html[data-theme="light"] .goke-left-stack,
+html[data-theme="light"] .goke-properties {
+  color: var(--goke-text);
 }
