@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { nanoid } from "nanoid";
 import { saveSiteBinary, contentTypeFor } from "@/lib/siteStore";
 
-const MAX = 12 * 1024 * 1024; // 12 MB
+const MAX = 4 * 1024 * 1024; // 4 MB (Vercel body limit ~4.5MB)
 const ALLOWED = new Set([
   "image/png",
   "image/jpeg",
@@ -47,7 +47,7 @@ export async function POST(
     return NextResponse.json({ error: "Missing file" }, { status: 400 });
   }
   if (file.size > MAX) {
-    return NextResponse.json({ error: "Max 12MB" }, { status: 413 });
+    return NextResponse.json({ error: "Max 4MB (platform limit)" }, { status: 413 });
   }
   if (!ALLOWED.has(file.type)) {
     return NextResponse.json(
