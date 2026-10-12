@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import "./theme.css";
+import "./hero-mobile.css";
 import { CodeCascadePreloader } from "./components/CodeCascadePreloader";
 import { PwaInstallPrompt } from "./components/PwaInstallPrompt";
 import { ThemeProvider } from "./components/ThemeProvider";

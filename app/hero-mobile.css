@@ -1,0 +1,111 @@
+/* Hero upload widget — mobile containment + light-mode tabs */
+
+html {
+  overflow-x: hidden;
+}
+
+.gk-hero {
+  overflow-x: clip;
+  max-width: 100vw;
+}
+
+.gk-hero .gk-container,
+.gk-hero-grid {
+  max-width: 100%;
+  min-width: 0;
+}
+
+/* Grid children must be allowed to shrink below content width */
+.gk-hero-grid > * {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.gk-upload-card {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.gk-path-tabs {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.gk-path-tabs button {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Active tab: readable in both themes */
+.gk-path-tabs button.active {
+  background: var(--gk-accent-soft);
+  color: var(--gk-text);
+}
+
+html[data-theme="light"] .gk-path-tabs button.active {
+  background: var(--gk-accent-soft);
+  color: var(--gk-text);
+  font-weight: 700;
+}
+
+.gk-handle-row,
+.gk-field-label,
+.gk-field-label select,
+.gk-handle-row input {
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.gk-btn-block,
+.gk-upload-card .gk-btn {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+@media (max-width: 960px) {
+  .gk-hero {
+    padding: 2rem 0 2.25rem;
+  }
+
+  .gk-hero .gk-container {
+    width: 100%;
+    max-width: 100%;
+    padding-inline: 1rem;
+    box-sizing: border-box;
+  }
+
+  /* Override width: min(100% - 2rem) double-counting if padding also applied */
+  .gk-hero .gk-container.gk-hero-grid {
+    width: 100%;
+    padding-inline: 1rem;
+  }
+
+  .gk-upload-card {
+    padding: 1.15rem;
+    border-radius: 14px;
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.18);
+  }
+
+  .gk-path-tabs button {
+    font-size: 0.78rem;
+    padding: 0.5rem 0.35rem;
+  }
+}
+
+@media (max-width: 380px) {
+  .gk-hero .gk-container {
+    padding-inline: 0.75rem;
+  }
+
+  .gk-upload-card {
+    padding: 1rem 0.85rem;
+  }
+}
