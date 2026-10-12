@@ -79,6 +79,56 @@ export default function AdminConsolePage() {
         router.push("/admin/login");
         return;
       }
+      const ct = res.headers.get("content-type") || "";
+      if (!ct.includes("application/json")) {
+        // Fallback if only /admin/jobs route exists on this deploy
+        const res2 = await fetch("/admin/jobs", { credentials: "include" });
+        if (res2.status === 401) {
+          router.push("/admin/login");
+          return;
+        }
+        const ct2 = res2.headers.get("content-type") || "";
+        if (!ct2.includes("application/json")) {
+          throw new Error(
+            "Admin jobs API returned HTML instead of JSON. Deploy app/api/admin/jobs/route.ts and ensure ADMIN_PASSWORD is set."
+          );
+        }
+        const data2 = await res2.json();
+        if (!res2.ok) throw new Error(data2.error || "Failed to load");
+        // Support both { jobs } and { stats, jobs }
+        const list = data2.jobs || [];
+        setJobs(
+          list.map((j: Record<string, unknown>) => ({
+            jobId: (j.jobId as string) || (j.id as string),
+            status: j.status as string,
+            username: (j.username as string) || null,
+            customerName: (j.customerName as string) || null,
+            email: (j.email as string) || null,
+            phone: (j.phone as string) || null,
+            whatsappUrl: (j.whatsappUrl as string) || null,
+            country: (j.country as string) || null,
+            siteUrl: (j.siteUrl as string) || null,
+            repoUrl: (j.repoUrl as string) || null,
+            editorMode: (j.editorMode as string) || null,
+            commerceTier: (j.commerceTier as string) || "lite",
+            bookingTier: (j.bookingTier as string) || "lite",
+            isLive: Boolean(j.isLive ?? (j.status === "done" && j.siteUrl)),
+            error: (j.error as string) || null,
+            createdAt: (j.createdAt as string) || null,
+          }))
+        );
+        setStats(
+          data2.stats || {
+            total: list.length,
+            live: list.filter((x: { status?: string; siteUrl?: string }) => x.status === "done" && x.siteUrl).length,
+            pendingPayment: list.filter((x: { status?: string }) => x.status === "pending_payment").length,
+            deploying: list.filter((x: { status?: string }) => x.status === "deploying").length,
+            failed: list.filter((x: { status?: string }) => x.status === "failed").length,
+            draft: list.filter((x: { status?: string }) => x.status === "draft").length,
+          }
+        );
+        return;
+      }
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to load");
       setJobs(data.jobs || []);
