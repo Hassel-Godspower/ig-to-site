@@ -308,3 +308,102 @@ html[data-theme="light"] .goke-left-stack,
 html[data-theme="light"] .goke-properties {
   color: var(--goke-text);
 }
+
+/* ═══════════════════════════════════════════════════════════
+   Surfaces that ignored theme (footer + bands + cards)
+   globals hard-codes .gk-footer { background: #06070a }
+   ═══════════════════════════════════════════════════════════ */
+
+.gk-footer {
+  background: var(--gk-bg-elevated) !important;
+  color: var(--gk-text);
+  border-top-color: var(--gk-border) !important;
+}
+
+.gk-footer h4 {
+  color: var(--gk-faint) !important;
+}
+
+.gk-footer a,
+.gk-footer p {
+  color: var(--gk-muted) !important;
+}
+
+.gk-footer a:hover {
+  color: var(--gk-text) !important;
+}
+
+.gk-footer-bottom {
+  border-top-color: var(--gk-border) !important;
+  color: var(--gk-faint) !important;
+}
+
+.gk-footer .gk-logo-word {
+  color: var(--gk-text) !important;
+}
+
+/* Alternating sections */
+.gk-section-alt {
+  background:
+    linear-gradient(180deg, var(--gk-accent-soft), transparent 42%),
+    var(--gk-bg-elevated) !important;
+  border-color: var(--gk-border) !important;
+}
+
+.gk-cta-band {
+  background:
+    radial-gradient(ellipse 80% 100% at 50% 100%, var(--gk-accent-soft), transparent 55%),
+    var(--gk-surface) !important;
+  border-top-color: var(--gk-border-strong) !important;
+  color: var(--gk-text);
+}
+
+.gk-cta-band h2 {
+  color: var(--gk-text) !important;
+}
+
+.gk-cta-band p {
+  color: var(--gk-muted) !important;
+}
+
+/* Proof / pricing / cards that used fixed dark fills */
+.gk-proof-card,
+.gk-pricing-card,
+.gk-card {
+  background: var(--gk-surface);
+  color: var(--gk-text);
+  border-color: var(--gk-border);
+}
+
+.gk-proof-body h3,
+.gk-pricing-card h3 {
+  color: var(--gk-text);
+}
+
+.gk-proof-body p,
+.gk-pricing-card p {
+  color: var(--gk-muted);
+}
+
+/* Light mode: slightly softer elevated footer (not pure white-on-white) */
+html[data-theme="light"] .gk-footer {
+  background: var(--gk-surface-2) !important;
+}
+
+html[data-theme="light"] .gk-section-alt {
+  background:
+    linear-gradient(180deg, rgba(109, 40, 217, 0.06), transparent 40%),
+    var(--gk-bg-elevated) !important;
+}
+
+html[data-theme="light"] .gk-cta-band {
+  background:
+    radial-gradient(ellipse 80% 100% at 50% 100%, rgba(109, 40, 217, 0.1), transparent 55%),
+    var(--gk-surface) !important;
+}
+
+/* Common hard-coded dark blocks in marketing */
+html[data-theme="light"] .gk-proof-visual,
+html[data-theme="light"] .gk-demo-frame > * {
+  background: var(--gk-bg) !important;
+}
