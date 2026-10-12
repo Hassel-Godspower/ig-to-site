@@ -20,7 +20,7 @@ export default function AdminLoginPage() {
     });
     setLoading(false);
     if (!res.ok) {
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
       setError(data.error || "Login failed.");
       return;
     }
@@ -31,12 +31,14 @@ export default function AdminLoginPage() {
   return (
     <main style={s.main}>
       <form onSubmit={submit} style={s.card}>
-        <h1 style={s.heading}>Admin</h1>
+        <p style={s.kicker}>gòke</p>
+        <h1 style={s.heading}>Platform admin</h1>
+        <p style={s.sub}>Published sites, customers, WhatsApp &amp; country</p>
         <input
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          placeholder="Password"
+          placeholder="Admin password"
           autoFocus
           style={s.input}
         />
@@ -50,10 +52,54 @@ export default function AdminLoginPage() {
 }
 
 const s: Record<string, React.CSSProperties> = {
-  main: { minHeight: "100vh", background: "#0d0d0d", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "system-ui, sans-serif" },
-  card: { background: "#171717", border: "1px solid #2a2a2a", borderRadius: 12, padding: 32, width: 320, display: "flex", flexDirection: "column", gap: 12 },
-  heading: { color: "#f5f5f5", fontSize: 18, fontWeight: 500, margin: "0 0 8px" },
-  input: { background: "#0d0d0d", border: "1px solid #2a2a2a", borderRadius: 8, padding: "10px 12px", color: "#f5f5f5", fontSize: 14, outline: "none" },
-  button: { background: "#22c55e", color: "#052e12", border: "none", borderRadius: 8, padding: "10px 14px", fontSize: 14, fontWeight: 500, cursor: "pointer" },
+  main: {
+    minHeight: "100dvh",
+    background: "#0b0d12",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontFamily: "system-ui, sans-serif",
+    padding: 16,
+  },
+  card: {
+    background: "#12151c",
+    border: "1px solid rgba(167,139,250,0.25)",
+    borderRadius: 16,
+    padding: 28,
+    width: "100%",
+    maxWidth: 360,
+    display: "flex",
+    flexDirection: "column",
+    gap: 12,
+  },
+  kicker: {
+    margin: 0,
+    fontSize: 12,
+    fontWeight: 800,
+    letterSpacing: "0.1em",
+    textTransform: "uppercase",
+    color: "#a78bfa",
+  },
+  heading: { color: "#f3f4f6", fontSize: 22, fontWeight: 800, margin: 0 },
+  sub: { margin: 0, fontSize: 13, color: "#9ca3af" },
+  input: {
+    background: "#0b0d12",
+    border: "1px solid rgba(167,139,250,0.35)",
+    borderRadius: 10,
+    padding: "12px 14px",
+    color: "#f3f4f6",
+    fontSize: 15,
+    outline: "none",
+  },
+  button: {
+    background: "#a78bfa",
+    color: "#0b0d12",
+    border: "none",
+    borderRadius: 10,
+    padding: "12px 14px",
+    fontSize: 14,
+    fontWeight: 700,
+    cursor: "pointer",
+  },
   error: { color: "#f87171", fontSize: 13, margin: 0 },
 };
