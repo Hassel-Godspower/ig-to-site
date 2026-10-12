@@ -3,25 +3,46 @@ const EXAMPLES = [
   {
     name: "Pax & Pearl BodyWorks",
     niche: "Spa · wellness",
-    href: "https://paxpearlbodyworks.pages.dev",
-    blurb: "Massage and bodywork in Lagos — services, gallery, and WhatsApp booking.",
+    href: "https://paxpearlbodyworks.pages.dev/",
+    blurb:
+      "Massage and bodywork in Lagos — services, gallery, and WhatsApp booking.",
+  },
+  {
+    name: "NaijaFitness",
+    niche: "Fitness · gym",
+    href: "https://naijafitness.pages.dev/",
+    blurb:
+      "Training programs, results gallery, and a clear path to book a free session.",
+  },
+  {
+    name: "iFitness NG",
+    niche: "Performance studio",
+    href: "https://ifitnessng.pages.dev/",
+    blurb:
+      "Strength, conditioning, and coached sessions — studio presence built for intent.",
   },
   {
     name: "Brandrich",
     niche: "Creative · brand",
-    href: "https://brandrich.pages.dev",
-    blurb: "Brand presence built from Instagram content into a multi-section site.",
+    href: "https://brandrich.pages.dev/",
+    blurb:
+      "Brand presence built from Instagram content into a multi-section site.",
   },
 ] as const;
 
 export function LiveExamples() {
   return (
-    <section className="gk-section" id="live-examples" aria-labelledby="live-examples-title">
+    <section
+      className="gk-section"
+      id="live-examples"
+      aria-labelledby="live-examples-title"
+    >
       <div className="gk-container">
         <div className="gk-section-head">
           <h2 id="live-examples-title">Live on the open web</h2>
           <p>
-            Real publishes from gòke — open them, scroll on your phone, then generate yours.
+            Real sites published with gòke — open them, scroll on your phone,
+            then generate yours.
           </p>
         </div>
         <div
@@ -81,9 +102,10 @@ export function LiveExamples() {
               <span
                 style={{
                   display: "inline-block",
-                  marginTop: 12,
+                  marginTop: "0.85rem",
                   fontSize: 13,
-                  color: "var(--gk-accent-hover)",
+                  fontWeight: 600,
+                  color: "var(--gk-accent)",
                 }}
               >
                 Open live site →
@@ -91,15 +113,6 @@ export function LiveExamples() {
             </a>
           ))}
         </div>
-        <p
-          style={{
-            marginTop: "1.25rem",
-            fontSize: 13,
-            color: "var(--gk-faint)",
-          }}
-        >
-          More customer sites land here as they go live. Yours can be next.
-        </p>
       </div>
     </section>
   );
