@@ -10,6 +10,8 @@ export interface Job {
   customerName?: string;
   /** Customer WhatsApp / mobile, digits or local format */
   phone?: string;
+  /** ISO country code or label (e.g. NG, Nigeria) */
+  country?: string;
   siteUrl?: string;
   error?: string;
   repoOwner?: string;
@@ -47,6 +49,7 @@ export interface Job {
 // alter table jobs add column if not exists customer_name text;
 // alter table jobs add column if not exists commerce_tier text default 'lite';
 // alter table jobs add column if not exists booking_tier text default 'lite';
+// alter table jobs add column if not exists country text;
 //   alter table jobs add column customer_name text;
 // alter table jobs add column editor_mode text;
 
@@ -59,6 +62,7 @@ function mapRow(data: any): Job {
     email: data.email ?? undefined,
     customerName: data.customer_name ?? undefined,
     phone: data.phone ?? undefined,
+    country: data.country ?? undefined,
     siteUrl: data.site_url ?? undefined,
     error: data.error ?? undefined,
     repoOwner: data.repo_owner ?? undefined,
@@ -81,6 +85,7 @@ export async function createJob(job: Job): Promise<void> {
     email: job.email ?? null,
     customer_name: job.customerName ?? null,
     phone: job.phone ?? null,
+    country: job.country ?? null,
     site_url: job.siteUrl ?? null,
     error: job.error ?? null,
     repo_owner: job.repoOwner ?? null,
@@ -120,6 +125,7 @@ export async function updateJob(id: string, patch: Partial<Job>): Promise<Job> {
   if (patch.email !== undefined) row.email = patch.email;
   if (patch.customerName !== undefined) row.customer_name = patch.customerName;
   if (patch.phone !== undefined) row.phone = patch.phone;
+  if (patch.country !== undefined) row.country = patch.country;
   if (patch.siteUrl !== undefined) row.site_url = patch.siteUrl;
   if (patch.error !== undefined) row.error = patch.error;
   if (patch.repoOwner !== undefined) row.repo_owner = patch.repoOwner;
