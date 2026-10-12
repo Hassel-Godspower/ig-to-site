@@ -1,5 +1,23 @@
 /** Ongoing value — answers “what happens after I pay?” */
 export function AfterGoLive() {
+  const card = {
+    padding: "1.15rem",
+    borderRadius: 12,
+    border: "1px solid var(--gk-border-strong)",
+    background: "var(--gk-surface)",
+  };
+  const title = {
+    margin: "0 0 0.4rem",
+    fontSize: "1rem",
+    color: "var(--gk-text)",
+  };
+  const body = {
+    margin: 0,
+    fontSize: 14,
+    color: "var(--gk-muted)",
+    lineHeight: 1.55,
+  };
+
   return (
     <section className="gk-section" id="after-go-live" aria-labelledby="after-go-live-title">
       <div className="gk-container">
@@ -32,17 +50,9 @@ export function AfterGoLive() {
               d: "New posts do not auto-sync yet. Re-generate or edit manually when your offer changes.",
             },
           ].map((x) => (
-            <article
-              key={x.t}
-              style={{
-                padding: "1.15rem",
-                borderRadius: 12,
-                border: "1px solid rgba(167,139,250,0.2)",
-                background: "rgba(18,16,24,0.85)",
-              }}
-            >
-              <h3 style={{ margin: "0 0 0.4rem", fontSize: "1rem", color: "#f3f4f6" }}>{x.t}</h3>
-              <p style={{ margin: 0, fontSize: 14, color: "#9ca3af", lineHeight: 1.55 }}>{x.d}</p>
+            <article key={x.t} className="gk-card" style={card}>
+              <h3 style={title}>{x.t}</h3>
+              <p style={body}>{x.d}</p>
             </article>
           ))}
         </div>

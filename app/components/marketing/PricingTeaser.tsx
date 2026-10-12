@@ -43,8 +43,8 @@ export function PricingTeaser() {
             </a>
           </article>
         </div>
-        <p style={{ textAlign: "center", marginTop: "1.25rem", fontSize: 13, color: "#9ca3af" }}>
-          <a href="#what-you-get" style={{ color: "#c4b5fd" }}>See exactly what ₦20,000 includes</a>
+        <p style={{ textAlign: "center", marginTop: "1.25rem", fontSize: 13, color: "var(--gk-muted)" }}>
+          <a href="#what-you-get" style={{ color: "var(--gk-accent)" }}>See exactly what ₦20,000 includes</a>
         </p>
       </div>
     </section>

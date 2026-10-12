@@ -14,13 +14,13 @@ export function AboutGoke() {
             coaches, spas, boutiques, studios, and service brands that need a real site, not
             another bio link.
           </p>
-          <p style={{ color: "#9ca3af", fontSize: 14, lineHeight: 1.6 }}>
-            Payments run through <strong style={{ color: "#e5e7eb" }}>Paystack</strong>. Sites
-            publish to <strong style={{ color: "#e5e7eb" }}>Cloudflare Pages</strong>. You
+          <p style={{ color: "var(--gk-muted)", fontSize: 14, lineHeight: 1.6 }}>
+            Payments run through <strong style={{ color: "var(--gk-text)" }}>Paystack</strong>. Sites
+            publish to <strong style={{ color: "var(--gk-text)" }}>Cloudflare Pages</strong>. You
             generate free; you pay once (₦20,000) when you are ready to go live.
           </p>
-          <p style={{ color: "#6b7280", fontSize: 13 }}>
-            Product: <strong style={{ color: "#c4b5fd" }}>gòke</strong>
+          <p style={{ color: "var(--gk-faint)", fontSize: 13 }}>
+            Product: <strong style={{ color: "var(--gk-accent)" }}>gòke</strong>
             {" · "}
             Built by HighValue Solutions
           </p>
