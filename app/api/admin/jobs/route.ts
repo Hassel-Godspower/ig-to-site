@@ -12,7 +12,7 @@ function isAdmin(req: NextRequest): boolean {
 
 /**
  * GET /api/admin/jobs
- * Platform admin: all jobs with customer + WhatsApp + country + live URLs.
+ * Source of truth: Supabase `jobs` table (site_url from Cloudflare deploy is stored here).
  */
 export async function GET(req: NextRequest) {
   if (!isAdmin(req)) {
@@ -23,14 +23,14 @@ export async function GET(req: NextRequest) {
     const jobs = await listJobs(500);
     const rows = jobs.map((j) => {
       const phoneDigits = (j.phone || "").replace(/\D/g, "");
-      const wa =
-        phoneDigits.length >= 8
-          ? `https://wa.me/${phoneDigits.replace(/^0/, "234")}`
-          : null;
-      // Heuristic: if already has country code 234 keep as-is
-      const waLink = phoneDigits
-        ? `https://wa.me/${phoneDigits.startsWith("0") && phoneDigits.length === 11 ? "234" + phoneDigits.slice(1) : phoneDigits}`
-        : null;
+      let whatsappUrl: string | null = null;
+      if (phoneDigits.length >= 8) {
+        const intl =
+          phoneDigits.startsWith("0") && phoneDigits.length === 11
+            ? "234" + phoneDigits.slice(1)
+            : phoneDigits;
+        whatsappUrl = `https://wa.me/${intl}`;
+      }
 
       return {
         jobId: j.id,
@@ -39,13 +39,13 @@ export async function GET(req: NextRequest) {
         customerName: j.customerName || null,
         email: j.email || null,
         phone: j.phone || null,
-        whatsappUrl: waLink,
-        country: j.country || null,
+        whatsappUrl,
+        country: (j as { country?: string }).country || null,
         siteUrl: j.siteUrl || null,
         repoUrl: j.repoUrl || null,
         editorMode: j.editorMode || null,
-        commerceTier: j.commerceTier || "lite",
-        bookingTier: j.bookingTier || "lite",
+        commerceTier: (j as { commerceTier?: string }).commerceTier || "lite",
+        bookingTier: (j as { bookingTier?: string }).bookingTier || "lite",
         isLive: j.status === "done" && Boolean(j.siteUrl),
         error: j.error || null,
         createdAt: j.createdAt || null,
