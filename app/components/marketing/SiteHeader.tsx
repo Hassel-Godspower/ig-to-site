@@ -12,7 +12,7 @@ export function SiteHeader() {
   return (
     <header className="gk-header">
       <div className="gk-container gk-header-inner">
-        <Link href="/" className="gk-logo" aria-label="gòke by HighValue — home" onClick={close}>
+        <Link href="/" className="gk-logo" aria-label="gòke home" onClick={close}>
           <Image
             src="/icons/icon-192.png"
             alt=""
@@ -21,31 +21,22 @@ export function SiteHeader() {
             className="gk-logo-img"
             priority
           />
-          <span className="gk-logo-text">
-            <span className="gk-logo-word">gòke</span>
-            <span className="gk-logo-by">by HighValue</span>
-          </span>
+          <span className="gk-logo-word">gòke</span>
         </Link>
 
         <nav className={`gk-nav${open ? " open" : ""}`} aria-label="Primary">
           <a href="/#how" onClick={close}>
             How it works
           </a>
+          <a href="/#live-examples" onClick={close}>
+            Live sites
+          </a>
+          <a href="/#demo" onClick={close}>
+            Demo
+          </a>
           <a href="/#pricing" onClick={close}>
             Pricing
           </a>
-          <Link href="/builders" onClick={close}>
-            Builders
-          </Link>
-          <Link href="/why" onClick={close}>
-            Why gòke
-          </Link>
-          <Link href="/own-your-presence" onClick={close}>
-            Own your presence
-          </Link>
-          <Link href="/how-to-export" onClick={close}>
-            Export guide
-          </Link>
           <a
             href="/#start"
             className="gk-nav-mobile-cta gk-btn gk-btn-primary"
