@@ -21,7 +21,7 @@
   --gk-radius: 12px;
   --gk-radius-lg: 16px;
   --gk-max: 1120px;
-  --gk-font: "Syne", system-ui, sans-serif, "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --gk-font: "Syne", system-ui, sans-serif;
 }
 
 *, *::before, *::after { box-sizing: border-box; }
