@@ -1,5 +1,6 @@
 import { SiteHeader } from "./components/marketing/SiteHeader";
 import { HeroUpload } from "./components/marketing/HeroUpload";
+import { DemoVideos } from "./components/marketing/DemoVideos";
 import { HeroRotator } from "./components/marketing/HeroRotator";
 import { TechStackStrip } from "./components/marketing/TechStackStrip";
 import { HowItWorks } from "./components/marketing/HowItWorks";
@@ -48,37 +49,7 @@ export default function HomePage() {
                 booking-ready site structured for the open web.
               </p>
             </div>
-            <div className="gk-demo-frame gk-demo-video-wrap">
-              {/* Desktop / tablet — landscape recording */}
-              <video
-                className="gk-demo-video gk-demo-video--desktop"
-                controls
-                playsInline
-                muted
-                loop
-                autoPlay
-                preload="metadata"
-                poster="/marketing/proof/fitness.svg"
-              >
-                <source src="/marketing/proof/demo-desktop.mp4" type="video/mp4" />
-                <source src="/marketing/proof/demo.mp4" type="video/mp4" />
-                Your browser does not support the video tag.
-              </video>
-              {/* Phone — vertical screen recording */}
-              <video
-                className="gk-demo-video gk-demo-video--mobile"
-                controls
-                playsInline
-                muted
-                loop
-                autoPlay
-                preload="metadata"
-                poster="/marketing/proof/fitness.svg"
-              >
-                <source src="/marketing/proof/demo-mobile.mp4" type="video/mp4" />
-                Your browser does not support the video tag.
-              </video>
-            </div>
+            <DemoVideos />
             <div className="gk-demo-actions">
               <a href="#start" className="gk-btn gk-btn-primary">
                 Generate my site

@@ -1,4 +1,11 @@
-/* Dual demo videos: landscape desktop + portrait mobile */
+/**
+ * One demo video at a time:
+ * - desktop + tablet (>768px): landscape
+ * - phone (≤768px): mobile recording
+ *
+ * IMPORTANT: do not set display on bare `video` / `.gk-demo-video`
+ * or it overrides --desktop / --mobile with equal !important.
+ */
 
 .gk-demo-frame.gk-demo-video-wrap,
 .gk-demo-video-wrap {
@@ -11,9 +18,9 @@
   box-sizing: border-box;
 }
 
+/* Sizing only — no display here */
 .gk-demo-frame video,
 .gk-demo-video {
-  display: block !important;
   width: 100% !important;
   max-width: 100% !important;
   height: auto !important;
@@ -21,28 +28,34 @@
   object-fit: contain !important;
   border-radius: calc(var(--gk-radius-lg, 16px) - 1px);
   background: #0b0d12;
+  border: none;
+  vertical-align: top;
 }
 
-/* Default: show desktop, hide mobile */
-.gk-demo-video--desktop {
+/* Desktop / tablet: landscape only */
+.gk-demo-frame video.gk-demo-video--desktop,
+.gk-demo-video.gk-demo-video--desktop {
   display: block !important;
 }
-.gk-demo-video--mobile {
+.gk-demo-frame video.gk-demo-video--mobile,
+.gk-demo-video.gk-demo-video--mobile {
   display: none !important;
 }
 
-/* Phone / narrow: mobile recording only */
+/* Phone: mobile recording only */
 @media (max-width: 768px) {
-  .gk-demo-video--desktop {
+  .gk-demo-frame video.gk-demo-video--desktop,
+  .gk-demo-video.gk-demo-video--desktop {
     display: none !important;
   }
-  .gk-demo-video--mobile {
+  .gk-demo-frame video.gk-demo-video--mobile,
+  .gk-demo-video.gk-demo-video--mobile {
     display: block !important;
   }
 
   .gk-demo-frame.gk-demo-video-wrap,
   .gk-demo-video-wrap {
-    max-width: min(100%, 420px); /* portrait-friendly frame */
+    max-width: min(100%, 420px);
   }
 
   #demo .gk-container {
@@ -51,7 +64,6 @@
   }
 }
 
-/* Optional: tablet can stay landscape */
 @media (min-width: 769px) and (max-width: 1024px) {
   .gk-demo-video-wrap {
     max-width: min(100%, 860px);
