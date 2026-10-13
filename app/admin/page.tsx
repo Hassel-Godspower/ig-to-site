@@ -67,6 +67,13 @@ export default function AdminConsolePage() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [liveCount, setLiveCount] = useState(0);
+  const [liveVisitors, setLiveVisitors] = useState<
+    { sessionId: string; path: string | null; country: string | null; referrer: string | null; pageviews: number }[]
+  >([]);
+  const [recentVisitors, setRecentVisitors] = useState<
+    { sessionId: string; path: string | null; country: string | null; lastSeenAt: string }[]
+  >([]);
   const [filter, setFilter] = useState<Filter>("all");
   const [q, setQ] = useState("");
 
@@ -133,6 +140,17 @@ export default function AdminConsolePage() {
       if (!res.ok) throw new Error(data.error || "Failed to load");
       setJobs(data.jobs || []);
       setStats(data.stats || null);
+      try {
+        const vr = await fetch("/api/admin/visitors", { credentials: "include" });
+        if (vr.ok) {
+          const vd = await vr.json();
+          setLiveCount(vd.liveCount || 0);
+          setLiveVisitors(vd.live || []);
+          setRecentVisitors(vd.recent || []);
+        }
+      } catch {
+        /* visitors optional */
+      }
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
@@ -250,6 +268,40 @@ export default function AdminConsolePage() {
           ))}
         </div>
       </div>
+
+      
+      <section style={{ maxWidth: 1100, margin: "0 auto 16px", background: "#12151c", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 14, padding: 16 }}>
+        <h2 style={{ margin: "0 0 8px", fontSize: 16 }}>
+          Live on <span style={{ color: "#a78bfa" }}>highvaluesolutions.net</span>{" "}
+          <span style={{ color: "#34d399" }}>{liveCount} online</span>
+        </h2>
+        <p style={{ margin: "0 0 12px", fontSize: 12, color: "#9ca3af" }}>
+          Visitors browsing the gòke platform right now (last 45 seconds).
+        </p>
+        {liveVisitors.length === 0 ? (
+          <p style={{ color: "#6b7280", fontSize: 13 }}>No one online at the moment.</p>
+        ) : (
+          <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
+            {liveVisitors.map((v) => (
+              <li key={v.sessionId} style={{ padding: "8px 0", borderBottom: "1px solid rgba(255,255,255,0.06)", fontSize: 13 }}>
+                <strong>{v.path || "/"}</strong>
+                <span style={{ color: "#9ca3af" }}>
+                  {" "}· {v.country || "—"} · {v.pageviews} views
+                  {v.referrer ? ` · from ${v.referrer.slice(0, 40)}` : " · direct"}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+        <h3 style={{ fontSize: 12, color: "#9ca3af", margin: "14px 0 6px" }}>Recent</h3>
+        <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
+          {recentVisitors.slice(0, 15).map((v) => (
+            <li key={v.sessionId + (v.lastSeenAt || "")} style={{ fontSize: 12, color: "#9ca3af", padding: "4px 0" }}>
+              {v.path || "/"} · {v.country || "—"} · {v.lastSeenAt ? new Date(v.lastSeenAt).toLocaleString() : ""}
+            </li>
+          ))}
+        </ul>
+      </section>
 
       {error && <p style={styles.error}>{error}</p>}
       {loading && <p style={styles.muted}>Loading jobs…</p>}
