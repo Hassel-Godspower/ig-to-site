@@ -6,6 +6,8 @@ import "./hero-rotator.css";
 import { CodeCascadePreloader } from "./components/CodeCascadePreloader";
 import { PwaInstallPrompt } from "./components/PwaInstallPrompt";
 import { ThemeProvider } from "./components/ThemeProvider";
+import { PlatformTrackBeacon } from "./components/PlatformTrackBeacon";
+import { Suspense } from "react";
 
 export const metadata: Metadata = {
   title: {
@@ -72,6 +74,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body>
         <ThemeProvider>
+          <Suspense fallback={null}>
+            <PlatformTrackBeacon />
+          </Suspense>
           <CodeCascadePreloader />
           {children}
           <PwaInstallPrompt />
