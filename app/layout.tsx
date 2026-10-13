@@ -3,6 +3,7 @@ import "./globals.css";
 import "./theme.css";
 import "./hero-mobile.css";
 import "./hero-rotator.css";
+import "./brand-highvalue.css";
 import { CodeCascadePreloader } from "./components/CodeCascadePreloader";
 import { PwaInstallPrompt } from "./components/PwaInstallPrompt";
 import { ThemeProvider } from "./components/ThemeProvider";
@@ -11,22 +12,22 @@ import { Suspense } from "react";
 
 export const metadata: Metadata = {
   title: {
-    default: "gòke — Instagram to website",
-    template: "%s · gòke",
+    default: "gòke by HighValue — Instagram to website",
+    template: "%s · gòke by HighValue",
   },
   description:
     "Turn your Instagram into a real multi-section website. Generate from your data export, edit visually, publish when you’re ready.",
-  applicationName: "gòke",
+  applicationName: "gòke by HighValue",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "gòke",
+    title: "gòke by HighValue",
   },
   formatDetection: {
     telephone: false,
   },
   openGraph: {
-    title: "gòke — Instagram to website",
+    title: "gòke by HighValue — Instagram to website",
     description:
       "From Instagram export to live site — visual editor included. Free to preview, pay to go live.",
     type: "website",
@@ -62,14 +63,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
-          href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Work+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&display=swap"
           rel="stylesheet"
         />
         {/* iOS home screen */}
         <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" sizes="180x180" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-        <meta name="apple-mobile-web-app-title" content="gòke" />
+        <meta name="apple-mobile-web-app-title" content="gòke by HighValue" />
         <meta name="mobile-web-app-capable" content="yes" />
       </head>
       <body>
