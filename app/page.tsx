@@ -49,8 +49,9 @@ export default function HomePage() {
               </p>
             </div>
             <div className="gk-demo-frame gk-demo-video-wrap">
+              {/* Desktop / tablet — landscape recording */}
               <video
-                className="gk-demo-video"
+                className="gk-demo-video gk-demo-video--desktop"
                 controls
                 playsInline
                 muted
@@ -59,8 +60,22 @@ export default function HomePage() {
                 preload="metadata"
                 poster="/marketing/proof/fitness.svg"
               >
+                <source src="/marketing/proof/demo-desktop.mp4" type="video/mp4" />
                 <source src="/marketing/proof/demo.mp4" type="video/mp4" />
-                <source src="/marketing/proof/demo.webm" type="video/webm" />
+                Your browser does not support the video tag.
+              </video>
+              {/* Phone — vertical screen recording */}
+              <video
+                className="gk-demo-video gk-demo-video--mobile"
+                controls
+                playsInline
+                muted
+                loop
+                autoPlay
+                preload="metadata"
+                poster="/marketing/proof/fitness.svg"
+              >
+                <source src="/marketing/proof/demo-mobile.mp4" type="video/mp4" />
                 Your browser does not support the video tag.
               </video>
             </div>

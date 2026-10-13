@@ -1,4 +1,4 @@
-/* Demo transformation video — full width, no crop on mobile */
+/* Dual demo videos: landscape desktop + portrait mobile */
 
 .gk-demo-frame.gk-demo-video-wrap,
 .gk-demo-video-wrap {
@@ -11,7 +11,6 @@
   box-sizing: border-box;
 }
 
-/* Kill fixed intrinsic size from width/height attributes */
 .gk-demo-frame video,
 .gk-demo-video {
   display: block !important;
@@ -20,34 +19,41 @@
   height: auto !important;
   max-height: none !important;
   object-fit: contain !important;
-  vertical-align: top;
   border-radius: calc(var(--gk-radius-lg, 16px) - 1px);
   background: #0b0d12;
 }
 
-/* Frame children rule in globals was for img; keep video fluid */
-.gk-demo-frame > video,
-.gk-demo-frame .gk-demo-video {
-  width: 100% !important;
-  height: auto !important;
-  max-height: none !important;
+/* Default: show desktop, hide mobile */
+.gk-demo-video--desktop {
+  display: block !important;
+}
+.gk-demo-video--mobile {
+  display: none !important;
 }
 
-@media (max-width: 640px) {
-  .gk-section#demo .gk-container,
-  #demo .gk-container {
-    padding-left: 0.75rem;
-    padding-right: 0.75rem;
+/* Phone / narrow: mobile recording only */
+@media (max-width: 768px) {
+  .gk-demo-video--desktop {
+    display: none !important;
+  }
+  .gk-demo-video--mobile {
+    display: block !important;
   }
 
   .gk-demo-frame.gk-demo-video-wrap,
   .gk-demo-video-wrap {
-    max-width: 100%;
-    border-radius: 12px;
+    max-width: min(100%, 420px); /* portrait-friendly frame */
   }
 
-  .gk-demo-frame video,
-  .gk-demo-video {
-    border-radius: 11px;
+  #demo .gk-container {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+}
+
+/* Optional: tablet can stay landscape */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .gk-demo-video-wrap {
+    max-width: min(100%, 860px);
   }
 }
