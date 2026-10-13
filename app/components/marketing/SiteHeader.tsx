@@ -12,7 +12,7 @@ export function SiteHeader() {
   return (
     <header className="gk-header">
       <div className="gk-container gk-header-inner">
-        <Link href="/" className="gk-logo" aria-label="gòke home" onClick={close}>
+        <Link href="/" className="gk-logo" aria-label="gòke by HighValue — home" onClick={close}>
           <Image
             src="/icons/icon-192.png"
             alt=""
@@ -21,7 +21,10 @@ export function SiteHeader() {
             className="gk-logo-img"
             priority
           />
-          <span className="gk-logo-word">gòke</span>
+          <span className="gk-logo-text">
+            <span className="gk-logo-word">gòke</span>
+            <span className="gk-logo-by">by HighValue</span>
+          </span>
         </Link>
 
         <nav className={`gk-nav${open ? " open" : ""}`} aria-label="Primary">

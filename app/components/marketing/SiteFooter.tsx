@@ -1,6 +1,9 @@
 import Link from "next/link";
 import Image from "next/image";
 
+const WA = "https://wa.me/2347065341105";
+const TEL = "+2347065341105";
+
 export function SiteFooter() {
   return (
     <footer className="gk-footer">
@@ -17,8 +20,20 @@ export function SiteFooter() {
               />
               <span className="gk-logo-word">gòke</span>
             </div>
-            <p>
-              Instagram to a real website — generate, edit visually, publish when you’re ready.
+            <p className="gk-footer-tagline">
+              Instagram to a real website — generate, edit visually, publish when
+              you&apos;re ready.
+            </p>
+            <p className="gk-footer-by">
+              A product of{" "}
+              <strong>HighValue Solutions</strong>
+            </p>
+            <p className="gk-footer-contact">
+              <a href={WA} target="_blank" rel="noopener noreferrer">
+                WhatsApp {TEL}
+              </a>
+              <span aria-hidden="true"> · </span>
+              <a href={`tel:${TEL.replace(/\s/g, "")}`}>{TEL}</a>
             </p>
           </div>
           <div>
@@ -34,9 +49,12 @@ export function SiteFooter() {
           <div>
             <h4>Help</h4>
             <Link href="/how-to-export">Export guide</Link>
-            <Link href="/why">Why gòke</Link>
+            <a href="/#about-goke">About</a>
             <a href="/#start">Generate site</a>
             <a href="/#demo">View demo</a>
+            <a href={WA} target="_blank" rel="noopener noreferrer">
+              Contact on WhatsApp
+            </a>
           </div>
           <div>
             <h4>Legal</h4>
@@ -45,8 +63,10 @@ export function SiteFooter() {
           </div>
         </div>
         <div className="gk-footer-bottom">
-          <span>© {new Date().getFullYear()} gòke</span>
-          <span>Visual sites from Instagram</span>
+          <span>
+            © {new Date().getFullYear()} HighValue Solutions · gòke
+          </span>
+          <span>gòke by HighValue</span>
         </div>
       </div>
     </footer>
