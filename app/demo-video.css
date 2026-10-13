@@ -1,13 +1,4 @@
-/**
- * One demo video at a time:
- * - desktop + tablet (>768px): landscape
- * - phone (≤768px): mobile recording
- *
- * IMPORTANT: do not set display on bare `video` / `.gk-demo-video`
- * or it overrides --desktop / --mobile with equal !important.
- */
-
-.gk-demo-frame.gk-demo-video-wrap,
+/* Layout only — visibility is controlled by DemoVideos (single video in DOM) */
 .gk-demo-video-wrap {
   width: 100%;
   max-width: min(100%, 900px);
@@ -17,55 +8,16 @@
   line-height: 0;
   box-sizing: border-box;
 }
-
-/* Sizing only — no display here */
-.gk-demo-frame video,
-.gk-demo-video {
-  width: 100% !important;
-  max-width: 100% !important;
-  height: auto !important;
-  max-height: none !important;
-  object-fit: contain !important;
-  border-radius: calc(var(--gk-radius-lg, 16px) - 1px);
+.gk-demo-video-wrap video {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-width: 100%;
+  object-fit: contain;
   background: #0b0d12;
-  border: none;
-  vertical-align: top;
 }
-
-/* Desktop / tablet: landscape only */
-.gk-demo-frame video.gk-demo-video--desktop,
-.gk-demo-video.gk-demo-video--desktop {
-  display: block !important;
-}
-.gk-demo-frame video.gk-demo-video--mobile,
-.gk-demo-video.gk-demo-video--mobile {
-  display: none !important;
-}
-
-/* Phone: mobile recording only */
 @media (max-width: 768px) {
-  .gk-demo-frame video.gk-demo-video--desktop,
-  .gk-demo-video.gk-demo-video--desktop {
-    display: none !important;
-  }
-  .gk-demo-frame video.gk-demo-video--mobile,
-  .gk-demo-video.gk-demo-video--mobile {
-    display: block !important;
-  }
-
-  .gk-demo-frame.gk-demo-video-wrap,
   .gk-demo-video-wrap {
     max-width: min(100%, 420px);
-  }
-
-  #demo .gk-container {
-    padding-left: 0.75rem;
-    padding-right: 0.75rem;
-  }
-}
-
-@media (min-width: 769px) and (max-width: 1024px) {
-  .gk-demo-video-wrap {
-    max-width: min(100%, 860px);
   }
 }
