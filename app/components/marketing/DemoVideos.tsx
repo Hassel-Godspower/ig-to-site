@@ -1,43 +1,62 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useState } from "react";
 
 /**
- * Desktop landscape + mobile portrait demos.
- * Only the active viewport player is visible and playing.
+ * Only ONE video in the DOM at a time:
+ * - mobile (≤768px) → demo-mobile.mp4
+ * - desktop/tablet → demo-desktop.mp4
+ * Does not rely on CSS hide/show (production was missing those rules).
  */
 export function DemoVideos() {
-  const desktopRef = useRef<HTMLVideoElement>(null);
-  const mobileRef = useRef<HTMLVideoElement>(null);
+  const [mode, setMode] = useState<"desktop" | "mobile" | null>(null);
 
   useEffect(() => {
     const mq = window.matchMedia("(max-width: 768px)");
-
-    function sync() {
-      const mobile = mq.matches;
-      const desk = desktopRef.current;
-      const mob = mobileRef.current;
-      if (!desk || !mob) return;
-
-      if (mobile) {
-        desk.pause();
-        void mob.play().catch(() => {});
-      } else {
-        mob.pause();
-        void desk.play().catch(() => {});
-      }
-    }
-
-    sync();
-    mq.addEventListener("change", sync);
-    return () => mq.removeEventListener("change", sync);
+    const apply = () => setMode(mq.matches ? "mobile" : "desktop");
+    apply();
+    mq.addEventListener("change", apply);
+    return () => mq.removeEventListener("change", apply);
   }, []);
 
+  // Avoid flash of wrong video: wait until we know viewport
+  if (mode === null) {
+    return (
+      <div
+        className="gk-demo-frame gk-demo-video-wrap"
+        style={{
+          width: "100%",
+          maxWidth: 900,
+          margin: "0 auto",
+          minHeight: 200,
+          background: "#0b0d12",
+          borderRadius: 16,
+        }}
+        aria-hidden
+      />
+    );
+  }
+
+  const isMobile = mode === "mobile";
+  const src = isMobile
+    ? "/marketing/proof/demo-mobile.mp4"
+    : "/marketing/proof/demo-desktop.mp4";
+  const fallback = isMobile ? undefined : "/marketing/proof/demo.mp4";
+
   return (
-    <div className="gk-demo-frame gk-demo-video-wrap">
+    <div
+      className="gk-demo-frame gk-demo-video-wrap"
+      style={{
+        width: "100%",
+        maxWidth: isMobile ? 420 : 900,
+        margin: "0 auto 1.5rem",
+        overflow: "hidden",
+        lineHeight: 0,
+        borderRadius: 16,
+      }}
+    >
       <video
-        ref={desktopRef}
-        className="gk-demo-video gk-demo-video--desktop"
+        key={src}
         controls
         playsInline
         muted
@@ -45,22 +64,18 @@ export function DemoVideos() {
         autoPlay
         preload="metadata"
         poster="/marketing/proof/fitness.svg"
+        style={{
+          display: "block",
+          width: "100%",
+          height: "auto",
+          maxWidth: "100%",
+          objectFit: "contain",
+          background: "#0b0d12",
+          borderRadius: 15,
+        }}
       >
-        <source src="/marketing/proof/demo-desktop.mp4" type="video/mp4" />
-        <source src="/marketing/proof/demo.mp4" type="video/mp4" />
-      </video>
-      <video
-        ref={mobileRef}
-        className="gk-demo-video gk-demo-video--mobile"
-        controls
-        playsInline
-        muted
-        loop
-        autoPlay
-        preload="metadata"
-        poster="/marketing/proof/fitness.svg"
-      >
-        <source src="/marketing/proof/demo-mobile.mp4" type="video/mp4" />
+        <source src={src} type="video/mp4" />
+        {fallback ? <source src={fallback} type="video/mp4" /> : null}
       </video>
     </div>
   );
