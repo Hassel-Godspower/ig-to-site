@@ -58,8 +58,6 @@ export default function HomePage() {
                 autoPlay
                 preload="metadata"
                 poster="/marketing/proof/fitness.svg"
-                width={900}
-                height={520}
               >
                 <source src="/marketing/proof/demo.mp4" type="video/mp4" />
                 <source src="/marketing/proof/demo.webm" type="video/webm" />
