@@ -48,13 +48,23 @@ export default function HomePage() {
                 booking-ready site structured for the open web.
               </p>
             </div>
-            <div className="gk-demo-frame">
-              <img
-                src="/marketing/proof/fitness.svg"
-                alt="Instagram profile transforming into a fitness website"
+            <div className="gk-demo-frame gk-demo-video-wrap">
+              <video
+                className="gk-demo-video"
+                controls
+                playsInline
+                muted
+                loop
+                autoPlay
+                preload="metadata"
+                poster="/marketing/proof/fitness.svg"
                 width={900}
                 height={520}
-              />
+              >
+                <source src="/marketing/proof/demo.mp4" type="video/mp4" />
+                <source src="/marketing/proof/demo.webm" type="video/webm" />
+                Your browser does not support the video tag.
+              </video>
             </div>
             <div className="gk-demo-actions">
               <a href="#start" className="gk-btn gk-btn-primary">

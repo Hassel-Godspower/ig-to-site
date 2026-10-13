@@ -1,0 +1,21 @@
+/* Demo transformation video */
+.gk-demo-video-wrap {
+  overflow: hidden;
+  line-height: 0;
+}
+
+.gk-demo-video {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: min(70vh, 560px);
+  object-fit: cover;
+  border-radius: inherit;
+  background: #0b0d12;
+}
+
+.gk-demo-frame video {
+  width: 100%;
+  height: auto;
+  border-radius: calc(var(--gk-radius-lg, 16px) - 1px);
+}
