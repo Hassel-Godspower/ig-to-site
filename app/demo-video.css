@@ -1,21 +1,53 @@
-/* Demo transformation video */
+/* Demo transformation video — full width, no crop on mobile */
+
+.gk-demo-frame.gk-demo-video-wrap,
 .gk-demo-video-wrap {
+  width: 100%;
+  max-width: min(100%, 900px);
+  margin-left: auto;
+  margin-right: auto;
   overflow: hidden;
   line-height: 0;
+  box-sizing: border-box;
 }
 
+/* Kill fixed intrinsic size from width/height attributes */
+.gk-demo-frame video,
 .gk-demo-video {
-  display: block;
-  width: 100%;
-  height: auto;
-  max-height: min(70vh, 560px);
-  object-fit: cover;
-  border-radius: inherit;
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  height: auto !important;
+  max-height: none !important;
+  object-fit: contain !important;
+  vertical-align: top;
+  border-radius: calc(var(--gk-radius-lg, 16px) - 1px);
   background: #0b0d12;
 }
 
-.gk-demo-frame video {
-  width: 100%;
-  height: auto;
-  border-radius: calc(var(--gk-radius-lg, 16px) - 1px);
+/* Frame children rule in globals was for img; keep video fluid */
+.gk-demo-frame > video,
+.gk-demo-frame .gk-demo-video {
+  width: 100% !important;
+  height: auto !important;
+  max-height: none !important;
+}
+
+@media (max-width: 640px) {
+  .gk-section#demo .gk-container,
+  #demo .gk-container {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+
+  .gk-demo-frame.gk-demo-video-wrap,
+  .gk-demo-video-wrap {
+    max-width: 100%;
+    border-radius: 12px;
+  }
+
+  .gk-demo-frame video,
+  .gk-demo-video {
+    border-radius: 11px;
+  }
 }
