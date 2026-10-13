@@ -4,7 +4,7 @@ import { recordHeartbeat } from "@/lib/visitorTrack";
 export const runtime = "nodejs";
 
 /** Fixed tenant key for highvaluesolutions.net / gòke marketing site */
-export const PLATFORM_SITE_ID = "platform";
+const PLATFORM_SITE_ID = "platform";
 
 /**
  * POST /api/track/platform
