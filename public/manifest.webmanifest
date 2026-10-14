@@ -1,14 +1,17 @@
 {
-  "name": "gòke — Instagram to website",
+  "name": "gòke by HighValue",
   "short_name": "gòke",
-  "description": "Turn your Instagram into a real website. Generate, edit visually, publish.",
-  "start_url": "/",
+  "description": "Turn your Instagram into a real website. Generate, edit, publish once.",
+  "start_url": "/?source=pwa",
   "scope": "/",
   "display": "standalone",
-  "orientation": "any",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "portrait-primary",
   "background_color": "#08090c",
   "theme_color": "#08090c",
   "categories": ["business", "productivity"],
+  "lang": "en",
+  "dir": "ltr",
   "icons": [
     {
       "src": "/icons/icon-192.png",
