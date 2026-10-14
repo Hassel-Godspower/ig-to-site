@@ -3,9 +3,11 @@ import "./globals.css";
 import "./theme.css";
 import "./hero-mobile.css";
 import "./hero-rotator.css";
+import "./app-shell.css";
 import "./brand-highvalue.css";
 import { CodeCascadePreloader } from "./components/CodeCascadePreloader";
 import { PwaInstallPrompt } from "./components/PwaInstallPrompt";
+import { MobileAppTabBar } from "./components/MobileAppTabBar";
 import { ThemeProvider } from "./components/ThemeProvider";
 import { PlatformTrackBeacon } from "./components/PlatformTrackBeacon";
 import { Suspense } from "react";
@@ -81,6 +83,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <CodeCascadePreloader />
           {children}
           <PwaInstallPrompt />
+          <MobileAppTabBar />
         </ThemeProvider>
       </body>
     </html>
