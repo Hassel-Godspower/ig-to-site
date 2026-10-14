@@ -929,6 +929,23 @@ If spa / salon / clinic / hotel / appointments:
 }
 
 
+
+/** Ensure body data-wa is set for WhatsApp form handler */
+function injectWaAttr(html: string, waNumber: string | null): string {
+  const wa = (waNumber || "").replace(/\D/g, "");
+  if (!html) return html;
+  if (/<body[^>]*\bdata-wa\s*=/i.test(html)) {
+    return html.replace(
+      /(<body[^>]*\bdata-wa\s*=\s*)(["']?)[^"'>\s]*\2/i,
+      `$1"${wa}"`
+    );
+  }
+  if (/<body\b/i.test(html)) {
+    return html.replace(/<body\b/i, `<body data-wa="${wa}"`);
+  }
+  return html;
+}
+
 function parseMultiPage(
   raw: string,
   profile: InstagramProfile,
