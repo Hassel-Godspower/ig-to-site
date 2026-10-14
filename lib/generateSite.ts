@@ -8,6 +8,11 @@ import { blueprintPromptSection, resolveNicheBlueprint, pagesJsonFromBlueprint }
 import { toLegacyNicheId } from "./nicheCompat";
 import { chatWithFallback } from "./ai";
 import { ensureCommerceBookingScript } from "./staticCommerceRuntime";
+import {
+  contentFromProfile,
+  parseShellContentJson,
+  renderShellSite,
+} from "./premiumShell";
 
 /**
  * Multi-page niche-aware static site via Groq.
@@ -447,27 +452,70 @@ export async function generateSite(
   const galleryUrls = resolveGalleryUrls(profile, imageNicheId);
   const titles = captionTitles(profile);
 
-  const systemPrompt =
-    "You ship static multi-page business sites at the craft level of https://ifitnessng.pages.dev/ (iFitness). That site is the MINIMUM bar for first output: fixed frosted header; 100dvh hero with full-bleed photo, dark gradient overlay, accent kicker with glow-dot, huge display H1 (accent on second line), muted lead, dual pill CTAs, process metrics strip; bento cards with image hover; optional marquee; split about; mosaic gallery; quote cards; radial CTA panel; multi-column footer; mobile hamburger panel; fixed bottom tab bar. Bespoke for THIS brand/niche (do not copy iFitness name or gym-only copy unless niche is fitness). CSS :root tokens, Syne or strong display font + Plus Jakarta/DM Sans body via Google Fonts. Five HTML pages + styles.css + script.js. SEO title+description+og per page. No React, no Tailwind CDN, no Bootstrap, no markdown, no lorem, no TODO. Output ONLY ===PAGE/===CSS/===JS markers.";
-  const userPrompt =
-    buildPrompt(profile, niche, waNumber, galleryUrls, titles) + "\n\n" + intel;
-
-  // Provider router: Groq → Gemini → Cerebras → OpenRouter (configured keys only)
-  const ai = await chatWithFallback({
-    messages: [
-      { role: "system", content: systemPrompt },
-      { role: "user", content: userPrompt },
-    ],
-    maxTokens: 20000,
-    temperature: 0.28,
+  // ── Premium shell: AI = copy JSON; HTML/CSS/JS = deterministic (ifitness bar) ──
+  const fallbackContent = contentFromProfile(profile, {
+    waNumber,
+    galleryUrls,
+    titles,
+    nicheId: imageNicheId || bp.id || niche.id,
+    primaryCta: bp.primaryCTA || "Get in touch",
+    brandPrimary: (profile as { brandPrimary?: string }).brandPrimary,
   });
+  // Prefer real logo/avatar fields on profile
+  fallbackContent.logoUrl =
+    (profile as { logoUrl?: string }).logoUrl ||
+    (profile as { profilePicUrl?: string }).profilePicUrl ||
+    fallbackContent.logoUrl;
 
-  const raw: string = ai.content ?? "";
-  const files = parseMultiPage(raw, profile, waNumber);
+
+  const systemPrompt =
+    "You write website COPY only as JSON for a premium multi-page business site. Do not output HTML or CSS. Output a single JSON object with keys: kicker, headlineLine1, headlineLine2, lead, primaryCta, secondaryCta, metrics (array of {value,label} length 3), marquee (string[]), services (array of {tag,title,body,image} length 3-4 using provided image URLs), aboutTitle, aboutParagraphs (string[]), aboutList (string[]), aboutImage, gallery (array of {src,alt}), quotes (optional {text,author}[]), ctaTitle, ctaBody, footerBlurb, brand, logoUrl. Voice: confident, specific to THIS business. No lorem, no fake awards. Use real image URLs from the user message.";
+
+  const userPrompt = [
+    `Brand: ${profile.name || profile.username}`,
+    `Bio: ${profile.bio || ""}`,
+    `Niche: ${bp.label || niche.id}`,
+    `Primary CTA hint: ${bp.primaryCTA || "Contact"}`,
+    `WhatsApp: ${waNumber || "none"}`,
+    `Logo/avatar: ${(profile as { logoUrl?: string; profilePicUrl?: string }).logoUrl || (profile as { profilePicUrl?: string }).profilePicUrl || ""}`,
+    `Caption titles:\n${titles.map((x, i) => `${i + 1}. ${x}`).join("\n") || "(derive)"}`,
+    `Image URLs (use these):\n${galleryUrls.map((u, i) => `${i + 1}. ${u}`).join("\n")}`,
+    `Captions sample:\n${profile.posts
+      .map((p) => p.caption)
+      .filter(Boolean)
+      .slice(0, 12)
+      .join("\n---\n")}`,
+    intel,
+    "Return JSON only.",
+  ].join("\n\n");
+
+  let raw = "";
+  let aiMeta: { provider?: string; model?: string } = {};
+  try {
+    const ai = await chatWithFallback({
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt },
+      ],
+      maxTokens: 4000,
+      temperature: 0.35,
+    });
+    raw = ai.content ?? "";
+    aiMeta = { provider: ai.provider, model: ai.model };
+  } catch (err) {
+    console.error("shell content AI failed, using profile fallback", err);
+  }
+
+  const content = parseShellContentJson(raw, fallbackContent);
+  const files = renderShellSite(content);
+  try {
+    files["script.js"] = ensureLiveScript(files["script.js"] || "", waNumber);
+  } catch { /* optional */ }
+
   // Optional debug: which provider produced this site
   try {
     files["ai-provider.json"] = JSON.stringify(
-      { provider: ai.provider, model: ai.model, at: new Date().toISOString() },
+      { provider: aiMeta.provider || "shell", model: aiMeta.model || "premiumShell", mode: "shell+json", at: new Date().toISOString() },
       null,
       2
     );
