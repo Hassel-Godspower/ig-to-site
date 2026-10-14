@@ -448,7 +448,7 @@ export async function generateSite(
   const titles = captionTitles(profile);
 
   const systemPrompt =
-    "You are a Principal Frontend Engineer. MINIMUM quality bar = real shipped sites: iFitness (dark performance studio, Syne + Plus Jakarta, lime accent, sticky header, hamburger + mobile-nav panel, immersive hero with full-bleed photo + sharp H1, dual CTAs, reveal sections, WA form), Club One Africa (full CSS design tokens, sticky header with IMAGE logo, desktop nav + nav-cta, two-column hero, card grids, multi-column footer, IntersectionObserver .reveal.active), Pax & Pearl BodyWorks (calm spa tokens, logo in header, dual CTAs, fixed bottom mobile tab bar, body padding-bottom, multi-page Home/About/Services/Gallery/Contact). Reject bare templates. Every site must pass: (1) :root design tokens, (2) logo or strong wordmark in header on EVERY page, (3) sticky header + mobile menu that works, (4) hero with real photo never blank white, (5) scroll-reveal, (6) multi-column footer, (7) contact form → WhatsApp, (8) unique SEO title+description per page. Output ONLY HTML5 pages + one styles.css + one script.js. No React, no Tailwind CDN, no Bootstrap, no markdown, no lorem, no TODO.";
+    "You ship static multi-page business sites at the craft level of https://ifitnessng.pages.dev/ (iFitness). That site is the MINIMUM bar for first output: fixed frosted header; 100dvh hero with full-bleed photo, dark gradient overlay, accent kicker with glow-dot, huge display H1 (accent on second line), muted lead, dual pill CTAs, process metrics strip; bento cards with image hover; optional marquee; split about; mosaic gallery; quote cards; radial CTA panel; multi-column footer; mobile hamburger panel; fixed bottom tab bar. Bespoke for THIS brand/niche (do not copy iFitness name or gym-only copy unless niche is fitness). CSS :root tokens, Syne or strong display font + Plus Jakarta/DM Sans body via Google Fonts. Five HTML pages + styles.css + script.js. SEO title+description+og per page. No React, no Tailwind CDN, no Bootstrap, no markdown, no lorem, no TODO. Output ONLY ===PAGE/===CSS/===JS markers.";
   const userPrompt =
     buildPrompt(profile, niche, waNumber, galleryUrls, titles) + "\n\n" + intel;
 
@@ -458,8 +458,8 @@ export async function generateSite(
       { role: "system", content: systemPrompt },
       { role: "user", content: userPrompt },
     ],
-    maxTokens: 16000,
-    temperature: 0.32,
+    maxTokens: 20000,
+    temperature: 0.28,
   });
 
   const raw: string = ai.content ?? "";
@@ -747,49 +747,31 @@ Include CSS for .reveal/.site-section opacity transform and .is-visible.
 Include CSS for mobile floating footer tab bar (position:fixed; bottom:0) and body padding-bottom.
 
 === LAYER 5 — REQUIRED PAGES (full HTML documents each) ===
-1) index.html — Hero (blueprint) → optional trust only if data supports → 3 service/value pillars from captions → about teaser → gallery teaser (2–6 images with labels) → final CTA band
+1) index.html — ifitnessng-level: 100dvh photo hero (kicker+H1+lead+dual pills+metrics) → optional marquee → bento services (3–4) → split about → mosaic gallery → optional quotes → cta-panel → footer+mobile-tabbar
 2) about.html — Story from bio → values/method → CTA
 3) services.html — Outcome cards from captions (or Vehicles/Training/Collections per blueprint) → process → CTA
 4) gallery.html — Full responsive grid; card title from caption first line; button View details / Case study / Shop look per niche
 5) contact.html — Pitch → form#contact-form (name, email, message) + submit data-goke="button" → WhatsApp/contact
 
 
-=== PRODUCTION QUALITY BAR (NON-NEGOTIABLE — match these real sites) ===
-These three shipped sites define the MINIMUM. Structure/patterns only — do NOT copy their names, copy, or assets.
+=== PRODUCTION QUALITY BAR = https://ifitnessng.pages.dev/ ===
+MINIMUM craft. Adapt palette/copy to THIS niche — do not clone iFitness branding.
 
-A) iFitness (fitness / performance):
-- Fonts: display Syne (or equivalent bold geometric) + body Plus Jakarta Sans / DM Sans
-- Dark theme OK for fitness/tech; light for spa/food/family — always intentional
-- Sticky .site-header; .is-scrolled after scrollY > 16
-- Brand wordmark or logo left; .desktop-nav center/right; .btn-primary header CTA; hamburger → #mobileNav panel (hidden until open)
-- Hero: full-bleed image OR split visual+copy; kicker; H1 with line break personality; lead; TWO buttons (primary + ghost)
-- Sections: tight max-width ~1180px; generous padding; pillar cards; gallery teaser; final CTA band
-- script.js: menu toggle, IntersectionObserver .reveal → .is-visible, contact form → wa.me, year in footer
+HOME section order (required):
+1) Fixed .site-header > .nav-bar: brand (img logo and/or wordmark) | .desktop-nav | .header-ctas .btn-primary | .nav-toggle | #mobileNav
+2) .hero min-height 100dvh: .hero-visual img + gradient overlay; .hero-body .kicker, h1 (line2 accent), .hero-lead, .hero-actions (primary+ghost), .hero-metrics (3 real process labels — never fake stats)
+3) Optional .marquee-wrap from bio/captions
+4) .bento 3–4 .bento-card (photo, tag, title, blurb, link)
+5) .split about (media + copy + checklist from bio)
+6) .mosaic gallery from provided image URLs (first cell wide)
+7) Optional honest .quote cards (no fake star widgets)
+8) .cta-panel → contact.html
+9) .site-footer multi-column + .mobile-tabbar (fixed bottom)
 
-B) Club One Africa (family / community / multi-audience):
-- Rich :root tokens (brand greens/oranges or niche equivalents): --text --muted --border --shadow --radius-sm/md/lg --container --transition
-- Header with IMAGE .site-logo (not text-only when profile image exists)
-- Two-column heroes; section labels + headings; card grids; multi-column footer with logo + links + contact
-- .reveal + IO → .active (or .is-visible); smooth transitions cubic-bezier(.2,.8,.2,1)
+CSS required: :root tokens (ink/surface/line/text/muted/accent/radius/fonts); fixed header + .is-scrolled blur; pill buttons + hover lift; hero overlays; bento hover; .reveal/.is-visible; desktop nav ≥900px; tabbar only <900px + body padding-bottom.
+JS required: menu toggle, header scroll class, IntersectionObserver reveals, #contact-form → wa.me from body[data-wa], footer year.
 
-C) Pax & Pearl BodyWorks (spa / wellness / services):
-- Calm palette, strong typography hierarchy
-- data-goke hooks on sections for editor
-- Fixed bottom mobile tab bar on small screens + body padding-bottom
-- Pages: index, about, services, gallery, contact — same header/footer chrome every page
-
-FAIL CONDITIONS (do not ship):
-- White empty hero, missing footer, desktop-only nav with no mobile menu
-- Single page only, or identical title/description on every page
-- Lorem, fake star ratings, invented awards, placeholder "Your headline here"
-- CSS without :root tokens; buttons with no hover state
-- Contact page without working form → WhatsApp path when phone known
-
-PASS CONDITIONS:
-- Looks intentional in a 3-second mobile scroll
-- Logo/wordmark visible; primary CTA obvious
-- Alive: reveal on scroll + hover affordances
-- Ready to publish as static HTML on Cloudflare Pages
+FAIL: empty/white hero, no mobile menu, no footer, single page, lorem, identical meta titles, generic light bootstrap look.
 
 === PREMIUM HEADER (identical every page, horizontally aligned) ===
 Structure — single row flex, space-between, vertically centered:
@@ -1004,65 +986,29 @@ function parseMultiPage(
 
 /** Baseline CSS so weak model output still feels premium & alive */
 function ensurePremiumCss(css: string): string {
-  const extras = `
-/* goke-premium-baseline */
-:root{--goke-primary:#3b82f6;--goke-text:#111;--goke-muted:#6b7280;--goke-bg:#fff;--goke-surface:#f8fafc;--goke-border:#e2e8f0}
-*{box-sizing:border-box}
-html{scroll-behavior:smooth}
-body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--goke-text);background:var(--goke-bg);line-height:1.55}
-img{max-width:100%;height:auto;display:block}
-a{color:inherit}
-.site-header{position:sticky;top:0;z-index:100;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);background:rgba(255,255,255,.86);border-bottom:1px solid var(--goke-border)}
-.site-header.is-scrolled{box-shadow:0 8px 30px rgba(0,0,0,.08)}
-.nav-bar{display:flex;align-items:center;justify-content:space-between;gap:1rem;max-width:1200px;margin:0 auto;padding:.85rem 1.25rem}
-.brand{display:inline-flex;align-items:center;gap:.65rem;text-decoration:none;font-weight:700}
-.brand-logo,.site-logo{height:40px;width:auto;max-height:48px;max-width:160px;object-fit:contain;border-radius:8px}
-.desktop-nav,.site-nav .nav-list{display:flex;align-items:center;gap:1.35rem;list-style:none;margin:0;padding:0}
-.desktop-nav a,.nav-list a{text-decoration:none;font-size:.92rem;font-weight:500;opacity:.85}
-.desktop-nav a:hover,.nav-list a:hover{opacity:1}
-.nav-toggle,.menu-toggle{display:none;background:transparent;border:0;cursor:pointer;padding:6px;flex-direction:column;gap:5px}
-.nav-toggle-bar,.menu-toggle span{display:block;width:22px;height:2px;background:#111;border-radius:1px}
-.mobile-nav{display:none}
-.header-ctas a,.btn,a[data-goke=button],button[data-goke=button]{transition:transform .2s ease,box-shadow .2s ease,background .2s ease}
-.header-ctas a:hover,.btn:hover{transform:translateY(-1px)}
-.site-section,.reveal{opacity:0;transform:translateY(28px);transition:opacity .7s ease,transform .7s ease}
-.site-section.is-visible,.site-section.active,.reveal.is-visible,.reveal.active{opacity:1;transform:none}
-.hero-grid{display:grid;gap:2rem;align-items:center;max-width:1200px;margin:0 auto;padding:3rem 1.25rem}
-@media(min-width:900px){.hero-grid{grid-template-columns:1.1fr .9fr}}
-.site-footer{border-top:1px solid var(--goke-border);background:var(--goke-surface);margin-top:3rem}
-.footer-inner{display:grid;gap:2rem;max-width:1200px;margin:0 auto;padding:3rem 1.25rem}
-@media(min-width:768px){.footer-inner{grid-template-columns:2fr 1fr 1fr}}
-.footer-bottom{max-width:1200px;margin:0 auto;padding:1rem 1.25rem 1.5rem;font-size:.8rem;color:var(--goke-muted);border-top:1px solid var(--goke-border)}
-@media(max-width:767px){
-  .nav-toggle,.menu-toggle{display:inline-flex}
-  .desktop-nav{display:none!important}
-  .mobile-nav.is-open,.mobile-nav:not([hidden]){display:flex;flex-direction:column;gap:.5rem;padding:1rem 1.25rem;border-top:1px solid var(--goke-border);background:#fff}
-  .site-footer{position:fixed;bottom:0;left:0;right:0;z-index:90;margin:0;padding:0;background:rgba(255,255,255,.94);backdrop-filter:blur(12px);border-top:1px solid var(--goke-border);box-shadow:0 -8px 30px rgba(0,0,0,.06)}
-  .footer-inner,.footer-bottom{display:none}
-  .site-footer::after{content:"";display:flex;justify-content:space-around;padding:.55rem .5rem calc(.55rem + env(safe-area-inset-bottom));font-size:.65rem}
-  body{padding-bottom:4.5rem}
-}
-`;
-  if (css.includes("goke-premium-baseline")) return css;
-  return css + "\n" + extras;
-}
-
-function injectWaAttr(html: string, wa: string | null): string {
-  if (!wa) {
-    if (/<body[^>]*>/i.test(html) && !/data-wa=/i.test(html)) {
-      return html.replace(/<body/i, '<body data-wa=""');
-    }
-    return html;
+  // Fill gaps only — never force a light generic theme over bespoke :root
+  let out = css || "";
+  const has = (s: string) => out.includes(s);
+  const bits: string[] = [];
+  if (!has("scroll-behavior")) bits.push("html{scroll-behavior:smooth}");
+  if (!has("box-sizing")) bits.push("*,*::before,*::after{box-sizing:border-box}");
+  if (!has(".reveal") && !has(".is-visible")) {
+    bits.push(
+      ".reveal{opacity:0;transform:translateY(28px);transition:opacity .7s ease,transform .7s ease}",
+      ".reveal.is-visible,.reveal.active,.site-section.is-visible{opacity:1;transform:none}"
+    );
   }
-  if (/data-wa=/i.test(html)) {
-    return html.replace(/data-wa="[^"]*"/i, `data-wa="${wa}"`);
+  if (!has("mobile-tabbar") && !has("bottom-tab") && !has("mobile-nav-tab")) {
+    bits.push(
+      "@media(max-width:899px){body{padding-bottom:calc(64px + env(safe-area-inset-bottom,0px))}",
+      ".mobile-tabbar{position:fixed;left:0;right:0;bottom:0;z-index:90;display:flex;justify-content:space-around;padding:8px 6px calc(8px + env(safe-area-inset-bottom,0px));background:rgba(7,9,15,.92);backdrop-filter:blur(16px);border-top:1px solid rgba(255,255,255,.08)}",
+      ".mobile-tabbar a{flex:1;text-align:center;font-size:10px;font-weight:600;color:#8b93a7;text-decoration:none;padding:6px 4px}",
+      ".mobile-tabbar a[aria-current=page],.mobile-tabbar a.active{color:var(--lime,var(--primary,#c8ff3d))}}"
+    );
   }
-  if (/<body/i.test(html)) {
-    return html.replace(/<body/i, `<body data-wa="${wa}"`);
-  }
-  return html;
+  if (bits.length) out += "\n/* goke-premium-gaps */\n" + bits.join("\n");
+  return out;
 }
-
 
 function ensureLiveScript(js: string, waNumber: string | null): string {
   let out = ensureWhatsAppScript(js, waNumber);
