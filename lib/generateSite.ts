@@ -448,7 +448,7 @@ export async function generateSite(
   const titles = captionTitles(profile);
 
   const systemPrompt =
-    "You are a Principal Frontend Engineer shipping production static multi-page sites at the quality of Club One Africa and Pax & Pearl Body Works: real logo in header, CSS design tokens, sticky horizontal nav, mobile hamburger panel, multi-column footer, mobile app-style bottom tab bar, scroll-reveal sections, dual CTAs, and niche-accurate photography. Output ONLY HTML5. CRITICAL SEO (every HTML page): unique <title>, meta name='description', meta name='viewport', Open Graph og:title/og:description, semantic landmarks (header/main/footer), one H1 per page, img alt text, lang='en' on <html>.  Output ONLY HTML5 pages + one styles.css + one script.js. No React, no Tailwind CDN, no Bootstrap. No markdown, no lorem, no TODO.";
+    "You are a Principal Frontend Engineer. MINIMUM quality bar = real shipped sites: iFitness (dark performance studio, Syne + Plus Jakarta, lime accent, sticky header, hamburger + mobile-nav panel, immersive hero with full-bleed photo + sharp H1, dual CTAs, reveal sections, WA form), Club One Africa (full CSS design tokens, sticky header with IMAGE logo, desktop nav + nav-cta, two-column hero, card grids, multi-column footer, IntersectionObserver .reveal.active), Pax & Pearl BodyWorks (calm spa tokens, logo in header, dual CTAs, fixed bottom mobile tab bar, body padding-bottom, multi-page Home/About/Services/Gallery/Contact). Reject bare templates. Every site must pass: (1) :root design tokens, (2) logo or strong wordmark in header on EVERY page, (3) sticky header + mobile menu that works, (4) hero with real photo never blank white, (5) scroll-reveal, (6) multi-column footer, (7) contact form → WhatsApp, (8) unique SEO title+description per page. Output ONLY HTML5 pages + one styles.css + one script.js. No React, no Tailwind CDN, no Bootstrap, no markdown, no lorem, no TODO.";
   const userPrompt =
     buildPrompt(profile, niche, waNumber, galleryUrls, titles) + "\n\n" + intel;
 
@@ -459,7 +459,7 @@ export async function generateSite(
       { role: "user", content: userPrompt },
     ],
     maxTokens: 16000,
-    temperature: 0.4,
+    temperature: 0.32,
   });
 
   const raw: string = ai.content ?? "";
@@ -754,12 +754,42 @@ Include CSS for mobile floating footer tab bar (position:fixed; bottom:0) and bo
 5) contact.html — Pitch → form#contact-form (name, email, message) + submit data-goke="button" → WhatsApp/contact
 
 
-=== PRODUCTION QUALITY BAR (match real agency static sites) ===
-Reference quality (structure only — do not copy their content/branding):
-1) Club One Africa style: sticky header with IMAGE logo + horizontal desktop links + primary nav-cta + hamburger; separate mobile-nav panel; hero as TWO-COLUMN grid (copy + large photo); section-label + section-heading; card grids with .reveal; multi-column footer with logo again; WhatsApp CTAs; CSS :root tokens; IntersectionObserver adds .active on .reveal.
-2) Pax & Pearl style: brand logo image; immersive hero (image/overlay, dual primary/secondary buttons); fixed bottom mobile-nav tab bar (icon or short label + text) on small screens; body padding-bottom so content clears the bar; calm spa or high-energy fitness tokens depending on niche.
+=== PRODUCTION QUALITY BAR (NON-NEGOTIABLE — match these real sites) ===
+These three shipped sites define the MINIMUM. Structure/patterns only — do NOT copy their names, copy, or assets.
 
-Your output must feel like those sites: polished spacing, real logo, alive scroll motion — not a bare Bootstrap skeleton.
+A) iFitness (fitness / performance):
+- Fonts: display Syne (or equivalent bold geometric) + body Plus Jakarta Sans / DM Sans
+- Dark theme OK for fitness/tech; light for spa/food/family — always intentional
+- Sticky .site-header; .is-scrolled after scrollY > 16
+- Brand wordmark or logo left; .desktop-nav center/right; .btn-primary header CTA; hamburger → #mobileNav panel (hidden until open)
+- Hero: full-bleed image OR split visual+copy; kicker; H1 with line break personality; lead; TWO buttons (primary + ghost)
+- Sections: tight max-width ~1180px; generous padding; pillar cards; gallery teaser; final CTA band
+- script.js: menu toggle, IntersectionObserver .reveal → .is-visible, contact form → wa.me, year in footer
+
+B) Club One Africa (family / community / multi-audience):
+- Rich :root tokens (brand greens/oranges or niche equivalents): --text --muted --border --shadow --radius-sm/md/lg --container --transition
+- Header with IMAGE .site-logo (not text-only when profile image exists)
+- Two-column heroes; section labels + headings; card grids; multi-column footer with logo + links + contact
+- .reveal + IO → .active (or .is-visible); smooth transitions cubic-bezier(.2,.8,.2,1)
+
+C) Pax & Pearl BodyWorks (spa / wellness / services):
+- Calm palette, strong typography hierarchy
+- data-goke hooks on sections for editor
+- Fixed bottom mobile tab bar on small screens + body padding-bottom
+- Pages: index, about, services, gallery, contact — same header/footer chrome every page
+
+FAIL CONDITIONS (do not ship):
+- White empty hero, missing footer, desktop-only nav with no mobile menu
+- Single page only, or identical title/description on every page
+- Lorem, fake star ratings, invented awards, placeholder "Your headline here"
+- CSS without :root tokens; buttons with no hover state
+- Contact page without working form → WhatsApp path when phone known
+
+PASS CONDITIONS:
+- Looks intentional in a 3-second mobile scroll
+- Logo/wordmark visible; primary CTA obvious
+- Alive: reveal on scroll + hover affordances
+- Ready to publish as static HTML on Cloudflare Pages
 
 === PREMIUM HEADER (identical every page, horizontally aligned) ===
 Structure — single row flex, space-between, vertically centered:
