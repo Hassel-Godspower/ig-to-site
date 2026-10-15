@@ -3,6 +3,13 @@ import Link from "next/link";
 import { SiteHeader } from "../components/marketing/SiteHeader";
 import { SiteFooter } from "../components/marketing/SiteFooter";
 
+/** HighValue / gòke WhatsApp — community access requests */
+const WHATSAPP_COMMUNITY =
+  "https://wa.me/2347065341105?text=" +
+  encodeURIComponent(
+    "Hi — I’ve built a site with gòke and I’d like access to the Gòke Builders community."
+  );
+
 export const metadata: Metadata = {
   title: "Gòke Builders — Build websites. Sell them. Build your income.",
   description:
@@ -88,20 +95,48 @@ const steps = [
 const gateSteps = [
   "Build your first website",
   "Publish or complete your project",
-  "Request Builder access",
+  "Request Builder access on WhatsApp",
   "Join the Gòke Builders community",
   "Learn advanced techniques",
   "Start building for clients",
 ];
 
 const communityPerks = [
-  { icon: "🎥", title: "Design tutorials", body: "Practical videos on creating better websites." },
-  { icon: "💡", title: "Design inspiration", body: "Layouts, ideas, compositions, creative approaches." },
-  { icon: "🧠", title: "Gòke tips", body: "Shortcuts and techniques to get more from the platform." },
-  { icon: "🛠️", title: "Practical guides", body: "Step-by-step builds for different business types." },
-  { icon: "📐", title: "Design principles", body: "Make sites look professional — not just functional." },
-  { icon: "💼", title: "Business guidance", body: "Approach clients, present work, package your service." },
-  { icon: "🤝", title: "Community", body: "Connect with other builders using gòke." },
+  {
+    icon: "🎥",
+    title: "Design tutorials",
+    body: "Practical videos on creating better websites.",
+  },
+  {
+    icon: "💡",
+    title: "Design inspiration",
+    body: "Layouts, ideas, compositions, creative approaches.",
+  },
+  {
+    icon: "🧠",
+    title: "Gòke tips",
+    body: "Shortcuts and techniques to get more from the platform.",
+  },
+  {
+    icon: "🛠️",
+    title: "Practical guides",
+    body: "Step-by-step builds for different business types.",
+  },
+  {
+    icon: "📐",
+    title: "Design principles",
+    body: "Make sites look professional — not just functional.",
+  },
+  {
+    icon: "💼",
+    title: "Business guidance",
+    body: "Approach clients, present work, package your service.",
+  },
+  {
+    icon: "🤝",
+    title: "Community",
+    body: "Connect with other builders using gòke.",
+  },
 ];
 
 const templates = [
@@ -120,9 +155,21 @@ const templates = [
 const levels = [
   { level: "01", name: "Explorer", desc: "You’ve discovered gòke." },
   { level: "02", name: "Builder", desc: "You’ve built your first website." },
-  { level: "03", name: "Gòke Builder", desc: "You’re actively creating websites." },
-  { level: "04", name: "Professional", desc: "You’re serving multiple clients." },
-  { level: "05", name: "Power Builder", desc: "Consistent delivery — a real web-design practice." },
+  {
+    level: "03",
+    name: "Gòke Builder",
+    desc: "You’re actively creating websites.",
+  },
+  {
+    level: "04",
+    name: "Professional",
+    desc: "You’re serving multiple clients.",
+  },
+  {
+    level: "05",
+    name: "Power Builder",
+    desc: "Consistent delivery — a real web-design practice.",
+  },
 ];
 
 const studentIdeas = [
@@ -152,8 +199,9 @@ export default function BuildersPage() {
               <em>Build again.</em>
             </h1>
             <p className="gb-hero-lead">
-              Gòke gives students, designers, developers, and tech enthusiasts the tools to create
-              professional websites for real businesses — without building every site from scratch.
+              Gòke gives students, designers, developers, and tech enthusiasts the tools to
+              create professional websites for real businesses — without building every site
+              from scratch.
             </p>
             <p className="gb-hero-sub">
               Build with gòke. Sell with confidence. Build again.
@@ -213,8 +261,8 @@ export default function BuildersPage() {
             <div className="gk-section-head">
               <h2>Example economics</h2>
               <p>
-                Your client doesn’t need to know how long it took. They care about the result. You
-                set the price. Gòke charges a one-time publish fee per site.
+                Your client doesn’t need to know how long it took. They care about the result.
+                You set the price. Gòke charges a one-time publish fee per site.
               </p>
             </div>
             <div className="gb-econ">
@@ -246,21 +294,67 @@ export default function BuildersPage() {
                   </li>
                 </ul>
                 <p className="gb-econ-punch">
-                  Your earning potential grows with the number of websites you successfully sell and
-                  deliver.
+                  Your earning potential grows with the number of websites you successfully
+                  sell and deliver.
                 </p>
               </div>
             </div>
             <p className="gb-disclaimer">
-              Example only. Gòke does not guarantee client acquisition, selling prices, or earnings.
-              Builders set their own prices and are responsible for delivering services to their
-              clients.
+              Example only. Gòke does not guarantee client acquisition, selling prices, or
+              earnings. Builders set their own prices and are responsible for delivering
+              services to their clients.
+            </p>
+          </div>
+        </section>
+
+        {/* Publish pricing */}
+        <section className="gk-section" id="builders-pricing">
+          <div className="gk-container" style={{ maxWidth: 800 }}>
+            <div className="gk-section-head">
+              <h2>Publish pricing (same for everyone)</h2>
+              <p>
+                Clients pay gòke to go live. You can charge them more for design, content, and
+                ongoing help — the platform fee does not change.
+              </p>
+            </div>
+            <ul
+              style={{
+                lineHeight: 1.7,
+                color: "var(--gk-muted)",
+                paddingLeft: "1.2rem",
+              }}
+            >
+              <li>
+                <strong style={{ color: "var(--gk-text)" }}>₦20,000 once</strong> — live site
+                on Cloudflare Pages, free <code>yourusername.pages.dev</code> subdomain
+              </li>
+              <li>
+                <strong style={{ color: "var(--gk-text)" }}>₦30,000 / year</strong> — optional
+                custom domain (.com / .org / .com.ng)
+              </li>
+              <li>
+                Optional add-ons: ecommerce engine, SEO/AEO, Branded, web app — priced
+                separately
+              </li>
+              <li>
+                gòke is{" "}
+                <strong style={{ color: "var(--gk-text)" }}>not a marketplace</strong> and does
+                not bring customers; you deliver a website they own and control
+              </li>
+              <li>
+                Open to students, tech enthusiasts, freelancers, agencies, and business owners
+              </li>
+            </ul>
+            <p style={{ marginTop: "1.25rem" }}>
+              <Link href="/#what-you-get" className="gk-btn gk-btn-ghost">
+                Full inclusions &amp; FAQ on homepage
+              </Link>
             </p>
           </div>
         </section>
 
         {/* Who for */}
-        <section className="gk-section" id="who">
+        <section className="gk-section gk-section-alt" id="who">
           <div className="gk-container">
             <div className="gk-section-head">
               <h2>Who is this for?</h2>
@@ -281,7 +375,7 @@ export default function BuildersPage() {
         </section>
 
         {/* How it works */}
-        <section className="gk-section gk-section-alt" id="how">
+        <section className="gk-section" id="how">
           <div className="gk-container">
             <div className="gk-section-head">
               <h2>How it works</h2>
@@ -302,15 +396,15 @@ export default function BuildersPage() {
         </section>
 
         {/* Gate */}
-        <section className="gk-section" id="join">
+        <section className="gk-section gk-section-alt" id="join">
           <div className="gk-container gb-gate">
             <h2>Want to become a Gòke Builder?</h2>
             <p className="gb-gate-lead">
               <strong>Build first. Join second.</strong>
             </p>
             <p>
-              We don’t want people joining just to watch tutorials. We want people who have opened
-              gòke, built a website, and experienced the platform.
+              We don’t want people joining just to watch tutorials. We want people who have
+              opened gòke, built a website, and experienced the platform.
             </p>
             <ol className="gb-gate-list">
               {gateSteps.map((s, i) => (
@@ -325,22 +419,31 @@ export default function BuildersPage() {
                 Build your first website
               </a>
               <a
-                href="https://t.me/"
+                href={WHATSAPP_COMMUNITY}
                 className="gk-btn gk-btn-ghost"
                 target="_blank"
-                rel="noreferrer"
+                rel="noopener noreferrer"
               >
-                Request Builders access
+                Request access on WhatsApp
               </a>
             </div>
             <p className="gb-gate-note">
-              Replace the Telegram link with your real community invite when ready.
+              Message{" "}
+              <a
+                href={WHATSAPP_COMMUNITY}
+                style={{ color: "var(--gk-accent)" }}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                +234 706 534 1105
+              </a>{" "}
+              after you’ve completed a build. We’ll reply with community access details.
             </p>
           </div>
         </section>
 
         {/* Community */}
-        <section className="gk-section gk-section-alt" id="community">
+        <section className="gk-section" id="community">
           <div className="gk-container">
             <div className="gk-section-head">
               <h2>Gòke Builders community</h2>
@@ -355,11 +458,21 @@ export default function BuildersPage() {
                 </article>
               ))}
             </div>
+            <p style={{ marginTop: "1.5rem" }}>
+              <a
+                href={WHATSAPP_COMMUNITY}
+                className="gk-btn gk-btn-primary"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Request community access on WhatsApp
+              </a>
+            </p>
           </div>
         </section>
 
         {/* Templates */}
-        <section className="gk-section" id="templates">
+        <section className="gk-section gk-section-alt" id="templates">
           <div className="gk-container">
             <div className="gk-section-head">
               <h2>Build for almost any business</h2>
@@ -374,20 +487,20 @@ export default function BuildersPage() {
               ))}
             </div>
             <p className="gb-template-foot">
-              Fashion brands, restaurants, hotels, real estate, clinics, professionals, schools,
-              churches, startups, local businesses — and more.
+              Fashion brands, restaurants, hotels, real estate, clinics, professionals,
+              schools, churches, startups, local businesses — and more.
             </p>
           </div>
         </section>
 
         {/* Students */}
-        <section className="gk-section gk-section-alt" id="students">
+        <section className="gk-section" id="students">
           <div className="gk-container gb-students">
             <h2>Students: don’t wait until graduation</h2>
             <p>
-              Learn by creating actual websites. Your first project doesn’t have to be perfect —
-              it’s your first case study. The second can be better. The third can be faster. The
-              tenth can become a business.
+              Learn by creating actual websites. Your first project doesn’t have to be perfect
+              — it’s your first case study. The second can be better. The third can be faster.
+              The tenth can become a business.
             </p>
             <p className="gb-students-label">Build a website for:</p>
             <ul className="gb-student-ideas">
@@ -402,7 +515,7 @@ export default function BuildersPage() {
         </section>
 
         {/* Levels */}
-        <section className="gk-section" id="levels">
+        <section className="gk-section gk-section-alt" id="levels">
           <div className="gk-container">
             <div className="gk-section-head">
               <h2>The progression</h2>
@@ -426,12 +539,13 @@ export default function BuildersPage() {
         </section>
 
         {/* Three-sided model */}
-        <section className="gk-section gk-section-alt">
+        <section className="gk-section">
           <div className="gk-container">
             <div className="gk-section-head">
               <h2>A network, not a tutorial club</h2>
               <p>
-                Gòke Builders is a network of people using gòke to deliver websites to businesses.
+                Gòke Builders is a network of people using gòke to deliver websites to
+                businesses.
               </p>
             </div>
             <div className="gb-triad">
@@ -455,8 +569,8 @@ export default function BuildersPage() {
               </article>
             </div>
             <p className="gb-triad-note">
-              The builder earns from the service. Gòke earns from the platform. More websites sold
-              means more websites created on gòke.
+              The builder earns from the service. Gòke earns from the platform. More websites
+              sold means more websites created on gòke.
             </p>
           </div>
         </section>
@@ -467,64 +581,25 @@ export default function BuildersPage() {
             <h2>Your first website is waiting</h2>
             <p>
               You don’t need a client. You don’t need a company. You don’t need to be an expert.
-              Open gòke. Build something. Once you’ve completed your first website, request access
-              to the Gòke Builders community.
+              Open gòke. Build something. Once you’ve completed your first website, request
+              access to the Gòke Builders community on WhatsApp.
             </p>
             <div className="gb-hero-actions" style={{ justifyContent: "center" }}>
               <a href="/#start" className="gk-btn gk-btn-primary gk-btn-lg">
                 Start building with gòke
               </a>
               <a
-                href="https://t.me/"
+                href={WHATSAPP_COMMUNITY}
                 className="gk-btn gk-btn-ghost gk-btn-lg"
                 target="_blank"
-                rel="noreferrer"
+                rel="noopener noreferrer"
               >
-                Already built? Request access
+                Request access on WhatsApp
               </a>
             </div>
           </div>
         </section>
       </main>
-
-        <section className="gk-section gk-section-alt" id="builders-pricing">
-          <div className="gk-container" style={{ maxWidth: 800 }}>
-            <div className="gk-section-head">
-              <h2>Publish pricing (same for everyone)</h2>
-              <p>
-                Clients pay gòke to go live. You can charge them more for design,
-                content, and ongoing help — the platform fee does not change.
-              </p>
-            </div>
-            <ul style={{ lineHeight: 1.7, color: "var(--gk-muted)", paddingLeft: "1.2rem" }}>
-              <li>
-                <strong style={{ color: "var(--gk-text)" }}>₦20,000 once</strong> — live site
-                on Cloudflare Pages, free <code>yourusername.pages.dev</code> subdomain
-              </li>
-              <li>
-                <strong style={{ color: "var(--gk-text)" }}>₦30,000 / year</strong> — optional
-                custom domain (.com / .org / .com.ng)
-              </li>
-              <li>
-                Optional add-ons: ecommerce engine, SEO/AEO, Branded, web app — priced
-                separately
-              </li>
-              <li>
-                gòke is <strong style={{ color: "var(--gk-text)" }}>not a marketplace</strong> and
-                does not bring customers; you deliver a website they own and control
-              </li>
-              <li>
-                Open to students, tech enthusiasts, freelancers, agencies, and business owners
-              </li>
-            </ul>
-            <p style={{ marginTop: "1.25rem" }}>
-              <Link href="/#what-you-get" className="gk-btn gk-btn-ghost">
-                Full inclusions &amp; FAQ on homepage
-              </Link>
-            </p>
-          </div>
-        </section>
-
       <SiteFooter />
     </>
   );
