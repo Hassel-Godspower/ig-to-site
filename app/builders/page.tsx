@@ -6,7 +6,7 @@ import { SiteFooter } from "../components/marketing/SiteFooter";
 export const metadata: Metadata = {
   title: "Gòke Builders — Build websites. Sell them. Build your income.",
   description:
-    "Turn web skills into a business. Build professional websites with gòke, sell to real clients, keep the difference. For students, designers, freelancers, and tech enthusiasts.",
+    "Build websites with gòke for clients or yourself. Students, designers, freelancers, tech enthusiasts, and business owners — not a marketplace; a site you own.",
 };
 
 const audiences = [
@@ -486,6 +486,45 @@ export default function BuildersPage() {
           </div>
         </section>
       </main>
+
+        <section className="gk-section gk-section-alt" id="builders-pricing">
+          <div className="gk-container" style={{ maxWidth: 800 }}>
+            <div className="gk-section-head">
+              <h2>Publish pricing (same for everyone)</h2>
+              <p>
+                Clients pay gòke to go live. You can charge them more for design,
+                content, and ongoing help — the platform fee does not change.
+              </p>
+            </div>
+            <ul style={{ lineHeight: 1.7, color: "var(--gk-muted)", paddingLeft: "1.2rem" }}>
+              <li>
+                <strong style={{ color: "var(--gk-text)" }}>₦20,000 once</strong> — live site
+                on Cloudflare Pages, free <code>yourusername.pages.dev</code> subdomain
+              </li>
+              <li>
+                <strong style={{ color: "var(--gk-text)" }}>₦30,000 / year</strong> — optional
+                custom domain (.com / .org / .com.ng)
+              </li>
+              <li>
+                Optional add-ons: ecommerce engine, SEO/AEO, Branded, web app — priced
+                separately
+              </li>
+              <li>
+                gòke is <strong style={{ color: "var(--gk-text)" }}>not a marketplace</strong> and
+                does not bring customers; you deliver a website they own and control
+              </li>
+              <li>
+                Open to students, tech enthusiasts, freelancers, agencies, and business owners
+              </li>
+            </ul>
+            <p style={{ marginTop: "1.25rem" }}>
+              <Link href="/#what-you-get" className="gk-btn gk-btn-ghost">
+                Full inclusions &amp; FAQ on homepage
+              </Link>
+            </p>
+          </div>
+        </section>
+
       <SiteFooter />
     </>
   );
