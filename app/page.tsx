@@ -5,13 +5,13 @@ import { HeroRotator } from "./components/marketing/HeroRotator";
 import { HowItWorks } from "./components/marketing/HowItWorks";
 import { LiveExamples } from "./components/marketing/LiveExamples";
 import { PricingTeaser } from "./components/marketing/PricingTeaser";
+import { PricingWhatYouGet } from "./components/marketing/PricingWhatYouGet";
 import { AboutGoke } from "./components/marketing/AboutGoke";
 import { SiteFooter } from "./components/marketing/SiteFooter";
 import Link from "next/link";
 
 /**
- * Lean homepage — only what converts:
- * Hero → How it works → Live sites → Demo → Pricing → About → CTA
+ * Lean homepage + clear pricing scope
  */
 export default function HomePage() {
   return (
@@ -19,7 +19,6 @@ export default function HomePage() {
       <SiteHeader />
 
       <main>
-        {/* 1. Hero + generate */}
         <section className="gk-hero" id="start">
           <div className="gk-container gk-hero-grid">
             <div>
@@ -29,13 +28,9 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* 2. Three steps */}
         <HowItWorks />
-
-        {/* 3. Live customer sites */}
         <LiveExamples />
 
-        {/* 4. Demo video */}
         <section className="gk-section gk-section-alt" id="demo">
           <div className="gk-container">
             <div className="gk-section-head">
@@ -57,19 +52,16 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* 5. Price */}
         <PricingTeaser />
-
-        {/* 6. Who / contact */}
+        <PricingWhatYouGet />
         <AboutGoke />
 
-        {/* 7. Final CTA */}
         <section className="gk-cta-band">
           <div className="gk-container">
             <h2>Ready when your Instagram is</h2>
             <p>
               Type your handle or upload an export — preview free, pay once to go
-              live.
+              live on yourusername.pages.dev.
             </p>
             <a href="#start" className="gk-btn gk-btn-primary gk-btn-lg">
               Generate my site

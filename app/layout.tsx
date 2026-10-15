@@ -5,6 +5,7 @@ import "./hero-mobile.css";
 import "./hero-rotator.css";
 import "./app-shell.css";
 import "./brand-highvalue.css";
+import "./pricing-faq.css";
 import { CodeCascadePreloader } from "./components/CodeCascadePreloader";
 import { PwaInstallPrompt } from "./components/PwaInstallPrompt";
 import { MobileAppTabBar } from "./components/MobileAppTabBar";
