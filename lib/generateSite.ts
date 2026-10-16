@@ -1,7 +1,13 @@
 import type { InstagramProfile } from "./parseInstagramExport";
-import { buildNicheCuratedImages } from "./lagosNicheImages";
+import {
+  buildNicheCuratedImages,
+  resolveImagesForNiche,
+  detectImagePackId,
+} from "./lagosNicheImages";
 import { blueprintPromptSection, resolveNicheBlueprint, pagesJsonFromBlueprint } from "./blueprintPrompt";
 import { toLegacyNicheId } from "./nicheCompat";
+import { chatWithFallback } from "./ai";
+import { ensureCommerceBookingScript } from "./staticCommerceRuntime";
 
 /**
  * Multi-page niche-aware static site via Groq.
@@ -275,14 +281,21 @@ function resolveGalleryUrls(profile: InstagramProfile, nicheId: string): string[
       typeof u === "string" &&
       /^https?:\/\//i.test(u) &&
       !u.includes("example.com") &&
-      !u.includes("picsum.photos")
+      !u.includes("picsum.photos") &&
+      !u.includes("placehold")
   );
-  const curated =
-    NICHE_CURATED_IMAGES[nicheId] || NICHE_CURATED_IMAGES.general_business;
+  // Exclusive niche pack only — never mix e.g. café images into restaurant
+  const curated = resolveImagesForNiche(nicheId);
+  const fallback =
+    curated.length > 0
+      ? curated
+      : NICHE_CURATED_IMAGES[nicheId] ||
+        NICHE_CURATED_IMAGES.general_business ||
+        [];
   const out = [...fromIg];
   let i = 0;
-  while (out.length < 8) {
-    out.push(curated[i % curated.length]);
+  while (out.length < 8 && fallback.length > 0) {
+    out.push(fallback[i % fallback.length]);
     i++;
   }
   return out.slice(0, 12);
@@ -414,41 +427,53 @@ export async function generateSite(
   // Map blueprint → legacy guide id for Lagos image packs
   const legacyId = toLegacyNicheId(bp.id);
   const niche = detectNiche(profile);
-  // Prefer legacy mapping when user picked a fine-grained niche
-  const imageNicheId = legacyId !== "general_business" ? legacyId : niche.id;
+  // Prefer fine-grained exclusive pack from bio/captions, then blueprint id, then legacy
+  const textBlob = [
+    profile.name || "",
+    profile.username || "",
+    profile.bio || "",
+    ...profile.posts.map((p) => p.caption || ""),
+  ].join(" ");
+  const fromCaptions = detectImagePackId(textBlob);
+  const imageNicheId =
+    fromCaptions !== "general_business"
+      ? fromCaptions
+      : bp.id && bp.id !== "general_business"
+        ? bp.id
+        : legacyId !== "general_business"
+          ? legacyId
+          : niche.id;
   const waNumber = extractWhatsAppNumber(profile);
   const galleryUrls = resolveGalleryUrls(profile, imageNicheId);
   const titles = captionTitles(profile);
 
-  const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: "openai/gpt-oss-120b",
-      max_tokens: 16000,
-      temperature: 0.4,
-      messages: [
-        {
-          role: "system",
-          content:
-            "You are a Principal Frontend Engineer shipping production static multi-page sites at the quality of Club One Africa and Pax & Pearl Body Works: real logo in header, CSS design tokens, sticky horizontal nav, mobile hamburger panel, multi-column footer, mobile app-style bottom tab bar, scroll-reveal sections, dual CTAs, and niche-accurate photography. Output ONLY HTML5. CRITICAL SEO (every HTML page): unique <title>, meta name='description', meta name='viewport', Open Graph og:title/og:description, semantic landmarks (header/main/footer), one H1 per page, img alt text, lang='en' on <html>.  Output ONLY HTML5 pages + one styles.css + one script.js. No React, no Tailwind CDN, no Bootstrap. No markdown, no lorem, no TODO.",
-        },
-        { role: "user", content: buildPrompt(profile, niche, waNumber, galleryUrls, titles) + "\n\n" + intel },
-      ],
-    }),
+  const systemPrompt =
+    "You are a Principal Frontend Engineer shipping production static multi-page sites at the quality of Club One Africa and Pax & Pearl Body Works: real logo in header, CSS design tokens, sticky horizontal nav, mobile hamburger panel, multi-column footer, mobile app-style bottom tab bar, scroll-reveal sections, dual CTAs, and niche-accurate photography. Output ONLY HTML5. CRITICAL SEO (every HTML page): unique <title>, meta name='description', meta name='viewport', Open Graph og:title/og:description, semantic landmarks (header/main/footer), one H1 per page, img alt text, lang='en' on <html>.  Output ONLY HTML5 pages + one styles.css + one script.js. No React, no Tailwind CDN, no Bootstrap. No markdown, no lorem, no TODO.";
+  const userPrompt =
+    buildPrompt(profile, niche, waNumber, galleryUrls, titles) + "\n\n" + intel;
+
+  // Provider router: Groq → Gemini → Cerebras → OpenRouter (configured keys only)
+  const ai = await chatWithFallback({
+    messages: [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userPrompt },
+    ],
+    maxTokens: 16000,
+    temperature: 0.4,
   });
 
-  if (!res.ok) {
-    const errText = await res.text();
-    throw new Error(`Groq request failed (${res.status}): ${errText}`);
-  }
-
-  const data = await res.json();
-  const raw: string = data.choices?.[0]?.message?.content ?? "";
+  const raw: string = ai.content ?? "";
   const files = parseMultiPage(raw, profile, waNumber);
+  // Optional debug: which provider produced this site
+  try {
+    files["ai-provider.json"] = JSON.stringify(
+      { provider: ai.provider, model: ai.model, at: new Date().toISOString() },
+      null,
+      2
+    );
+  } catch {
+    /* optional */
+  }
 
   // Deterministic SEO pass on every HTML page
   const brand = profile.name || profile.username || "Business";
@@ -479,6 +504,7 @@ export async function generateSite(
       id: bp.id,
       label: bp.label,
       legacyId: niche.id,
+      imagePackId: imageNicheId,
       primaryCTA: bp.primaryCTA,
       primaryGoal: bp.primaryGoal,
       whatsapp: waNumber,
@@ -800,6 +826,20 @@ Mobile <768px — APP-STYLE FLOATING TAB FOOTER:
 
 <link rel="stylesheet" href="styles.css"> and <script src="script.js" defer></script> on every page.
 
+
+=== LAYER 6b — SHOP & BOOKING (when niche is retail/shop OR services/spa/salon/clinic/hotel) ===
+If ecommerce / shop / fashion / retail:
+- Include Shop or product grid with .goke-product cards:
+  data-product-id, data-product-name, data-product-price (numeric Naira in attribute, no ₦ symbol)
+- Buttons class="goke-add-cart"
+- Floating cart: .goke-cart-count and .goke-cart-checkout
+- Order completes via script.js → WhatsApp (data-wa on body). No fake payment gateways.
+
+If spa / salon / clinic / hotel / appointments:
+- Book section with form.goke-booking-form (name, phone, service, date, time, notes)
+- Service cards may use href="#book"
+- Submit → WhatsApp via script.js
+
 === LAYER 6 — script.js (site must feel ALIVE, not static) ===
 1) Mobile nav dropdown: .nav-toggle toggles #site-nav hidden/is-open + aria-expanded; close on link click when width < 768px
 2) #contact-form preventDefault → wa.me when data-wa set
@@ -1057,6 +1097,7 @@ function ensureLiveScript(js: string, waNumber: string | null): string {
 })();
 `;
   }
+  out = ensureCommerceBookingScript(out);
   return out;
 }
 
