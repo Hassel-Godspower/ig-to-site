@@ -1,3 +1,4 @@
+import { resolveOpulentDirection } from "./opulentDirection";
 /**
  * Deterministic premium shell (craft: ifitnessng.pages.dev).
  */
@@ -5,6 +6,11 @@ export type ShellTheme = {
   ink: string; ink2: string; surface: string; line: string;
   text: string; muted: string; accent: string; accentDim: string;
   accentGlow: string; onAccent: string; mode: "dark" | "light";
+  fontDisplay: string;
+  fontBody: string;
+  googleFontsHref: string;
+  radius: string;
+  radiusLg: string;
 };
 export type ShellService = { tag: string; title: string; body: string; image: string };
 export type ShellContent = {
@@ -24,22 +30,32 @@ const E = (s: string) =>
   String(s || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
 
 export function themeForNiche(nicheId: string, brandPrimary?: string): ShellTheme {
-  const id = (nicheId || "").toLowerCase();
-  if (brandPrimary && /^#[0-9a-fA-F]{6}$/.test(brandPrimary)) {
-    return { ink:"#07090f",ink2:"#0e121b",surface:"#131824",line:"rgba(255,255,255,0.08)",text:"#f2f4f8",muted:"#8b93a7",
-      accent:brandPrimary,accentDim:brandPrimary+"24",accentGlow:brandPrimary+"59",onAccent:"#0a0c10",mode:"dark" };
-  }
-  if (/spa|wellness|beauty|salon|massage/.test(id)) {
-    return { ink:"#f7f3ef",ink2:"#efe8e0",surface:"#fff",line:"rgba(40,30,20,0.1)",text:"#1c1917",muted:"#78716c",
-      accent:"#0f766e",accentDim:"rgba(15,118,110,0.12)",accentGlow:"rgba(15,118,110,0.25)",onAccent:"#fff",mode:"light" };
-  }
-  return { ink:"#07090f",ink2:"#0e121b",surface:"#131824",line:"rgba(255,255,255,0.08)",text:"#f2f4f8",muted:"#8b93a7",
-    accent:"#c8ff3d",accentDim:"rgba(200,255,61,0.14)",accentGlow:"rgba(200,255,61,0.35)",onAccent:"#0a0c10",mode:"dark" };
+  const o = resolveOpulentDirection(nicheId || "general_business");
+  const accent =
+    brandPrimary && /^#[0-9a-fA-F]{6}$/.test(brandPrimary) ? brandPrimary : o.accent;
+  return {
+    ink: o.ink,
+    ink2: o.ink2,
+    surface: o.surface,
+    line: o.mode === "dark" ? "rgba(255,255,255,0.08)" : "rgba(40,30,20,0.12)",
+    text: o.text,
+    muted: o.muted,
+    accent,
+    accentDim: `${accent}26`,
+    accentGlow: `${accent}59`,
+    onAccent: o.onAccent,
+    mode: o.mode,
+    fontDisplay: o.fontDisplay,
+    fontBody: o.fontBody,
+    googleFontsHref: o.googleFontsHref,
+    radius: o.radius,
+    radiusLg: o.radiusLg,
+  };
 }
 
 export function shellCss(theme: ShellTheme): string {
   const t = theme; const d = t.mode === "dark";
-  return `/* goke shell */:root{--ink:${t.ink};--ink-2:${t.ink2};--surface:${t.surface};--line:${t.line};--text:${t.text};--muted:${t.muted};--accent:${t.accent};--accent-dim:${t.accentDim};--accent-glow:${t.accentGlow};--on-accent:${t.onAccent};--radius:14px;--radius-lg:24px;--max:1180px;--font-display:"Syne",system-ui,sans-serif;--font-body:"Plus Jakarta Sans",system-ui,sans-serif}
+  return `/* goke shell */:root{--ink:${t.ink};--ink-2:${t.ink2};--surface:${t.surface};--line:${t.line};--text:${t.text};--muted:${t.muted};--accent:${t.accent};--accent-dim:${t.accentDim};--accent-glow:${t.accentGlow};--on-accent:${t.onAccent};--radius:${t.radius};--radius-lg:${t.radiusLg};--max:1180px;--font-display:${t.fontDisplay};--font-body:${t.fontBody}}
 *{box-sizing:border-box;margin:0;padding:0}html{scroll-behavior:smooth}body{font-family:var(--font-body);background:var(--ink);color:var(--text);line-height:1.65;min-height:100vh}
 img{max-width:100%;display:block}a{color:inherit;text-decoration:none}ul{list-style:none}
 h1,h2,h3{font-family:var(--font-display);font-weight:700;line-height:1.05;letter-spacing:-.03em}
@@ -104,11 +120,12 @@ export function shellJs(): string {
   return `document.addEventListener("DOMContentLoaded",()=>{document.querySelectorAll("[data-year]").forEach(el=>{el.textContent=String(new Date().getFullYear())});const header=document.querySelector(".site-header");if(header){const s=()=>header.classList.toggle("is-scrolled",window.scrollY>16);s();window.addEventListener("scroll",s,{passive:true})}const toggle=document.querySelector(".nav-toggle"),mobile=document.getElementById("mobileNav");if(toggle&&mobile){toggle.addEventListener("click",()=>{const o=mobile.classList.contains("is-open");if(o){mobile.classList.remove("is-open");mobile.setAttribute("hidden","");toggle.setAttribute("aria-expanded","false")}else{mobile.classList.add("is-open");mobile.removeAttribute("hidden");toggle.setAttribute("aria-expanded","true")}});mobile.querySelectorAll("a").forEach(a=>a.addEventListener("click",()=>{if(window.innerWidth<900){mobile.classList.remove("is-open");mobile.setAttribute("hidden","");toggle.setAttribute("aria-expanded","false")}}))}const reveals=document.querySelectorAll(".reveal");if("IntersectionObserver" in window){const io=new IntersectionObserver((ents,obs)=>{ents.forEach(e=>{if(e.isIntersecting){e.target.classList.add("is-visible");obs.unobserve(e.target)}})},{threshold:.12});reveals.forEach(el=>io.observe(el))}else reveals.forEach(el=>el.classList.add("is-visible"));const form=document.getElementById("contact-form");if(form){form.addEventListener("submit",e=>{e.preventDefault();const fd=new FormData(form);const lines=[];["name","email","message"].forEach(k=>{const v=fd.get(k);if(v)lines.push(k[0].toUpperCase()+k.slice(1)+": "+v)});const text=lines.join("\\n")||"Hello";const num=String(document.body.getAttribute("data-wa")||"").replace(/\\D/g,"");if(!num){alert("Thanks.");return}window.open("https://wa.me/"+num+"?text="+encodeURIComponent(text),"_blank","noopener")})}});`;
 }
 
-function head(title: string, desc: string) {
+function head(title: string, desc: string, fontsHref?: string) {
+  const fonts = fontsHref || "https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap";
   return `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>${E(title)}</title><meta name="description" content="${E(desc)}"/><meta property="og:title" content="${E(title)}"/><meta property="og:description" content="${E(desc)}"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet"/>
+<link href="${fonts}" rel="stylesheet"/>
 <link rel="stylesheet" href="styles.css"/><script src="script.js" defer></script></head>`;
 }
 function chrome(c: ShellContent, cur: string) {
@@ -146,15 +163,15 @@ export function contentFromProfile(
     brand,
     logoUrl: profile.profilePic || "",
     kicker: brand,
-    headlineLine1: "Built for",
-    headlineLine2: "your next client.",
-    lead: bio.slice(0, 180) || `${brand} helps people take action — clear offer, real presence, easy contact.`,
+    headlineLine1: brand.split(" ")[0] || brand,
+    headlineLine2: "crafted with intention.",
+    lead: bio.slice(0, 200) || `${brand} is built for clients who value clarity, craft, and a composed experience — from first look to final contact.`,
     primaryCta: opts.primaryCta || "Get in touch",
-    secondaryCta: "See services",
+    secondaryCta: "Explore",
     metrics: [
       { value: "01", label: "Discover" },
-      { value: "02", label: "Engage" },
-      { value: "03", label: "Book" },
+      { value: "02", label: "Experience" },
+      { value: "03", label: "Connect" },
     ],
     marquee: titles.slice(0, 5).map((x) => x.slice(0, 32)),
     services,
@@ -236,7 +253,7 @@ export function renderShellSite(c: ShellContent): Record<string, string> {
     )
     .join("");
   const heroImg = c.gallery[0]?.src || c.aboutImage;
-  const index = `${head(c.brand + " — " + c.kicker, desc)}<body data-wa="${E(c.waNumber)}">${ch.header}<main>
+  const index = `${head(c.brand + " — " + c.kicker, desc, c.theme.googleFontsHref)}<body data-wa="${E(c.waNumber)}">${ch.header}<main>
 <section class="hero"><div class="hero-visual"><img src="${E(heroImg)}" alt="${E(c.brand)}" width="1800" height="1200"/></div>
 <div class="hero-body"><p class="kicker">${E(c.kicker)}</p><h1 id="hero-headline">${E(c.headlineLine1)}<br><span class="line2">${E(c.headlineLine2)}</span></h1>
 <p class="hero-lead" id="hero-subheadline">${E(c.lead)}</p>
@@ -251,7 +268,7 @@ ${quotes ? `<section class="section"><div class="section-inner quotes">${quotes}
 </main>${ch.footer}${ch.tabbar}</body></html>`;
   const page = (file: string, title: string, body: string) => {
     const x = chrome(c, file);
-    return `${head(title + " · " + c.brand, desc)}<body data-wa="${E(c.waNumber)}">${x.header}<main><section class="page-top"><div class="section-inner"><h1>${E(title)}</h1><p>${E(c.lead)}</p></div></section>${body}</main>${x.footer}${x.tabbar}</body></html>`;
+    return `${head(title + " · " + c.brand, desc, c.theme.googleFontsHref)}<body data-wa="${E(c.waNumber)}">${x.header}<main><section class="page-top"><div class="section-inner"><h1>${E(title)}</h1><p>${E(c.lead)}</p></div></section>${body}</main>${x.footer}${x.tabbar}</body></html>`;
   };
   return {
     "index.html": index,

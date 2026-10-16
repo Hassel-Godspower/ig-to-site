@@ -13,6 +13,10 @@ import {
   parseShellContentJson,
   renderShellSite,
 } from "./premiumShell";
+import {
+  opulentPromptBlock,
+  shellSystemPromptOpulent,
+} from "./opulentDirection";
 
 /**
  * Multi-page niche-aware static site via Groq.
@@ -468,25 +472,27 @@ export async function generateSite(
     fallbackContent.logoUrl;
 
 
-  const systemPrompt =
-    "You write website COPY only as JSON for a premium multi-page business site. Do not output HTML or CSS. Output a single JSON object with keys: kicker, headlineLine1, headlineLine2, lead, primaryCta, secondaryCta, metrics (array of {value,label} length 3), marquee (string[]), services (array of {tag,title,body,image} length 3-4 using provided image URLs), aboutTitle, aboutParagraphs (string[]), aboutList (string[]), aboutImage, gallery (array of {src,alt}), quotes (optional {text,author}[]), ctaTitle, ctaBody, footerBlurb, brand, logoUrl. Voice: confident, specific to THIS business. No lorem, no fake awards. Use real image URLs from the user message.";
+  const systemPrompt = shellSystemPromptOpulent();
 
+  const brandName = profile.name || profile.username || "Business";
+  const nicheForDirection = imageNicheId || bp.id || niche.id;
   const userPrompt = [
-    `Brand: ${profile.name || profile.username}`,
+    `Brand: ${brandName}`,
     `Bio: ${profile.bio || ""}`,
-    `Niche: ${bp.label || niche.id}`,
+    `Niche: ${bp.label || niche.id} (${nicheForDirection})`,
     `Primary CTA hint: ${bp.primaryCTA || "Contact"}`,
     `WhatsApp: ${waNumber || "none"}`,
     `Logo/avatar: ${(profile as { logoUrl?: string; profilePicUrl?: string }).logoUrl || (profile as { profilePicUrl?: string }).profilePicUrl || ""}`,
     `Caption titles:\n${titles.map((x, i) => `${i + 1}. ${x}`).join("\n") || "(derive)"}`,
-    `Image URLs (use these):\n${galleryUrls.map((u, i) => `${i + 1}. ${u}`).join("\n")}`,
+    `Image URLs (use these only for services/gallery/aboutImage):\n${galleryUrls.map((u, i) => `${i + 1}. ${u}`).join("\n")}`,
     `Captions sample:\n${profile.posts
       .map((p) => p.caption)
       .filter(Boolean)
       .slice(0, 12)
       .join("\n---\n")}`,
     intel,
-    "Return JSON only.",
+    opulentPromptBlock(nicheForDirection, brandName),
+    "Return JSON only. No markdown fences.",
   ].join("\n\n");
 
   let raw = "";
@@ -498,7 +504,7 @@ export async function generateSite(
         { role: "user", content: userPrompt },
       ],
       maxTokens: 4000,
-      temperature: 0.35,
+      temperature: 0.45,
     });
     raw = ai.content ?? "";
     aiMeta = { provider: ai.provider, model: ai.model };
