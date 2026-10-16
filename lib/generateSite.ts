@@ -8,6 +8,11 @@ import { blueprintPromptSection, resolveNicheBlueprint, pagesJsonFromBlueprint }
 import { toLegacyNicheId } from "./nicheCompat";
 import { chatWithFallback } from "./ai";
 import { ensureCommerceBookingScript } from "./staticCommerceRuntime";
+import {
+  contentFromProfile,
+  parseShellContentJson,
+  renderShellSite,
+} from "./premiumShell";
 
 /**
  * Multi-page niche-aware static site via Groq.
@@ -447,27 +452,70 @@ export async function generateSite(
   const galleryUrls = resolveGalleryUrls(profile, imageNicheId);
   const titles = captionTitles(profile);
 
-  const systemPrompt =
-    "You are a Principal Frontend Engineer shipping production static multi-page sites at the quality of Club One Africa and Pax & Pearl Body Works: real logo in header, CSS design tokens, sticky horizontal nav, mobile hamburger panel, multi-column footer, mobile app-style bottom tab bar, scroll-reveal sections, dual CTAs, and niche-accurate photography. Output ONLY HTML5. CRITICAL SEO (every HTML page): unique <title>, meta name='description', meta name='viewport', Open Graph og:title/og:description, semantic landmarks (header/main/footer), one H1 per page, img alt text, lang='en' on <html>.  Output ONLY HTML5 pages + one styles.css + one script.js. No React, no Tailwind CDN, no Bootstrap. No markdown, no lorem, no TODO.";
-  const userPrompt =
-    buildPrompt(profile, niche, waNumber, galleryUrls, titles) + "\n\n" + intel;
-
-  // Provider router: Groq → Gemini → Cerebras → OpenRouter (configured keys only)
-  const ai = await chatWithFallback({
-    messages: [
-      { role: "system", content: systemPrompt },
-      { role: "user", content: userPrompt },
-    ],
-    maxTokens: 16000,
-    temperature: 0.4,
+  // ── Premium shell: AI = copy JSON; HTML/CSS/JS = deterministic (ifitness bar) ──
+  const fallbackContent = contentFromProfile(profile, {
+    waNumber,
+    galleryUrls,
+    titles,
+    nicheId: imageNicheId || bp.id || niche.id,
+    primaryCta: bp.primaryCTA || "Get in touch",
+    brandPrimary: (profile as { brandPrimary?: string }).brandPrimary,
   });
+  // Prefer real logo/avatar fields on profile
+  fallbackContent.logoUrl =
+    (profile as { logoUrl?: string }).logoUrl ||
+    (profile as { profilePicUrl?: string }).profilePicUrl ||
+    fallbackContent.logoUrl;
 
-  const raw: string = ai.content ?? "";
-  const files = parseMultiPage(raw, profile, waNumber);
+
+  const systemPrompt =
+    "You write website COPY only as JSON for a premium multi-page business site. Do not output HTML or CSS. Output a single JSON object with keys: kicker, headlineLine1, headlineLine2, lead, primaryCta, secondaryCta, metrics (array of {value,label} length 3), marquee (string[]), services (array of {tag,title,body,image} length 3-4 using provided image URLs), aboutTitle, aboutParagraphs (string[]), aboutList (string[]), aboutImage, gallery (array of {src,alt}), quotes (optional {text,author}[]), ctaTitle, ctaBody, footerBlurb, brand, logoUrl. Voice: confident, specific to THIS business. No lorem, no fake awards. Use real image URLs from the user message.";
+
+  const userPrompt = [
+    `Brand: ${profile.name || profile.username}`,
+    `Bio: ${profile.bio || ""}`,
+    `Niche: ${bp.label || niche.id}`,
+    `Primary CTA hint: ${bp.primaryCTA || "Contact"}`,
+    `WhatsApp: ${waNumber || "none"}`,
+    `Logo/avatar: ${(profile as { logoUrl?: string; profilePicUrl?: string }).logoUrl || (profile as { profilePicUrl?: string }).profilePicUrl || ""}`,
+    `Caption titles:\n${titles.map((x, i) => `${i + 1}. ${x}`).join("\n") || "(derive)"}`,
+    `Image URLs (use these):\n${galleryUrls.map((u, i) => `${i + 1}. ${u}`).join("\n")}`,
+    `Captions sample:\n${profile.posts
+      .map((p) => p.caption)
+      .filter(Boolean)
+      .slice(0, 12)
+      .join("\n---\n")}`,
+    intel,
+    "Return JSON only.",
+  ].join("\n\n");
+
+  let raw = "";
+  let aiMeta: { provider?: string; model?: string } = {};
+  try {
+    const ai = await chatWithFallback({
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt },
+      ],
+      maxTokens: 4000,
+      temperature: 0.35,
+    });
+    raw = ai.content ?? "";
+    aiMeta = { provider: ai.provider, model: ai.model };
+  } catch (err) {
+    console.error("shell content AI failed, using profile fallback", err);
+  }
+
+  const content = parseShellContentJson(raw, fallbackContent);
+  const files = renderShellSite(content);
+  try {
+    files["script.js"] = ensureLiveScript(files["script.js"] || "", waNumber);
+  } catch { /* optional */ }
+
   // Optional debug: which provider produced this site
   try {
     files["ai-provider.json"] = JSON.stringify(
-      { provider: ai.provider, model: ai.model, at: new Date().toISOString() },
+      { provider: aiMeta.provider || "shell", model: aiMeta.model || "premiumShell", mode: "shell+json", at: new Date().toISOString() },
       null,
       2
     );
@@ -747,19 +795,31 @@ Include CSS for .reveal/.site-section opacity transform and .is-visible.
 Include CSS for mobile floating footer tab bar (position:fixed; bottom:0) and body padding-bottom.
 
 === LAYER 5 — REQUIRED PAGES (full HTML documents each) ===
-1) index.html — Hero (blueprint) → optional trust only if data supports → 3 service/value pillars from captions → about teaser → gallery teaser (2–6 images with labels) → final CTA band
+1) index.html — ifitnessng-level: 100dvh photo hero (kicker+H1+lead+dual pills+metrics) → optional marquee → bento services (3–4) → split about → mosaic gallery → optional quotes → cta-panel → footer+mobile-tabbar
 2) about.html — Story from bio → values/method → CTA
 3) services.html — Outcome cards from captions (or Vehicles/Training/Collections per blueprint) → process → CTA
 4) gallery.html — Full responsive grid; card title from caption first line; button View details / Case study / Shop look per niche
 5) contact.html — Pitch → form#contact-form (name, email, message) + submit data-goke="button" → WhatsApp/contact
 
 
-=== PRODUCTION QUALITY BAR (match real agency static sites) ===
-Reference quality (structure only — do not copy their content/branding):
-1) Club One Africa style: sticky header with IMAGE logo + horizontal desktop links + primary nav-cta + hamburger; separate mobile-nav panel; hero as TWO-COLUMN grid (copy + large photo); section-label + section-heading; card grids with .reveal; multi-column footer with logo again; WhatsApp CTAs; CSS :root tokens; IntersectionObserver adds .active on .reveal.
-2) Pax & Pearl style: brand logo image; immersive hero (image/overlay, dual primary/secondary buttons); fixed bottom mobile-nav tab bar (icon or short label + text) on small screens; body padding-bottom so content clears the bar; calm spa or high-energy fitness tokens depending on niche.
+=== PRODUCTION QUALITY BAR = https://ifitnessng.pages.dev/ ===
+MINIMUM craft. Adapt palette/copy to THIS niche — do not clone iFitness branding.
 
-Your output must feel like those sites: polished spacing, real logo, alive scroll motion — not a bare Bootstrap skeleton.
+HOME section order (required):
+1) Fixed .site-header > .nav-bar: brand (img logo and/or wordmark) | .desktop-nav | .header-ctas .btn-primary | .nav-toggle | #mobileNav
+2) .hero min-height 100dvh: .hero-visual img + gradient overlay; .hero-body .kicker, h1 (line2 accent), .hero-lead, .hero-actions (primary+ghost), .hero-metrics (3 real process labels — never fake stats)
+3) Optional .marquee-wrap from bio/captions
+4) .bento 3–4 .bento-card (photo, tag, title, blurb, link)
+5) .split about (media + copy + checklist from bio)
+6) .mosaic gallery from provided image URLs (first cell wide)
+7) Optional honest .quote cards (no fake star widgets)
+8) .cta-panel → contact.html
+9) .site-footer multi-column + .mobile-tabbar (fixed bottom)
+
+CSS required: :root tokens (ink/surface/line/text/muted/accent/radius/fonts); fixed header + .is-scrolled blur; pill buttons + hover lift; hero overlays; bento hover; .reveal/.is-visible; desktop nav ≥900px; tabbar only <900px + body padding-bottom.
+JS required: menu toggle, header scroll class, IntersectionObserver reveals, #contact-form → wa.me from body[data-wa], footer year.
+
+FAIL: empty/white hero, no mobile menu, no footer, single page, lorem, identical meta titles, generic light bootstrap look.
 
 === PREMIUM HEADER (identical every page, horizontally aligned) ===
 Structure — single row flex, space-between, vertically centered:
@@ -869,6 +929,23 @@ If spa / salon / clinic / hotel / appointments:
 }
 
 
+
+/** Ensure body data-wa is set for WhatsApp form handler */
+function injectWaAttr(html: string, waNumber: string | null): string {
+  const wa = (waNumber || "").replace(/\D/g, "");
+  if (!html) return html;
+  if (/<body[^>]*\bdata-wa\s*=/i.test(html)) {
+    return html.replace(
+      /(<body[^>]*\bdata-wa\s*=\s*)(["']?)[^"'>\s]*\2/i,
+      `$1"${wa}"`
+    );
+  }
+  if (/<body\b/i.test(html)) {
+    return html.replace(/<body\b/i, `<body data-wa="${wa}"`);
+  }
+  return html;
+}
+
 function parseMultiPage(
   raw: string,
   profile: InstagramProfile,
@@ -974,65 +1051,29 @@ function parseMultiPage(
 
 /** Baseline CSS so weak model output still feels premium & alive */
 function ensurePremiumCss(css: string): string {
-  const extras = `
-/* goke-premium-baseline */
-:root{--goke-primary:#3b82f6;--goke-text:#111;--goke-muted:#6b7280;--goke-bg:#fff;--goke-surface:#f8fafc;--goke-border:#e2e8f0}
-*{box-sizing:border-box}
-html{scroll-behavior:smooth}
-body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--goke-text);background:var(--goke-bg);line-height:1.55}
-img{max-width:100%;height:auto;display:block}
-a{color:inherit}
-.site-header{position:sticky;top:0;z-index:100;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);background:rgba(255,255,255,.86);border-bottom:1px solid var(--goke-border)}
-.site-header.is-scrolled{box-shadow:0 8px 30px rgba(0,0,0,.08)}
-.nav-bar{display:flex;align-items:center;justify-content:space-between;gap:1rem;max-width:1200px;margin:0 auto;padding:.85rem 1.25rem}
-.brand{display:inline-flex;align-items:center;gap:.65rem;text-decoration:none;font-weight:700}
-.brand-logo,.site-logo{height:40px;width:auto;max-height:48px;max-width:160px;object-fit:contain;border-radius:8px}
-.desktop-nav,.site-nav .nav-list{display:flex;align-items:center;gap:1.35rem;list-style:none;margin:0;padding:0}
-.desktop-nav a,.nav-list a{text-decoration:none;font-size:.92rem;font-weight:500;opacity:.85}
-.desktop-nav a:hover,.nav-list a:hover{opacity:1}
-.nav-toggle,.menu-toggle{display:none;background:transparent;border:0;cursor:pointer;padding:6px;flex-direction:column;gap:5px}
-.nav-toggle-bar,.menu-toggle span{display:block;width:22px;height:2px;background:#111;border-radius:1px}
-.mobile-nav{display:none}
-.header-ctas a,.btn,a[data-goke=button],button[data-goke=button]{transition:transform .2s ease,box-shadow .2s ease,background .2s ease}
-.header-ctas a:hover,.btn:hover{transform:translateY(-1px)}
-.site-section,.reveal{opacity:0;transform:translateY(28px);transition:opacity .7s ease,transform .7s ease}
-.site-section.is-visible,.site-section.active,.reveal.is-visible,.reveal.active{opacity:1;transform:none}
-.hero-grid{display:grid;gap:2rem;align-items:center;max-width:1200px;margin:0 auto;padding:3rem 1.25rem}
-@media(min-width:900px){.hero-grid{grid-template-columns:1.1fr .9fr}}
-.site-footer{border-top:1px solid var(--goke-border);background:var(--goke-surface);margin-top:3rem}
-.footer-inner{display:grid;gap:2rem;max-width:1200px;margin:0 auto;padding:3rem 1.25rem}
-@media(min-width:768px){.footer-inner{grid-template-columns:2fr 1fr 1fr}}
-.footer-bottom{max-width:1200px;margin:0 auto;padding:1rem 1.25rem 1.5rem;font-size:.8rem;color:var(--goke-muted);border-top:1px solid var(--goke-border)}
-@media(max-width:767px){
-  .nav-toggle,.menu-toggle{display:inline-flex}
-  .desktop-nav{display:none!important}
-  .mobile-nav.is-open,.mobile-nav:not([hidden]){display:flex;flex-direction:column;gap:.5rem;padding:1rem 1.25rem;border-top:1px solid var(--goke-border);background:#fff}
-  .site-footer{position:fixed;bottom:0;left:0;right:0;z-index:90;margin:0;padding:0;background:rgba(255,255,255,.94);backdrop-filter:blur(12px);border-top:1px solid var(--goke-border);box-shadow:0 -8px 30px rgba(0,0,0,.06)}
-  .footer-inner,.footer-bottom{display:none}
-  .site-footer::after{content:"";display:flex;justify-content:space-around;padding:.55rem .5rem calc(.55rem + env(safe-area-inset-bottom));font-size:.65rem}
-  body{padding-bottom:4.5rem}
-}
-`;
-  if (css.includes("goke-premium-baseline")) return css;
-  return css + "\n" + extras;
-}
-
-function injectWaAttr(html: string, wa: string | null): string {
-  if (!wa) {
-    if (/<body[^>]*>/i.test(html) && !/data-wa=/i.test(html)) {
-      return html.replace(/<body/i, '<body data-wa=""');
-    }
-    return html;
+  // Fill gaps only — never force a light generic theme over bespoke :root
+  let out = css || "";
+  const has = (s: string) => out.includes(s);
+  const bits: string[] = [];
+  if (!has("scroll-behavior")) bits.push("html{scroll-behavior:smooth}");
+  if (!has("box-sizing")) bits.push("*,*::before,*::after{box-sizing:border-box}");
+  if (!has(".reveal") && !has(".is-visible")) {
+    bits.push(
+      ".reveal{opacity:0;transform:translateY(28px);transition:opacity .7s ease,transform .7s ease}",
+      ".reveal.is-visible,.reveal.active,.site-section.is-visible{opacity:1;transform:none}"
+    );
   }
-  if (/data-wa=/i.test(html)) {
-    return html.replace(/data-wa="[^"]*"/i, `data-wa="${wa}"`);
+  if (!has("mobile-tabbar") && !has("bottom-tab") && !has("mobile-nav-tab")) {
+    bits.push(
+      "@media(max-width:899px){body{padding-bottom:calc(64px + env(safe-area-inset-bottom,0px))}",
+      ".mobile-tabbar{position:fixed;left:0;right:0;bottom:0;z-index:90;display:flex;justify-content:space-around;padding:8px 6px calc(8px + env(safe-area-inset-bottom,0px));background:rgba(7,9,15,.92);backdrop-filter:blur(16px);border-top:1px solid rgba(255,255,255,.08)}",
+      ".mobile-tabbar a{flex:1;text-align:center;font-size:10px;font-weight:600;color:#8b93a7;text-decoration:none;padding:6px 4px}",
+      ".mobile-tabbar a[aria-current=page],.mobile-tabbar a.active{color:var(--lime,var(--primary,#c8ff3d))}}"
+    );
   }
-  if (/<body/i.test(html)) {
-    return html.replace(/<body/i, `<body data-wa="${wa}"`);
-  }
-  return html;
+  if (bits.length) out += "\n/* goke-premium-gaps */\n" + bits.join("\n");
+  return out;
 }
-
 
 function ensureLiveScript(js: string, waNumber: string | null): string {
   let out = ensureWhatsAppScript(js, waNumber);
