@@ -1,22 +1,7 @@
 import type { InstagramProfile } from "./parseInstagramExport";
-import {
-  buildNicheCuratedImages,
-  resolveImagesForNiche,
-  detectImagePackId,
-} from "./lagosNicheImages";
+import { buildNicheCuratedImages } from "./lagosNicheImages";
 import { blueprintPromptSection, resolveNicheBlueprint, pagesJsonFromBlueprint } from "./blueprintPrompt";
 import { toLegacyNicheId } from "./nicheCompat";
-import { chatWithFallback } from "./ai";
-import { ensureCommerceBookingScript } from "./staticCommerceRuntime";
-import {
-  contentFromProfile,
-  parseShellContentJson,
-  renderShellSite,
-} from "./premiumShell";
-import {
-  opulentPromptBlock,
-  shellSystemPromptOpulent,
-} from "./opulentDirection";
 
 /**
  * Multi-page niche-aware static site via Groq.
@@ -290,21 +275,14 @@ function resolveGalleryUrls(profile: InstagramProfile, nicheId: string): string[
       typeof u === "string" &&
       /^https?:\/\//i.test(u) &&
       !u.includes("example.com") &&
-      !u.includes("picsum.photos") &&
-      !u.includes("placehold")
+      !u.includes("picsum.photos")
   );
-  // Exclusive niche pack only — never mix e.g. café images into restaurant
-  const curated = resolveImagesForNiche(nicheId);
-  const fallback =
-    curated.length > 0
-      ? curated
-      : NICHE_CURATED_IMAGES[nicheId] ||
-        NICHE_CURATED_IMAGES.general_business ||
-        [];
+  const curated =
+    NICHE_CURATED_IMAGES[nicheId] || NICHE_CURATED_IMAGES.general_business;
   const out = [...fromIg];
   let i = 0;
-  while (out.length < 8 && fallback.length > 0) {
-    out.push(fallback[i % fallback.length]);
+  while (out.length < 8) {
+    out.push(curated[i % curated.length]);
     i++;
   }
   return out.slice(0, 12);
@@ -379,55 +357,6 @@ export function extractWhatsAppNumber(profile: InstagramProfile): string | null 
   return null;
 }
 
-
-/** Deterministic SEO + a11y fixes on generated HTML (does not rely on model luck). */
-function ensurePageSeo(html: string, opts: { title: string; description: string; pageName?: string }): string {
-  let h = html;
-  if (!/lang\s*=/i.test(h)) {
-    h = h.replace(/<html\b/i, '<html lang="en"');
-  }
-  if (!/<meta[^>]+charset=/i.test(h)) {
-    h = h.replace(/<head([^>]*)>/i, '<head$1>\n<meta charset="utf-8"/>');
-  }
-  if (!/<meta[^>]+name=["']viewport["']/i.test(h)) {
-    h = h.replace(
-      /<head([^>]*)>/i,
-      '<head$1>\n<meta name="viewport" content="width=device-width, initial-scale=1"/>'
-    );
-  }
-  const title = opts.title.slice(0, 70);
-  const desc = opts.description.slice(0, 160);
-  if (!/<title>/i.test(h)) {
-    h = h.replace(/<head([^>]*)>/i, `<head$1>\n<title>${title}</title>`);
-  }
-  if (!/<meta[^>]+name=["']description["']/i.test(h)) {
-    h = h.replace(
-      /<head([^>]*)>/i,
-      `<head$1>\n<meta name="description" content="${desc.replace(/"/g, "&quot;")}"/>`
-    );
-  }
-  if (!/property=["']og:title["']/i.test(h)) {
-    h = h.replace(
-      /<head([^>]*)>/i,
-      `<head$1>\n<meta property="og:title" content="${title.replace(/"/g, "&quot;")}"/>\n<meta property="og:description" content="${desc.replace(/"/g, "&quot;")}"/>`
-    );
-  }
-  // Ensure images have alt if missing
-  h = h.replace(/<img(?![^>]*\balt=)([^>]*)>/gi, '<img alt=""$1>');
-  return h;
-}
-
-function buildSitemap(pages: { file: string }[]): string {
-  const urls = pages
-    .map((p) => {
-      const loc = p.file === "index.html" ? "/" : `/${p.file}`;
-      return `  <url><loc>${loc}</loc></url>`;
-    })
-    .join("\n");
-  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>\n`;
-}
-
-
 export async function generateSite(
   profile: InstagramProfile
 ): Promise<Record<string, string>> {
@@ -436,131 +365,45 @@ export async function generateSite(
   // Map blueprint → legacy guide id for Lagos image packs
   const legacyId = toLegacyNicheId(bp.id);
   const niche = detectNiche(profile);
-  // Prefer fine-grained exclusive pack from bio/captions, then blueprint id, then legacy
-  const textBlob = [
-    profile.name || "",
-    profile.username || "",
-    profile.bio || "",
-    ...profile.posts.map((p) => p.caption || ""),
-  ].join(" ");
-  const fromCaptions = detectImagePackId(textBlob);
-  const imageNicheId =
-    fromCaptions !== "general_business"
-      ? fromCaptions
-      : bp.id && bp.id !== "general_business"
-        ? bp.id
-        : legacyId !== "general_business"
-          ? legacyId
-          : niche.id;
+  // Prefer legacy mapping when user picked a fine-grained niche
+  const imageNicheId = legacyId !== "general_business" ? legacyId : niche.id;
   const waNumber = extractWhatsAppNumber(profile);
   const galleryUrls = resolveGalleryUrls(profile, imageNicheId);
   const titles = captionTitles(profile);
 
-  // ── Premium shell: AI = copy JSON; HTML/CSS/JS = deterministic (ifitness bar) ──
-  const fallbackContent = contentFromProfile(profile, {
-    waNumber,
-    galleryUrls,
-    titles,
-    nicheId: imageNicheId || bp.id || niche.id,
-    primaryCta: bp.primaryCTA || "Get in touch",
-    brandPrimary: (profile as { brandPrimary?: string }).brandPrimary,
-  });
-  // Prefer real logo/avatar fields on profile
-  fallbackContent.logoUrl =
-    (profile as { logoUrl?: string }).logoUrl ||
-    (profile as { profilePicUrl?: string }).profilePicUrl ||
-    fallbackContent.logoUrl;
-
-
-  const systemPrompt = shellSystemPromptOpulent();
-
-  const brandName = profile.name || profile.username || "Business";
-  const nicheForDirection = imageNicheId || bp.id || niche.id;
-  const userPrompt = [
-    `Brand: ${brandName}`,
-    `Bio: ${profile.bio || ""}`,
-    `Niche: ${bp.label || niche.id} (${nicheForDirection})`,
-    `Primary CTA hint: ${bp.primaryCTA || "Contact"}`,
-    `WhatsApp: ${waNumber || "none"}`,
-    `Logo/avatar: ${(profile as { logoUrl?: string; profilePicUrl?: string }).logoUrl || (profile as { profilePicUrl?: string }).profilePicUrl || ""}`,
-    `Caption titles:\n${titles.map((x, i) => `${i + 1}. ${x}`).join("\n") || "(derive)"}`,
-    `Image URLs (use these only for services/gallery/aboutImage):\n${galleryUrls.map((u, i) => `${i + 1}. ${u}`).join("\n")}`,
-    `Captions sample:\n${profile.posts
-      .map((p) => p.caption)
-      .filter(Boolean)
-      .slice(0, 12)
-      .join("\n---\n")}`,
-    intel,
-    opulentPromptBlock(nicheForDirection, brandName),
-    "Return JSON only. No markdown fences.",
-  ].join("\n\n");
-
-  let raw = "";
-  let aiMeta: { provider?: string; model?: string } = {};
-  try {
-    const ai = await chatWithFallback({
+  const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: "openai/gpt-oss-120b",
+      max_tokens: 16000,
+      temperature: 0.4,
       messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt },
+        {
+          role: "system",
+          content:
+            "You are a Principal Frontend Engineer shipping production static multi-page sites at the quality of Club One Africa and Pax & Pearl Body Works: real logo in header, CSS design tokens, sticky horizontal nav, mobile hamburger panel, multi-column footer, mobile app-style bottom tab bar, scroll-reveal sections, dual CTAs, and niche-accurate photography. Output ONLY HTML5. CRITICAL SEO (every HTML page): unique <title>, meta name='description', meta name='viewport', Open Graph og:title/og:description, semantic landmarks (header/main/footer), one H1 per page, img alt text, lang='en' on <html>.  Output ONLY HTML5 pages + one styles.css + one script.js. No React, no Tailwind CDN, no Bootstrap. No markdown, no lorem, no TODO.",
+        },
+        { role: "user", content: buildPrompt(profile, niche, waNumber, galleryUrls, titles) + "\n\n" + intel },
       ],
-      maxTokens: 4000,
-      temperature: 0.45,
-    });
-    raw = ai.content ?? "";
-    aiMeta = { provider: ai.provider, model: ai.model };
-  } catch (err) {
-    console.error("shell content AI failed, using profile fallback", err);
+    }),
+  });
+
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(`Groq request failed (${res.status}): ${errText}`);
   }
 
-  const content = parseShellContentJson(raw, fallbackContent);
-  const files = renderShellSite(content);
-  try {
-    files["script.js"] = ensureLiveScript(files["script.js"] || "", waNumber);
-  } catch { /* optional */ }
-
-  // Optional debug: which provider produced this site
-  try {
-    files["ai-provider.json"] = JSON.stringify(
-      { provider: aiMeta.provider || "shell", model: aiMeta.model || "premiumShell", mode: "shell+json", at: new Date().toISOString() },
-      null,
-      2
-    );
-  } catch {
-    /* optional */
-  }
-
-  // Deterministic SEO pass on every HTML page
-  const brand = profile.name || profile.username || "Business";
-  const baseDesc = (profile.bio || `${brand} — official website`).replace(/\s+/g, " ").slice(0, 160);
-  for (const [name, content] of Object.entries(files)) {
-    if (!name.endsWith(".html") || typeof content !== "string") continue;
-    const pageLabel = name.replace(/\.html$/i, "").replace(/index/i, "Home");
-    files[name] = ensurePageSeo(content, {
-      title: name === "index.html" ? brand : `${pageLabel} · ${brand}`,
-      description: baseDesc,
-      pageName: pageLabel,
-    });
-  }
-
-  // robots + sitemap for static host
-  try {
-    const pagesMeta = files["pages.json"]
-      ? (JSON.parse(files["pages.json"]).pages as { file: string }[])
-      : [{ file: "index.html" }];
-    files["sitemap.xml"] = buildSitemap(Array.isArray(pagesMeta) ? pagesMeta : [{ file: "index.html" }]);
-    files["robots.txt"] = "User-agent: *\nAllow: /\nSitemap: /sitemap.xml\n";
-  } catch {
-    files["robots.txt"] = "User-agent: *\nAllow: /\n";
-  }
-
+  const data = await res.json();
+  const raw: string = data.choices?.[0]?.message?.content ?? "";
+  const files = parseMultiPage(raw, profile, waNumber);
   files["niche.json"] = JSON.stringify(
     {
-      id: bp.id,
-      label: bp.label,
-      legacyId: niche.id,
-      imagePackId: imageNicheId,
-      primaryCTA: bp.primaryCTA,
-      primaryGoal: bp.primaryGoal,
+      id: niche.id,
+      label: niche.label,
       whatsapp: waNumber,
       detectedAt: new Date().toISOString(),
     },
@@ -801,31 +644,19 @@ Include CSS for .reveal/.site-section opacity transform and .is-visible.
 Include CSS for mobile floating footer tab bar (position:fixed; bottom:0) and body padding-bottom.
 
 === LAYER 5 — REQUIRED PAGES (full HTML documents each) ===
-1) index.html — ifitnessng-level: 100dvh photo hero (kicker+H1+lead+dual pills+metrics) → optional marquee → bento services (3–4) → split about → mosaic gallery → optional quotes → cta-panel → footer+mobile-tabbar
+1) index.html — Hero (blueprint) → optional trust only if data supports → 3 service/value pillars from captions → about teaser → gallery teaser (2–6 images with labels) → final CTA band
 2) about.html — Story from bio → values/method → CTA
 3) services.html — Outcome cards from captions (or Vehicles/Training/Collections per blueprint) → process → CTA
 4) gallery.html — Full responsive grid; card title from caption first line; button View details / Case study / Shop look per niche
 5) contact.html — Pitch → form#contact-form (name, email, message) + submit data-goke="button" → WhatsApp/contact
 
 
-=== PRODUCTION QUALITY BAR = https://ifitnessng.pages.dev/ ===
-MINIMUM craft. Adapt palette/copy to THIS niche — do not clone iFitness branding.
+=== PRODUCTION QUALITY BAR (match real agency static sites) ===
+Reference quality (structure only — do not copy their content/branding):
+1) Club One Africa style: sticky header with IMAGE logo + horizontal desktop links + primary nav-cta + hamburger; separate mobile-nav panel; hero as TWO-COLUMN grid (copy + large photo); section-label + section-heading; card grids with .reveal; multi-column footer with logo again; WhatsApp CTAs; CSS :root tokens; IntersectionObserver adds .active on .reveal.
+2) Pax & Pearl style: brand logo image; immersive hero (image/overlay, dual primary/secondary buttons); fixed bottom mobile-nav tab bar (icon or short label + text) on small screens; body padding-bottom so content clears the bar; calm spa or high-energy fitness tokens depending on niche.
 
-HOME section order (required):
-1) Fixed .site-header > .nav-bar: brand (img logo and/or wordmark) | .desktop-nav | .header-ctas .btn-primary | .nav-toggle | #mobileNav
-2) .hero min-height 100dvh: .hero-visual img + gradient overlay; .hero-body .kicker, h1 (line2 accent), .hero-lead, .hero-actions (primary+ghost), .hero-metrics (3 real process labels — never fake stats)
-3) Optional .marquee-wrap from bio/captions
-4) .bento 3–4 .bento-card (photo, tag, title, blurb, link)
-5) .split about (media + copy + checklist from bio)
-6) .mosaic gallery from provided image URLs (first cell wide)
-7) Optional honest .quote cards (no fake star widgets)
-8) .cta-panel → contact.html
-9) .site-footer multi-column + .mobile-tabbar (fixed bottom)
-
-CSS required: :root tokens (ink/surface/line/text/muted/accent/radius/fonts); fixed header + .is-scrolled blur; pill buttons + hover lift; hero overlays; bento hover; .reveal/.is-visible; desktop nav ≥900px; tabbar only <900px + body padding-bottom.
-JS required: menu toggle, header scroll class, IntersectionObserver reveals, #contact-form → wa.me from body[data-wa], footer year.
-
-FAIL: empty/white hero, no mobile menu, no footer, single page, lorem, identical meta titles, generic light bootstrap look.
+Your output must feel like those sites: polished spacing, real logo, alive scroll motion — not a bare Bootstrap skeleton.
 
 === PREMIUM HEADER (identical every page, horizontally aligned) ===
 Structure — single row flex, space-between, vertically centered:
@@ -892,20 +723,6 @@ Mobile <768px — APP-STYLE FLOATING TAB FOOTER:
 
 <link rel="stylesheet" href="styles.css"> and <script src="script.js" defer></script> on every page.
 
-
-=== LAYER 6b — SHOP & BOOKING (when niche is retail/shop OR services/spa/salon/clinic/hotel) ===
-If ecommerce / shop / fashion / retail:
-- Include Shop or product grid with .goke-product cards:
-  data-product-id, data-product-name, data-product-price (numeric Naira in attribute, no ₦ symbol)
-- Buttons class="goke-add-cart"
-- Floating cart: .goke-cart-count and .goke-cart-checkout
-- Order completes via script.js → WhatsApp (data-wa on body). No fake payment gateways.
-
-If spa / salon / clinic / hotel / appointments:
-- Book section with form.goke-booking-form (name, phone, service, date, time, notes)
-- Service cards may use href="#book"
-- Submit → WhatsApp via script.js
-
 === LAYER 6 — script.js (site must feel ALIVE, not static) ===
 1) Mobile nav dropdown: .nav-toggle toggles #site-nav hidden/is-open + aria-expanded; close on link click when width < 768px
 2) #contact-form preventDefault → wa.me when data-wa set
@@ -934,23 +751,6 @@ If spa / salon / clinic / hotel / appointments:
 ...`;
 }
 
-
-
-/** Ensure body data-wa is set for WhatsApp form handler */
-function injectWaAttr(html: string, waNumber: string | null): string {
-  const wa = (waNumber || "").replace(/\D/g, "");
-  if (!html) return html;
-  if (/<body[^>]*\bdata-wa\s*=/i.test(html)) {
-    return html.replace(
-      /(<body[^>]*\bdata-wa\s*=\s*)(["']?)[^"'>\s]*\2/i,
-      `$1"${wa}"`
-    );
-  }
-  if (/<body\b/i.test(html)) {
-    return html.replace(/<body\b/i, `<body data-wa="${wa}"`);
-  }
-  return html;
-}
 
 function parseMultiPage(
   raw: string,
@@ -1057,29 +857,65 @@ function parseMultiPage(
 
 /** Baseline CSS so weak model output still feels premium & alive */
 function ensurePremiumCss(css: string): string {
-  // Fill gaps only — never force a light generic theme over bespoke :root
-  let out = css || "";
-  const has = (s: string) => out.includes(s);
-  const bits: string[] = [];
-  if (!has("scroll-behavior")) bits.push("html{scroll-behavior:smooth}");
-  if (!has("box-sizing")) bits.push("*,*::before,*::after{box-sizing:border-box}");
-  if (!has(".reveal") && !has(".is-visible")) {
-    bits.push(
-      ".reveal{opacity:0;transform:translateY(28px);transition:opacity .7s ease,transform .7s ease}",
-      ".reveal.is-visible,.reveal.active,.site-section.is-visible{opacity:1;transform:none}"
-    );
-  }
-  if (!has("mobile-tabbar") && !has("bottom-tab") && !has("mobile-nav-tab")) {
-    bits.push(
-      "@media(max-width:899px){body{padding-bottom:calc(64px + env(safe-area-inset-bottom,0px))}",
-      ".mobile-tabbar{position:fixed;left:0;right:0;bottom:0;z-index:90;display:flex;justify-content:space-around;padding:8px 6px calc(8px + env(safe-area-inset-bottom,0px));background:rgba(7,9,15,.92);backdrop-filter:blur(16px);border-top:1px solid rgba(255,255,255,.08)}",
-      ".mobile-tabbar a{flex:1;text-align:center;font-size:10px;font-weight:600;color:#8b93a7;text-decoration:none;padding:6px 4px}",
-      ".mobile-tabbar a[aria-current=page],.mobile-tabbar a.active{color:var(--lime,var(--primary,#c8ff3d))}}"
-    );
-  }
-  if (bits.length) out += "\n/* goke-premium-gaps */\n" + bits.join("\n");
-  return out;
+  const extras = `
+/* goke-premium-baseline */
+:root{--goke-primary:#3b82f6;--goke-text:#111;--goke-muted:#6b7280;--goke-bg:#fff;--goke-surface:#f8fafc;--goke-border:#e2e8f0}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--goke-text);background:var(--goke-bg);line-height:1.55}
+img{max-width:100%;height:auto;display:block}
+a{color:inherit}
+.site-header{position:sticky;top:0;z-index:100;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);background:rgba(255,255,255,.86);border-bottom:1px solid var(--goke-border)}
+.site-header.is-scrolled{box-shadow:0 8px 30px rgba(0,0,0,.08)}
+.nav-bar{display:flex;align-items:center;justify-content:space-between;gap:1rem;max-width:1200px;margin:0 auto;padding:.85rem 1.25rem}
+.brand{display:inline-flex;align-items:center;gap:.65rem;text-decoration:none;font-weight:700}
+.brand-logo,.site-logo{height:40px;width:auto;max-height:48px;max-width:160px;object-fit:contain;border-radius:8px}
+.desktop-nav,.site-nav .nav-list{display:flex;align-items:center;gap:1.35rem;list-style:none;margin:0;padding:0}
+.desktop-nav a,.nav-list a{text-decoration:none;font-size:.92rem;font-weight:500;opacity:.85}
+.desktop-nav a:hover,.nav-list a:hover{opacity:1}
+.nav-toggle,.menu-toggle{display:none;background:transparent;border:0;cursor:pointer;padding:6px;flex-direction:column;gap:5px}
+.nav-toggle-bar,.menu-toggle span{display:block;width:22px;height:2px;background:#111;border-radius:1px}
+.mobile-nav{display:none}
+.header-ctas a,.btn,a[data-goke=button],button[data-goke=button]{transition:transform .2s ease,box-shadow .2s ease,background .2s ease}
+.header-ctas a:hover,.btn:hover{transform:translateY(-1px)}
+.site-section,.reveal{opacity:0;transform:translateY(28px);transition:opacity .7s ease,transform .7s ease}
+.site-section.is-visible,.site-section.active,.reveal.is-visible,.reveal.active{opacity:1;transform:none}
+.hero-grid{display:grid;gap:2rem;align-items:center;max-width:1200px;margin:0 auto;padding:3rem 1.25rem}
+@media(min-width:900px){.hero-grid{grid-template-columns:1.1fr .9fr}}
+.site-footer{border-top:1px solid var(--goke-border);background:var(--goke-surface);margin-top:3rem}
+.footer-inner{display:grid;gap:2rem;max-width:1200px;margin:0 auto;padding:3rem 1.25rem}
+@media(min-width:768px){.footer-inner{grid-template-columns:2fr 1fr 1fr}}
+.footer-bottom{max-width:1200px;margin:0 auto;padding:1rem 1.25rem 1.5rem;font-size:.8rem;color:var(--goke-muted);border-top:1px solid var(--goke-border)}
+@media(max-width:767px){
+  .nav-toggle,.menu-toggle{display:inline-flex}
+  .desktop-nav{display:none!important}
+  .mobile-nav.is-open,.mobile-nav:not([hidden]){display:flex;flex-direction:column;gap:.5rem;padding:1rem 1.25rem;border-top:1px solid var(--goke-border);background:#fff}
+  .site-footer{position:fixed;bottom:0;left:0;right:0;z-index:90;margin:0;padding:0;background:rgba(255,255,255,.94);backdrop-filter:blur(12px);border-top:1px solid var(--goke-border);box-shadow:0 -8px 30px rgba(0,0,0,.06)}
+  .footer-inner,.footer-bottom{display:none}
+  .site-footer::after{content:"";display:flex;justify-content:space-around;padding:.55rem .5rem calc(.55rem + env(safe-area-inset-bottom));font-size:.65rem}
+  body{padding-bottom:4.5rem}
 }
+`;
+  if (css.includes("goke-premium-baseline")) return css;
+  return css + "\n" + extras;
+}
+
+function injectWaAttr(html: string, wa: string | null): string {
+  if (!wa) {
+    if (/<body[^>]*>/i.test(html) && !/data-wa=/i.test(html)) {
+      return html.replace(/<body/i, '<body data-wa=""');
+    }
+    return html;
+  }
+  if (/data-wa=/i.test(html)) {
+    return html.replace(/data-wa="[^"]*"/i, `data-wa="${wa}"`);
+  }
+  if (/<body/i.test(html)) {
+    return html.replace(/<body/i, `<body data-wa="${wa}"`);
+  }
+  return html;
+}
+
 
 function ensureLiveScript(js: string, waNumber: string | null): string {
   let out = ensureWhatsAppScript(js, waNumber);
@@ -1144,7 +980,6 @@ function ensureLiveScript(js: string, waNumber: string | null): string {
 })();
 `;
   }
-  out = ensureCommerceBookingScript(out);
   return out;
 }
 
