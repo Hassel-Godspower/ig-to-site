@@ -1,35 +1,40 @@
-/* ═══════════════════════════════════════════════════════════
-   Gòke Builders page — theme-aware (light + dark)
-   Replaces hard-coded #12151c / #f3f4f6 / #9ca3af with tokens
-   ═══════════════════════════════════════════════════════════ */
+/**
+ * Builders page — forced light/dark contrast
+ * Load AFTER globals.css and theme.css
+ *
+ * Problem this solves:
+ * - globals hard-codes #12151c cards + #f3f4f6 text
+ * - theme.css flips body/headings to dark text in light mode
+ * - cards stay dark → dark text on dark cards (unreadable)
+ * - stack column stays light text on light page (invisible)
+ */
+
+/* ── Shared: always use tokens on Builders chrome ───────── */
 
 .gb-page {
   color: var(--gk-text);
-  background: var(--gk-bg);
 }
 
 .gb-hero {
   background:
     radial-gradient(ellipse 80% 60% at 50% -20%, var(--gk-accent-soft), transparent),
     var(--gk-bg) !important;
-  border-bottom: 1px solid var(--gk-border) !important;
-  color: var(--gk-text);
+  border-bottom-color: var(--gk-border) !important;
+  color: var(--gk-text) !important;
 }
 
-.gb-hero h1 {
-  color: var(--gk-text);
+.gb-hero h1,
+.gb-hero h1 em {
+  color: var(--gk-text) !important;
 }
 
 .gb-hero h1 em {
   color: var(--gk-accent) !important;
 }
 
-.gb-hero-lead {
-  color: var(--gk-muted) !important;
-}
-
+.gb-hero-lead,
 .gb-hero-sub {
-  color: var(--gk-faint) !important;
+  color: var(--gk-muted) !important;
 }
 
 .gb-flow {
@@ -44,10 +49,6 @@
   color: var(--gk-success) !important;
 }
 
-.gb-position h2 {
-  color: var(--gk-text);
-}
-
 .gb-position-lead {
   color: var(--gk-accent) !important;
 }
@@ -57,10 +58,11 @@
 }
 
 .gb-position-grid li {
-  border-bottom-color: var(--gk-border) !important;
   color: var(--gk-text) !important;
+  border-bottom-color: var(--gk-border) !important;
 }
 
+/* Cards + step tiles */
 .gb-econ-card,
 .gb-audience-card,
 .gb-steps li,
@@ -70,12 +72,12 @@
 .gb-triad article {
   background: var(--gk-surface) !important;
   border-color: var(--gk-border) !important;
-  color: var(--gk-text);
+  color: var(--gk-text) !important;
 }
 
 .gb-econ-row {
-  border-bottom-color: var(--gk-border) !important;
   color: var(--gk-muted) !important;
+  border-bottom-color: var(--gk-border) !important;
 }
 
 .gb-econ-row strong {
@@ -87,94 +89,71 @@
   color: var(--gk-success) !important;
 }
 
-.gb-econ-stack p {
+/* Right column of economics — was invisible in light mode */
+.gb-econ-stack,
+.gb-econ-stack p,
+.gb-econ-stack li {
   color: var(--gk-muted) !important;
 }
 
 .gb-econ-stack li {
   border-bottom-color: var(--gk-border) !important;
-  color: var(--gk-muted) !important;
 }
 
 .gb-econ-stack li span {
   color: var(--gk-text) !important;
+  font-weight: 600;
 }
 
 .gb-econ-punch {
   color: var(--gk-text) !important;
+  font-weight: 600;
 }
 
 .gb-disclaimer {
   color: var(--gk-faint) !important;
 }
 
-.gb-audience-card h3 {
-  color: var(--gk-text);
-}
-
-.gb-audience-card p {
-  color: var(--gk-muted) !important;
-}
-
-.gb-step-n {
-  color: var(--gk-accent) !important;
-}
-
+.gb-audience-card h3,
+.gb-perk-card h3,
+.gb-template-chip strong,
+.gb-level strong,
+.gb-triad h3,
 .gb-steps strong {
   color: var(--gk-text) !important;
 }
 
-.gb-steps p {
+.gb-audience-card p,
+.gb-perk-card p,
+.gb-template-chip span,
+.gb-level p,
+.gb-triad p,
+.gb-steps p,
+.gb-template-foot,
+.gb-triad-note {
   color: var(--gk-muted) !important;
 }
 
-.gb-gate h2 {
-  color: var(--gk-text);
-}
-
-.gb-gate-lead strong {
+.gb-step-n,
+.gb-level-n,
+.gb-level-arrow,
+.gb-triad-arrow {
   color: var(--gk-accent) !important;
 }
 
-.gb-gate > p {
-  color: var(--gk-muted) !important;
-}
-
-.gb-gate-list li {
-  border-bottom-color: var(--gk-border) !important;
-  color: var(--gk-text) !important;
-}
-
+.gb-gate-lead strong,
 .gb-gate-list span {
   color: var(--gk-accent) !important;
 }
 
+.gb-gate > p,
 .gb-gate-note {
-  color: var(--gk-faint) !important;
-}
-
-.gb-perk-card h3 {
-  color: var(--gk-text);
-}
-
-.gb-perk-card p {
   color: var(--gk-muted) !important;
 }
 
-.gb-template-chip strong {
+.gb-gate-list li {
   color: var(--gk-text) !important;
-}
-
-.gb-template-chip span {
-  color: var(--gk-muted) !important;
-}
-
-.gb-template-foot {
-  color: var(--gk-muted) !important;
-}
-
-.gb-students h2 {
-  color: var(--gk-text);
+  border-bottom-color: var(--gk-border) !important;
 }
 
 .gb-students > p {
@@ -191,60 +170,34 @@
   color: var(--gk-text) !important;
 }
 
-.gb-level-n {
-  color: var(--gk-accent) !important;
-}
+/* ═══════════════════════════════════════════════════════════
+   LIGHT MODE — force readable cards (white surface + dark type)
+   ═══════════════════════════════════════════════════════════ */
 
-.gb-level strong {
+html[data-theme="light"] .gb-page {
+  background: var(--gk-bg);
   color: var(--gk-text);
 }
 
-.gb-level p {
-  color: var(--gk-muted) !important;
-}
-
-.gb-level-arrow {
-  color: var(--gk-accent) !important;
-}
-
-.gb-triad h3 {
-  color: var(--gk-text);
-}
-
-.gb-triad p {
-  color: var(--gk-muted) !important;
-}
-
-.gb-triad-arrow {
-  color: var(--gk-accent) !important;
-}
-
-.gb-triad-note {
-  color: var(--gk-muted) !important;
-}
-
-/* Builders pricing list (token text) */
-#builders-pricing li {
-  color: var(--gk-muted);
-}
-
-#builders-pricing strong {
-  color: var(--gk-text);
-}
-
-#builders-pricing code {
-  color: var(--gk-text);
-  background: var(--gk-surface-2);
-  padding: 0.1em 0.35em;
-  border-radius: 6px;
-  font-size: 0.85em;
-}
-
-/* Light mode: extra safety for any remaining hardcoded fills */
 html[data-theme="light"] .gb-hero {
   background:
-    radial-gradient(ellipse 80% 60% at 50% -20%, rgba(109, 40, 217, 0.1), transparent),
-    var(--gk-bg) !important;
+    radial-gradient(ellipse 80% 60% at 50% -20%, rgba(109, 40, 217, 0.12), transparent),
+    #f4f2f8 !important;
+  color: #14101f !important;
+}
+
+html[data-theme="light"] .gb-hero h1 {
+  color: #14101f !important;
+}
+
+html[data-theme="light"] .gb-hero h1 em {
+  color: #6d28d9 !important;
+}
+
+html[data-theme="light"] .gb-hero-lead,
+html[data-theme="light"] .gb-hero-sub,
+html[data-theme="light"] .gb-flow {
+  color: #4b455c !important;
 }
 
 html[data-theme="light"] .gb-econ-card,
@@ -254,12 +207,142 @@ html[data-theme="light"] .gb-perk-card,
 html[data-theme="light"] .gb-template-chip,
 html[data-theme="light"] .gb-level,
 html[data-theme="light"] .gb-triad article {
-  background: var(--gk-surface) !important;
+  background: #ffffff !important;
+  border: 1px solid rgba(20, 12, 40, 0.12) !important;
+  color: #14101f !important;
   box-shadow: 0 1px 3px rgba(15, 10, 30, 0.06);
+}
+
+html[data-theme="light"] .gb-econ-row {
+  color: #4b455c !important;
+  border-bottom-color: rgba(20, 12, 40, 0.1) !important;
+}
+
+html[data-theme="light"] .gb-econ-row strong {
+  color: #14101f !important;
+}
+
+html[data-theme="light"] .gb-econ-stack p,
+html[data-theme="light"] .gb-econ-stack li {
+  color: #4b455c !important;
+}
+
+html[data-theme="light"] .gb-econ-stack li span,
+html[data-theme="light"] .gb-econ-punch {
+  color: #14101f !important;
+}
+
+html[data-theme="light"] .gb-disclaimer {
+  color: #6f687f !important;
+}
+
+html[data-theme="light"] .gb-audience-card h3,
+html[data-theme="light"] .gb-perk-card h3,
+html[data-theme="light"] .gb-steps strong,
+html[data-theme="light"] .gb-template-chip strong,
+html[data-theme="light"] .gb-level strong,
+html[data-theme="light"] .gb-triad h3 {
+  color: #14101f !important;
+}
+
+html[data-theme="light"] .gb-audience-card p,
+html[data-theme="light"] .gb-perk-card p,
+html[data-theme="light"] .gb-steps p,
+html[data-theme="light"] .gb-template-chip span,
+html[data-theme="light"] .gb-level p,
+html[data-theme="light"] .gb-triad p,
+html[data-theme="light"] .gb-template-foot,
+html[data-theme="light"] .gb-triad-note {
+  color: #4b455c !important;
+}
+
+html[data-theme="light"] .gb-step-n,
+html[data-theme="light"] .gb-level-n,
+html[data-theme="light"] .gb-flow-arrow,
+html[data-theme="light"] .gb-position-lead {
+  color: #6d28d9 !important;
 }
 
 html[data-theme="light"] .gb-student-ideas li {
   background: rgba(109, 40, 217, 0.1) !important;
   border-color: rgba(109, 40, 217, 0.28) !important;
-  color: var(--gk-text) !important;
+  color: #14101f !important;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   DARK MODE — keep premium dark cards + light type
+   ═══════════════════════════════════════════════════════════ */
+
+html[data-theme="dark"] .gb-econ-card,
+html:not([data-theme]) .gb-econ-card,
+html[data-theme="dark"] .gb-audience-card,
+html:not([data-theme]) .gb-audience-card,
+html[data-theme="dark"] .gb-steps li,
+html:not([data-theme]) .gb-steps li,
+html[data-theme="dark"] .gb-perk-card,
+html:not([data-theme]) .gb-perk-card,
+html[data-theme="dark"] .gb-template-chip,
+html:not([data-theme]) .gb-template-chip,
+html[data-theme="dark"] .gb-level,
+html:not([data-theme]) .gb-level,
+html[data-theme="dark"] .gb-triad article,
+html:not([data-theme]) .gb-triad article {
+  background: #17141f !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  color: #f5f3ff !important;
+}
+
+html[data-theme="dark"] .gb-econ-row,
+html:not([data-theme]) .gb-econ-row,
+html[data-theme="dark"] .gb-econ-stack p,
+html:not([data-theme]) .gb-econ-stack p,
+html[data-theme="dark"] .gb-econ-stack li,
+html:not([data-theme]) .gb-econ-stack li,
+html[data-theme="dark"] .gb-audience-card p,
+html:not([data-theme]) .gb-audience-card p,
+html[data-theme="dark"] .gb-steps p,
+html:not([data-theme]) .gb-steps p,
+html[data-theme="dark"] .gb-perk-card p,
+html:not([data-theme]) .gb-perk-card p {
+  color: #a8a3b8 !important;
+}
+
+html[data-theme="dark"] .gb-econ-row strong,
+html:not([data-theme]) .gb-econ-row strong,
+html[data-theme="dark"] .gb-econ-stack li span,
+html:not([data-theme]) .gb-econ-stack li span,
+html[data-theme="dark"] .gb-econ-punch,
+html:not([data-theme]) .gb-econ-punch,
+html[data-theme="dark"] .gb-audience-card h3,
+html:not([data-theme]) .gb-audience-card h3,
+html[data-theme="dark"] .gb-steps strong,
+html:not([data-theme]) .gb-steps strong,
+html[data-theme="dark"] .gb-perk-card h3,
+html:not([data-theme]) .gb-perk-card h3 {
+  color: #f5f3ff !important;
+}
+
+html[data-theme="dark"] .gb-hero,
+html:not([data-theme]) .gb-hero {
+  background:
+    radial-gradient(ellipse 80% 60% at 50% -20%, rgba(167, 139, 250, 0.16), transparent),
+    #0c0a10 !important;
+  color: #f5f3ff !important;
+}
+
+html[data-theme="dark"] .gb-hero h1,
+html:not([data-theme]) .gb-hero h1 {
+  color: #f5f3ff !important;
+}
+
+html[data-theme="dark"] .gb-hero h1 em,
+html:not([data-theme]) .gb-hero h1 em {
+  color: #c4b5fd !important;
+}
+
+html[data-theme="dark"] .gb-hero-lead,
+html:not([data-theme]) .gb-hero-lead,
+html[data-theme="dark"] .gb-hero-sub,
+html:not([data-theme]) .gb-hero-sub {
+  color: #a8a3b8 !important;
 }
