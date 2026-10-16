@@ -1,0 +1,265 @@
+/* ═══════════════════════════════════════════════════════════
+   Gòke Builders page — theme-aware (light + dark)
+   Replaces hard-coded #12151c / #f3f4f6 / #9ca3af with tokens
+   ═══════════════════════════════════════════════════════════ */
+
+.gb-page {
+  color: var(--gk-text);
+  background: var(--gk-bg);
+}
+
+.gb-hero {
+  background:
+    radial-gradient(ellipse 80% 60% at 50% -20%, var(--gk-accent-soft), transparent),
+    var(--gk-bg) !important;
+  border-bottom: 1px solid var(--gk-border) !important;
+  color: var(--gk-text);
+}
+
+.gb-hero h1 {
+  color: var(--gk-text);
+}
+
+.gb-hero h1 em {
+  color: var(--gk-accent) !important;
+}
+
+.gb-hero-lead {
+  color: var(--gk-muted) !important;
+}
+
+.gb-hero-sub {
+  color: var(--gk-faint) !important;
+}
+
+.gb-flow {
+  color: var(--gk-muted) !important;
+}
+
+.gb-flow-arrow {
+  color: var(--gk-accent) !important;
+}
+
+.gb-flow-money {
+  color: var(--gk-success) !important;
+}
+
+.gb-position h2 {
+  color: var(--gk-text);
+}
+
+.gb-position-lead {
+  color: var(--gk-accent) !important;
+}
+
+.gb-position-grid h3 {
+  color: var(--gk-muted) !important;
+}
+
+.gb-position-grid li {
+  border-bottom-color: var(--gk-border) !important;
+  color: var(--gk-text) !important;
+}
+
+.gb-econ-card,
+.gb-audience-card,
+.gb-steps li,
+.gb-perk-card,
+.gb-template-chip,
+.gb-level,
+.gb-triad article {
+  background: var(--gk-surface) !important;
+  border-color: var(--gk-border) !important;
+  color: var(--gk-text);
+}
+
+.gb-econ-row {
+  border-bottom-color: var(--gk-border) !important;
+  color: var(--gk-muted) !important;
+}
+
+.gb-econ-row strong {
+  color: var(--gk-text) !important;
+}
+
+.gb-econ-diff span,
+.gb-econ-diff strong {
+  color: var(--gk-success) !important;
+}
+
+.gb-econ-stack p {
+  color: var(--gk-muted) !important;
+}
+
+.gb-econ-stack li {
+  border-bottom-color: var(--gk-border) !important;
+  color: var(--gk-muted) !important;
+}
+
+.gb-econ-stack li span {
+  color: var(--gk-text) !important;
+}
+
+.gb-econ-punch {
+  color: var(--gk-text) !important;
+}
+
+.gb-disclaimer {
+  color: var(--gk-faint) !important;
+}
+
+.gb-audience-card h3 {
+  color: var(--gk-text);
+}
+
+.gb-audience-card p {
+  color: var(--gk-muted) !important;
+}
+
+.gb-step-n {
+  color: var(--gk-accent) !important;
+}
+
+.gb-steps strong {
+  color: var(--gk-text) !important;
+}
+
+.gb-steps p {
+  color: var(--gk-muted) !important;
+}
+
+.gb-gate h2 {
+  color: var(--gk-text);
+}
+
+.gb-gate-lead strong {
+  color: var(--gk-accent) !important;
+}
+
+.gb-gate > p {
+  color: var(--gk-muted) !important;
+}
+
+.gb-gate-list li {
+  border-bottom-color: var(--gk-border) !important;
+  color: var(--gk-text) !important;
+}
+
+.gb-gate-list span {
+  color: var(--gk-accent) !important;
+}
+
+.gb-gate-note {
+  color: var(--gk-faint) !important;
+}
+
+.gb-perk-card h3 {
+  color: var(--gk-text);
+}
+
+.gb-perk-card p {
+  color: var(--gk-muted) !important;
+}
+
+.gb-template-chip strong {
+  color: var(--gk-text) !important;
+}
+
+.gb-template-chip span {
+  color: var(--gk-muted) !important;
+}
+
+.gb-template-foot {
+  color: var(--gk-muted) !important;
+}
+
+.gb-students h2 {
+  color: var(--gk-text);
+}
+
+.gb-students > p {
+  color: var(--gk-muted) !important;
+}
+
+.gb-students-label {
+  color: var(--gk-text) !important;
+}
+
+.gb-student-ideas li {
+  background: var(--gk-accent-soft) !important;
+  border-color: var(--gk-border-strong) !important;
+  color: var(--gk-text) !important;
+}
+
+.gb-level-n {
+  color: var(--gk-accent) !important;
+}
+
+.gb-level strong {
+  color: var(--gk-text);
+}
+
+.gb-level p {
+  color: var(--gk-muted) !important;
+}
+
+.gb-level-arrow {
+  color: var(--gk-accent) !important;
+}
+
+.gb-triad h3 {
+  color: var(--gk-text);
+}
+
+.gb-triad p {
+  color: var(--gk-muted) !important;
+}
+
+.gb-triad-arrow {
+  color: var(--gk-accent) !important;
+}
+
+.gb-triad-note {
+  color: var(--gk-muted) !important;
+}
+
+/* Builders pricing list (token text) */
+#builders-pricing li {
+  color: var(--gk-muted);
+}
+
+#builders-pricing strong {
+  color: var(--gk-text);
+}
+
+#builders-pricing code {
+  color: var(--gk-text);
+  background: var(--gk-surface-2);
+  padding: 0.1em 0.35em;
+  border-radius: 6px;
+  font-size: 0.85em;
+}
+
+/* Light mode: extra safety for any remaining hardcoded fills */
+html[data-theme="light"] .gb-hero {
+  background:
+    radial-gradient(ellipse 80% 60% at 50% -20%, rgba(109, 40, 217, 0.1), transparent),
+    var(--gk-bg) !important;
+}
+
+html[data-theme="light"] .gb-econ-card,
+html[data-theme="light"] .gb-audience-card,
+html[data-theme="light"] .gb-steps li,
+html[data-theme="light"] .gb-perk-card,
+html[data-theme="light"] .gb-template-chip,
+html[data-theme="light"] .gb-level,
+html[data-theme="light"] .gb-triad article {
+  background: var(--gk-surface) !important;
+  box-shadow: 0 1px 3px rgba(15, 10, 30, 0.06);
+}
+
+html[data-theme="light"] .gb-student-ideas li {
+  background: rgba(109, 40, 217, 0.1) !important;
+  border-color: rgba(109, 40, 217, 0.28) !important;
+  color: var(--gk-text) !important;
+}
