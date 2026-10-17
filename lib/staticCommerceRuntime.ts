@@ -123,3 +123,6 @@ export function ensureCommerceRuntime(js: string): string {
   if (js.includes("goke_cart") && js.includes("goke-add-cart")) return js;
   return js.trim() + "\n" + COMMERCE_BOOKING_RUNTIME;
 }
+
+/** Alias used by generateSite */
+export const ensureCommerceBookingScript = ensureCommerceRuntime;

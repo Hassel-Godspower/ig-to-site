@@ -266,23 +266,20 @@ export function extractCatalogFromPosts(
       items.push(d);
     }
     // Ensure every item shown in cart niches has a display price label
-    items = items.map((it) => {
+    items = items.map((it, idx) => {
       if (it.price != null && it.price > 0) {
         return { ...it, priceLabel: formatNgn(it.price) };
       }
-      if (mode !== "brochure" && (!it.priceLabel || it.priceLabel === "")) {
-        // assign a modest demo price so cart always works
+      if (!it.priceLabel || it.priceLabel === "") {
+        // assign a modest demo price so cart always works (commerce | booking only here)
         const fallbackPrice =
-          mode === "booking" ? 15000 + (items.indexOf(it) % 5) * 5000 : 12000 + (items.indexOf(it) % 5) * 6000;
+          mode === "booking" ? 15000 + (idx % 5) * 5000 : 12000 + (idx % 5) * 6000;
         return {
           ...it,
           price: fallbackPrice,
           priceLabel: formatNgn(fallbackPrice),
           source: it.source === "caption" ? "derived" : it.source,
         };
-      }
-      if (!it.priceLabel) {
-        return { ...it, priceLabel: "Talk on WhatsApp" };
       }
       return it;
     });
