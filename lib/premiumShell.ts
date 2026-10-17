@@ -1,7 +1,10 @@
 import { resolveOpulentDirection } from "./opulentDirection";
 import { normalizeSitePlan, defaultPlanForNiche, type SitePlan } from "./sitePlan";
 import { resolveTemplateFamily, type FamilyPage, type TemplateFamily } from "./templateFamilies";
-import { assembleHomeMain, assembleServicesBody } from "./siteBlocks";
+import { assembleHomeMain, assembleServicesBody, assembleListingBody } from "./siteBlocks";
+import type { CatalogItem, CatalogSeed } from "./extractCatalog";
+import { COMMERCE_BOOKING_RUNTIME } from "./staticCommerceRuntime";
+import { catalogFromTitles, isShoppableFamily } from "./extractCatalog";
 /**
  * Deterministic premium shell (craft: ifitnessng.pages.dev).
  */
@@ -34,6 +37,9 @@ export type ShellContent = {
   layout?: ShellLayout;
   /** AI + niche composition plan */
   plan: SitePlan;
+  /** Structured sellable / bookable items */
+  products: CatalogItem[];
+  shoppable: boolean;
 };
 const E = (s: string) =>
   String(s || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
@@ -248,7 +254,7 @@ function chrome(c: ShellContent, cur: string) {
 
 export function contentFromProfile(
   profile: { name?: string; username?: string; bio?: string; profilePic?: string },
-  opts: { waNumber?: string | null; galleryUrls: string[]; titles: string[]; nicheId: string; primaryCta?: string; brandPrimary?: string }
+  opts: { waNumber?: string | null; galleryUrls: string[]; titles: string[]; nicheId: string; primaryCta?: string; brandPrimary?: string; products?: CatalogItem[] }
 ): ShellContent {
   const brand = profile.name || profile.username || "Business";
   const bio = (profile.bio || "").trim();
@@ -263,6 +269,10 @@ export function contentFromProfile(
   }));
   const plan = defaultPlanForNiche(opts.nicheId);
   const family = resolveTemplateFamily(opts.nicheId);
+  const shoppable = isShoppableFamily(family.id);
+  const products: CatalogItem[] = (opts as { products?: CatalogItem[] }).products?.length
+    ? (opts as { products: CatalogItem[] }).products
+    : catalogFromTitles(titles, imgs, family.id);
   return {
     brand,
     logoUrl: profile.profilePic || "",
@@ -293,6 +303,8 @@ export function contentFromProfile(
     theme: themeForNiche(opts.nicheId, opts.brandPrimary),
     layout: layoutForNiche(opts.nicheId),
     plan,
+    products,
+    shoppable,
   };
 }
 
@@ -327,6 +339,10 @@ export function parseShellContentJson(
       waNumber: fallback.waNumber,
       logoUrl: (j as { logoUrl?: string }).logoUrl || fallback.logoUrl,
       brand: (j as { brand?: string }).brand || fallback.brand,
+      products: (j as { products?: CatalogItem[] }).products?.length
+        ? (j as { products: CatalogItem[] }).products
+        : fallback.products,
+      shoppable: fallback.shoppable,
     };
   } catch {
     return fallback;
@@ -402,7 +418,7 @@ export function renderShellSite(
     else if (p.role === "services") body = servicesBody;
     else if (p.role === "gallery") body = galleryBody;
     else if (p.role === "contact") body = contactBody;
-    else if (p.role === "listing") body = listingBody;
+    else if (p.role === "listing") body = assembleListingBody(content, p.title);
     else if (p.role === "team") body = teamBody;
     else if (p.role === "booking") body = bookingBody;
     else if (p.role === "proof" || p.role === "detail") body = proofBody;
@@ -416,7 +432,11 @@ export function renderShellSite(
   }
 
   files["styles.css"] = shellCss(content.theme);
-  files["script.js"] = shellJs();
+  files["script.js"] =
+    shellJs() +
+    (content.shoppable || (content.products && content.products.length)
+      ? "\n" + COMMERCE_BOOKING_RUNTIME
+      : "");
   files["pages.json"] = JSON.stringify(
     {
       family: family.id,
@@ -427,6 +447,13 @@ export function renderShellSite(
     null,
     2
   );
+  const catalogSeed: CatalogSeed = {
+    currency: "NGN",
+    items: content.products || [],
+    shoppable: content.shoppable,
+    updatedAt: new Date().toISOString(),
+  };
+  files["catalog.json"] = JSON.stringify(catalogSeed, null, 2);
   files["family.json"] = JSON.stringify(
     {
       id: family.id,

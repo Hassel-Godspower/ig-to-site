@@ -4,6 +4,7 @@
  */
 
 import type { ShellContent } from "./premiumShell";
+import type { CatalogItem } from "./extractCatalog";
 import type { HeroBlockId, SectionBlockId, SitePlan } from "./sitePlan";
 
 const E = (s: string) =>
@@ -198,6 +199,16 @@ export function assembleHomeMain(plan: SitePlan, c: ShellContent): string {
     const html = renderSection(sid, c);
     if (html) parts.push(html);
   }
+  // Shoppable niches: featured products after first content sections
+  if (c.products?.length && c.shoppable) {
+    const feat = assembleHomeProductsSection(c);
+    if (feat) {
+      // insert before last CTA-ish section if possible
+      const ctaIdx = parts.findIndex((p) => p.includes('data-section-name="cta') || p.includes("cta-band") || p.includes("cta-panel"));
+      if (ctaIdx > 0) parts.splice(ctaIdx, 0, feat);
+      else parts.push(feat);
+    }
+  }
   return parts.join("\n");
 }
 
@@ -211,3 +222,45 @@ export function assembleServicesBody(plan: SitePlan, c: ShellContent): string {
   }
   return `<section class="section"><div class="section-inner"><div class="svc-grid">${servicesGrid(c)}</div><p style="margin-top:2rem;text-align:center"><a href="contact.html" class="btn btn-primary" data-goke="button">${E(c.primaryCta)}</a></p></div></section>`;
 }
+
+
+/** Shoppable product / menu / listing cards — wired to staticCommerceRuntime */
+export function productsGridHtml(items: CatalogItem[], cta: string): string {
+  if (!items?.length) return "";
+  return items
+    .slice(0, 12)
+    .map((p) => {
+      const priceAttr = p.price != null ? String(p.price) : "0";
+      const priceShow = E(p.priceLabel || "Ask on WhatsApp");
+      return `<article class="svc-card goke-product-card reveal" data-goke="container" data-product-id="${E(p.id)}" data-product-name="${E(p.name)}" data-product-price="${E(priceAttr)}">
+  <img src="${E(p.image)}" alt="${E(p.name)}" loading="lazy" data-goke="image"/>
+  <div class="body">
+    <h3 class="goke-product-name" data-goke="heading">${E(p.name)}</h3>
+    <p data-goke="text">${E(p.description)}</p>
+    <p class="tag" data-goke="text">${priceShow}</p>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px">
+      <button type="button" class="btn btn-primary btn-sm goke-add-cart" data-goke="button">${E(cta || "Add")}</button>
+      <a href="contact.html" class="btn btn-ghost btn-sm" data-goke="button">Ask</a>
+    </div>
+  </div>
+</article>`;
+    })
+    .join("");
+}
+
+export function assembleListingBody(c: ShellContent, listingTitle = "Shop"): string {
+  const items = c.products?.length ? c.products : [];
+  const grid = productsGridHtml(items, c.primaryCta);
+  if (!grid) {
+    return assembleServicesBody(c.plan, c);
+  }
+  return `<section class="section" data-goke="section" data-section-name="listing"><div class="section-inner"><p class="section-label" data-goke="text">${E(listingTitle)}</p><h2 class="section-title" data-goke="heading">${E(listingTitle)}</h2><div class="svc-grid goke-product-grid">${grid}</div><p style="margin-top:2rem;text-align:center"><button type="button" class="btn btn-primary goke-cart-checkout" data-goke="button">Checkout on WhatsApp</button></p></div></section>`;
+}
+
+export function assembleHomeProductsSection(c: ShellContent): string {
+  const items = (c.products || []).slice(0, 6);
+  if (!items.length) return "";
+  const grid = productsGridHtml(items, c.primaryCta);
+  return `<section class="section site-section reveal" data-goke="section" data-section-name="shop"><div class="section-inner"><p class="section-label" data-goke="text">Featured</p><h2 class="section-title" data-goke="heading">From the collection</h2><div class="svc-grid goke-product-grid">${grid}</div><p style="margin-top:1.5rem;text-align:center"><a href="shop.html" class="btn btn-ghost" data-goke="button">View all</a></p></div></section>`;
+}
+

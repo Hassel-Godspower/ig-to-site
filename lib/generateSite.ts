@@ -19,6 +19,7 @@ import {
 } from "./opulentDirection";
 import { sitePlanMenuForPrompt } from "./sitePlan";
 import { resolveTemplateFamily } from "./templateFamilies";
+import { extractCatalogFromPosts, mergeCatalogItems } from "./extractCatalog";
 
 /**
  * Multi-page niche-aware static site via Groq.
@@ -457,6 +458,12 @@ export async function generateSite(
   const waNumber = extractWhatsAppNumber(profile);
   const galleryUrls = resolveGalleryUrls(profile, imageNicheId);
   const titles = captionTitles(profile);
+  const familyEarly = resolveTemplateFamily(imageNicheId || bp.id || niche.id);
+  const catalogSeed = extractCatalogFromPosts(profile.posts || [], {
+    familyId: familyEarly.id,
+    fallbackImages: galleryUrls,
+    maxItems: 12,
+  });
 
   // ── Premium shell: AI = copy JSON; HTML/CSS/JS = deterministic (ifitness bar) ──
   const fallbackContent = contentFromProfile(profile, {
@@ -464,9 +471,11 @@ export async function generateSite(
     galleryUrls,
     titles,
     nicheId: imageNicheId || bp.id || niche.id,
-    primaryCta: bp.primaryCTA || "Get in touch",
+    primaryCta: bp.primaryCTA || familyEarly.primaryCtaDefault || "Get in touch",
     brandPrimary: (profile as { brandPrimary?: string }).brandPrimary,
+    products: catalogSeed.items,
   });
+  fallbackContent.shoppable = catalogSeed.shoppable;
   // Prefer real logo/avatar fields on profile
   fallbackContent.logoUrl =
     (profile as { logoUrl?: string }).logoUrl ||
@@ -500,7 +509,11 @@ export async function generateSite(
     intel,
     opulentPromptBlock(nicheForDirection, brandName),
     sitePlanMenuForPrompt(),
-    "Return JSON only. No markdown fences. Include plan + copy fields.",
+    `Catalogue (from captions — use as products when shoppable; NEVER invent prices; use null/Ask on WhatsApp if unknown):\n${catalogSeed.items.map((it) => `- ${it.name} | ${it.priceLabel} | ${it.id}`).join("\n") || "(none)"}`,
+    catalogSeed.shoppable
+      ? "This niche is shoppable: include products: [{id,name,description,price (number|null),priceLabel,image,kind}] mirroring the catalogue. Do not invent ₦ amounts."
+      : "Brochure niche: products optional; focus on services and story.",
+    "Return JSON only. No markdown fences. Include plan + copy fields. Include products array when shoppable.",
   ].join("\n\n");
 
   let raw = "";
@@ -521,6 +534,18 @@ export async function generateSite(
   }
 
   const content = parseShellContentJson(raw, fallbackContent, imageNicheId || bp.id || niche.id);
+  // Prefer caption-extracted prices; allow AI names/descriptions to enrich
+  try {
+    const m = raw.match(/\{[\s\S]*\}/);
+    if (m) {
+      const j = JSON.parse(m[0]) as { products?: Partial<import("./extractCatalog").CatalogItem>[] };
+      if (j.products?.length) {
+        content.products = mergeCatalogItems(content.products || catalogSeed.items, j.products);
+      }
+    }
+  } catch { /* keep caption catalog */ }
+  if (!content.products?.length) content.products = catalogSeed.items;
+  content.shoppable = catalogSeed.shoppable || content.shoppable;
   const files = renderShellSite(content, imageNicheId || bp.id || niche.id);
   try {
     files["script.js"] = ensureLiveScript(files["script.js"] || "", waNumber);
