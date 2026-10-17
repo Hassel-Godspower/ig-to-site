@@ -383,9 +383,9 @@ export function renderShellSite(
   // Family owns multi-page IA (clinic doctors, estate properties, etc.)
   let nav = family.pages.map((p) => ({ href: p.file, label: p.title }));
 
-  // Ensure cart/booking page in nav when shoppable
-  if (content.shoppable && !nav.some((n) => n.href === "cart.html")) {
-    const label = content.cartMode === "booking" ? "Booking" : "Cart";
+  // Ensure cart/booking page in nav when shoppable (use `c` — content not declared yet)
+  if (c.shoppable && !nav.some((n) => n.href === "cart.html")) {
+    const label = c.cartMode === "booking" ? "Booking" : "Cart";
     const contactIdx = nav.findIndex((n) => n.href === "contact.html");
     const entry = { href: "cart.html", label };
     if (contactIdx >= 0) nav.splice(contactIdx, 0, entry);
