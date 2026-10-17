@@ -1,0 +1,213 @@
+/**
+ * Deterministic HTML fragments for each block id.
+ * Content is injected; structure is fixed per block — quality stays stable.
+ */
+
+import type { ShellContent } from "./premiumShell";
+import type { HeroBlockId, SectionBlockId, SitePlan } from "./sitePlan";
+
+const E = (s: string) =>
+  String(s || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+
+function servicesBento(c: ShellContent): string {
+  return c.services
+    .slice(0, 4)
+    .map(
+      (s, i) =>
+        `<article class="bento-card reveal${i === 0 ? " tall" : ""}" data-goke="container"><img src="${E(s.image)}" alt="${E(s.title)}" loading="lazy" data-goke="image"/><div class="body"><span class="tag" data-goke="text">${E(s.tag)}</span><h3 data-goke="heading">${E(s.title)}</h3><p data-goke="text">${E(s.body)}</p><a href="services.html" class="btn btn-ghost btn-sm" data-goke="button">Explore</a></div></article>`
+    )
+    .join("");
+}
+
+function servicesGrid(c: ShellContent): string {
+  return c.services
+    .slice(0, 6)
+    .map(
+      (s) =>
+        `<article class="svc-card reveal" data-goke="container"><img src="${E(s.image)}" alt="${E(s.title)}" loading="lazy" data-goke="image"/><div class="body"><p class="tag" data-goke="text">${E(s.tag)}</p><h3 data-goke="heading">${E(s.title)}</h3><p data-goke="text">${E(s.body)}</p></div></article>`
+    )
+    .join("");
+}
+
+function servicesList(c: ShellContent): string {
+  return c.services
+    .slice(0, 6)
+    .map(
+      (s) =>
+        `<article data-goke="container"><span class="tag" data-goke="text">${E(s.tag)}</span><div><h3 data-goke="heading">${E(s.title)}</h3><p data-goke="text">${E(s.body)}</p></div><a href="contact.html" class="btn btn-ghost btn-sm" data-goke="button">${E(c.primaryCta)}</a></article>`
+    )
+    .join("");
+}
+
+function metricsHtml(c: ShellContent): string {
+  return c.metrics
+    .slice(0, 4)
+    .map(
+      (m) =>
+        `<div class="num-card" data-goke="container"><strong data-goke="text">${E(m.value)}</strong><span data-goke="text">${E(m.label)}</span></div>`
+    )
+    .join("");
+}
+
+function mosaicHtml(c: ShellContent): string {
+  return c.gallery
+    .slice(0, 6)
+    .map(
+      (g) =>
+        `<figure data-goke="container"><img src="${E(g.src)}" alt="${E(g.alt)}" loading="lazy" data-goke="image"/></figure>`
+    )
+    .join("");
+}
+
+function quotesHtml(c: ShellContent): string {
+  return c.quotes
+    .slice(0, 2)
+    .map(
+      (q) =>
+        `<blockquote class="quote reveal" data-goke="container"><p data-goke="text">${E(q.text)}</p><footer data-goke="text">— <strong>${E(q.author)}</strong></footer></blockquote>`
+    )
+    .join("");
+}
+
+function aboutPs(c: ShellContent): string {
+  return c.aboutParagraphs.map((p) => `<p data-goke="text">${E(p)}</p>`).join("");
+}
+function aboutLi(c: ShellContent): string {
+  return c.aboutList.map((x) => `<li data-goke="text">${E(x)}</li>`).join("");
+}
+
+export function renderHero(hero: HeroBlockId, c: ShellContent): string {
+  const heroImg = c.gallery[0]?.src || c.aboutImage || "";
+
+  if (hero === "hero_fullbleed") {
+    return `
+<section class="hero-bleed site-section" data-goke="section" data-section-name="hero">
+  <div class="hero-media"><img src="${E(heroImg)}" alt="${E(c.brand)}" width="1800" height="1100" data-goke="image"/><div class="hero-overlay"></div></div>
+  <div class="hero-content">
+    <p class="eyebrow" data-goke="text">${E(c.kicker)}</p>
+    <h1 id="hero-headline" data-goke="heading">${E(c.headlineLine1)}<br/>${E(c.headlineLine2)}</h1>
+    <p class="hero-lead" data-goke="text">${E(c.lead)}</p>
+    <div class="hero-actions">
+      <a href="contact.html" class="btn btn-primary" id="cta-button" data-goke="button">${E(c.primaryCta)}</a>
+      <a href="services.html" class="btn btn-outline" data-goke="button">${E(c.secondaryCta)}</a>
+    </div>
+  </div>
+</section>`;
+  }
+
+  if (hero === "hero_authority") {
+    return `
+<section class="hero-authority site-section" data-goke="section" data-section-name="hero">
+  <div class="hero-authority-grid">
+    <div>
+      <p class="eyebrow" data-goke="text">${E(c.kicker)}</p>
+      <h1 id="hero-headline" data-goke="heading">${E(c.headlineLine1)} <span style="color:var(--accent)">${E(c.headlineLine2)}</span></h1>
+      <p class="hero-lead" data-goke="text">${E(c.lead)}</p>
+      <div class="hero-actions">
+        <a href="contact.html" class="btn btn-primary" id="cta-button" data-goke="button">${E(c.primaryCta)}</a>
+        <a href="services.html" class="btn btn-ghost" data-goke="button">${E(c.secondaryCta)}</a>
+      </div>
+    </div>
+    <div class="split-media"><img src="${E(heroImg)}" alt="${E(c.brand)}" data-goke="image"/></div>
+  </div>
+</section>`;
+  }
+
+  if (hero === "hero_minimal") {
+    return `
+<section class="hero-authority site-section" data-goke="section" data-section-name="hero">
+  <p class="eyebrow" data-goke="text">${E(c.kicker)}</p>
+  <h1 id="hero-headline" data-goke="heading" style="max-width:18ch;font-size:clamp(2.8rem,8vw,5rem)">${E(c.headlineLine1)} ${E(c.headlineLine2)}</h1>
+  <p class="hero-lead" data-goke="text">${E(c.lead)}</p>
+  <div class="hero-actions">
+    <a href="contact.html" class="btn btn-primary" id="cta-button" data-goke="button">${E(c.primaryCta)}</a>
+    <a href="services.html" class="btn btn-ghost" data-goke="button">${E(c.secondaryCta)}</a>
+  </div>
+</section>`;
+  }
+
+  // hero_asymmetric (default performance)
+  return `
+<section class="hero site-section" data-goke="section" data-section-name="hero">
+  <div class="hero-visual"><img src="${E(heroImg)}" alt="${E(c.brand)}" width="1800" height="1200" data-goke="image"/></div>
+  <div class="hero-body">
+    <p class="hero-kicker" data-goke="text">${E(c.kicker)}</p>
+    <h1 id="hero-headline" data-goke="heading">${E(c.headlineLine1)} <span class="line2">${E(c.headlineLine2)}</span></h1>
+    <p class="hero-lead" data-goke="text">${E(c.lead)}</p>
+    <div class="hero-actions">
+      <a href="contact.html" class="btn btn-primary" id="cta-button" data-goke="button">${E(c.primaryCta)}</a>
+      <a href="services.html" class="btn btn-ghost" data-goke="button">${E(c.secondaryCta)}</a>
+    </div>
+    <div class="hero-metrics" data-goke="container">${c.metrics
+      .slice(0, 3)
+      .map(
+        (m) =>
+          `<div><strong data-goke="text">${E(m.value)}</strong><span data-goke="text">${E(m.label)}</span></div>`
+      )
+      .join("")}</div>
+  </div>
+</section>`;
+}
+
+export function renderSection(id: SectionBlockId, c: ShellContent): string {
+  const heroImg2 = c.gallery[1]?.src || c.aboutImage || c.gallery[0]?.src || "";
+
+  switch (id) {
+    case "marquee": {
+      const marquee = [...c.marquee, ...c.marquee]
+        .map((x, i) => `<span>${i % 2 ? `<em>${E(x)}</em>` : E(x)}</span>`)
+        .join("");
+      return `<div class="marquee-wrap" aria-hidden="true"><div class="marquee">${marquee}</div></div>`;
+    }
+    case "services_bento":
+      return `<section class="section site-section reveal" data-goke="section" data-section-name="services"><div class="section-inner"><p class="section-label" data-goke="text">Paths</p><h2 class="section-title" data-goke="heading">Choose how you work with us</h2><p class="section-copy" data-goke="text">${E(c.lead)}</p><div class="bento">${servicesBento(c)}</div></div></section>`;
+    case "services_grid":
+      return `<section class="section site-section reveal" data-goke="section" data-section-name="services"><div class="section-inner"><p class="section-label" data-goke="text">Offerings</p><h2 class="section-title" data-goke="heading">What we offer</h2><div class="svc-grid">${servicesGrid(c)}</div></div></section>`;
+    case "services_list":
+      return `<section class="section site-section reveal" data-goke="section" data-section-name="services" style="background:var(--ink-2);border-block:1px solid var(--line)"><div class="section-inner"><p class="section-label" data-goke="text">Practice</p><h2 class="section-title" data-goke="heading">How we work with you</h2><div class="svc-list">${servicesList(c)}</div></div></section>`;
+    case "offerings_editorial":
+      return `<section class="section site-section reveal" data-goke="section" data-section-name="services"><div class="section-inner"><p class="section-label" data-goke="text">Offerings</p><h2 class="section-title" data-goke="heading">Signature experiences</h2><p class="section-copy" data-goke="text">${E(c.lead)}</p><div class="svc-grid">${servicesGrid(c)}</div><p style="margin-top:2rem;text-align:center"><a href="services.html" class="btn btn-ghost" data-goke="button">View all</a></p></div></section>`;
+    case "about_split":
+      return `<section class="section site-section reveal" data-goke="section" data-section-name="about"><div class="section-inner split"><div class="split-media"><img src="${E(c.aboutImage || heroImg2)}" alt="" data-goke="image"/></div><div class="split-copy"><p class="section-label" data-goke="text">Our story</p><h2 class="section-title" data-goke="heading">${E(c.aboutTitle)}</h2>${aboutPs(c)}<ul class="list-check">${aboutLi(c)}</ul><a href="about.html" class="btn btn-primary" style="margin-top:1rem" data-goke="button">About ${E(c.brand)}</a></div></div></section>`;
+    case "metrics_row":
+      return `<section class="section site-section reveal" data-goke="section" data-section-name="metrics" style="background:var(--ink-2);border-block:1px solid var(--line)"><div class="section-inner"><div class="numbers">${metricsHtml(c)}</div></div></section>`;
+    case "gallery_mosaic":
+      return `<section class="section site-section reveal" data-goke="section" data-section-name="gallery"><div class="section-inner"><p class="section-label" data-goke="text">Atmosphere</p><h2 class="section-title" data-goke="heading">A visual journal</h2><div class="mosaic">${mosaicHtml(c)}</div><p style="margin-top:1.5rem;text-align:center"><a href="gallery.html" class="btn btn-ghost" data-goke="button">Full gallery</a></p></div></section>`;
+    case "quotes": {
+      const q = quotesHtml(c);
+      if (!q) return "";
+      return `<section class="section site-section reveal" data-goke="section" data-section-name="quotes"><div class="section-inner"><div class="quotes">${q}</div></div></section>`;
+    }
+    case "cta_band":
+      return `<section class="cta-band site-section reveal" data-goke="section" data-section-name="cta-band"><h2 data-goke="heading">${E(c.ctaTitle)}</h2><p data-goke="text">${E(c.ctaBody)}</p><a href="contact.html" class="btn btn-primary" data-goke="button">${E(c.primaryCta)}</a></section>`;
+    case "cta_panel":
+      return `<section class="section site-section reveal" data-goke="section" data-section-name="cta"><div class="section-inner"><div class="cta-panel"><h2 data-goke="heading">${E(c.ctaTitle)}</h2><p data-goke="text">${E(c.ctaBody)}</p><a href="contact.html" class="btn btn-primary" data-goke="button">${E(c.primaryCta)}</a></div></div></section>`;
+    default:
+      return "";
+  }
+}
+
+/** Assemble home <main> from plan */
+export function assembleHomeMain(plan: SitePlan, c: ShellContent): string {
+  const parts: string[] = [renderHero(plan.hero, c)];
+  for (const sid of plan.sections) {
+    const html = renderSection(sid, c);
+    if (html) parts.push(html);
+  }
+  return parts.join("\n");
+}
+
+/** Inner services page body follows cardStyle */
+export function assembleServicesBody(plan: SitePlan, c: ShellContent): string {
+  if (plan.cardStyle === "list" || plan.hero === "hero_authority") {
+    return `<section class="section"><div class="section-inner"><div class="svc-list">${servicesList(c)}</div><p style="margin-top:2rem;text-align:center"><a href="contact.html" class="btn btn-primary" data-goke="button">${E(c.primaryCta)}</a></p></div></section>`;
+  }
+  if (plan.cardStyle === "bento") {
+    return `<section class="section"><div class="section-inner"><div class="bento">${servicesBento(c)}</div><p style="margin-top:2rem;text-align:center"><a href="contact.html" class="btn btn-primary" data-goke="button">${E(c.primaryCta)}</a></p></div></section>`;
+  }
+  return `<section class="section"><div class="section-inner"><div class="svc-grid">${servicesGrid(c)}</div><p style="margin-top:2rem;text-align:center"><a href="contact.html" class="btn btn-primary" data-goke="button">${E(c.primaryCta)}</a></p></div></section>`;
+}

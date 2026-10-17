@@ -11,10 +11,13 @@ import { ensureCommerceBookingScript } from "./staticCommerceRuntime";
 import {
   contentFromProfile,
   parseShellContentJson,
+  renderShellSite,
 } from "./premiumShell";
-import { shellIdForNiche } from "./shells/registry";
-import { renderShellById } from "./shells/render";
-import { themeForShell } from "./shells/themes";
+import {
+  opulentPromptBlock,
+  shellSystemPromptOpulent,
+} from "./opulentDirection";
+import { sitePlanMenuForPrompt } from "./sitePlan";
 
 /**
  * Multi-page niche-aware static site via Groq.
@@ -454,7 +457,7 @@ export async function generateSite(
   const galleryUrls = resolveGalleryUrls(profile, imageNicheId);
   const titles = captionTitles(profile);
 
-  // ── Multi-shell: AI = copy JSON; HTML/CSS = distinct shell per niche ──
+  // ── Premium shell: AI = copy JSON; HTML/CSS/JS = deterministic (ifitness bar) ──
   const fallbackContent = contentFromProfile(profile, {
     waNumber,
     galleryUrls,
@@ -471,24 +474,29 @@ export async function generateSite(
 
 
   const systemPrompt =
-    "You write website COPY only as JSON for a premium multi-page business site. Do not output HTML or CSS. Output a single JSON object with keys: kicker, headlineLine1, headlineLine2, lead, primaryCta, secondaryCta, metrics (array of {value,label} length 3), marquee (string[]), services (array of {tag,title,body,image} length 3-4 using provided image URLs), aboutTitle, aboutParagraphs (string[]), aboutList (string[]), aboutImage, gallery (array of {src,alt}), quotes (optional {text,author}[]), ctaTitle, ctaBody, footerBlurb, brand, logoUrl. Voice: confident, specific to THIS business. No lorem, no fake awards. Use real image URLs from the user message.";
+    shellSystemPromptOpulent() +
+    " Also include a plan object: { hero, sections, cardStyle, nav, pageTitles? } choosing only ids from the user composition menu. Composition must feel native to the niche — not one generic layout for every business.";
 
+  const brandName = profile.name || profile.username || "Business";
+  const nicheForDirection = imageNicheId || bp.id || niche.id;
   const userPrompt = [
-    `Brand: ${profile.name || profile.username}`,
+    `Brand: ${brandName}`,
     `Bio: ${profile.bio || ""}`,
-    `Niche: ${bp.label || niche.id}`,
+    `Niche: ${bp.label || niche.id} (${nicheForDirection})`,
     `Primary CTA hint: ${bp.primaryCTA || "Contact"}`,
     `WhatsApp: ${waNumber || "none"}`,
     `Logo/avatar: ${(profile as { logoUrl?: string; profilePicUrl?: string }).logoUrl || (profile as { profilePicUrl?: string }).profilePicUrl || ""}`,
     `Caption titles:\n${titles.map((x, i) => `${i + 1}. ${x}`).join("\n") || "(derive)"}`,
-    `Image URLs (use these):\n${galleryUrls.map((u, i) => `${i + 1}. ${u}`).join("\n")}`,
+    `Image URLs (use these only for services/gallery/aboutImage):\n${galleryUrls.map((u, i) => `${i + 1}. ${u}`).join("\n")}`,
     `Captions sample:\n${profile.posts
       .map((p) => p.caption)
       .filter(Boolean)
       .slice(0, 12)
       .join("\n---\n")}`,
     intel,
-    "Return JSON only.",
+    opulentPromptBlock(nicheForDirection, brandName),
+    sitePlanMenuForPrompt(),
+    "Return JSON only. No markdown fences. Include plan + copy fields.",
   ].join("\n\n");
 
   let raw = "";
@@ -500,7 +508,7 @@ export async function generateSite(
         { role: "user", content: userPrompt },
       ],
       maxTokens: 4000,
-      temperature: 0.35,
+      temperature: 0.45,
     });
     raw = ai.content ?? "";
     aiMeta = { provider: ai.provider, model: ai.model };
@@ -508,26 +516,16 @@ export async function generateSite(
     console.error("shell content AI failed, using profile fallback", err);
   }
 
-  const content = parseShellContentJson(raw, fallbackContent);
-  // Distinct shell per niche (structure + CSS), not a single fixed template
-  const shellId = shellIdForNiche(bp.id || niche.id || imageNicheId || "general_business");
-  content.theme = themeForShell(shellId, content.theme?.accent);
-  const files = renderShellById(shellId, content);
+  const content = parseShellContentJson(raw, fallbackContent, imageNicheId || bp.id || niche.id);
+  const files = renderShellSite(content);
   try {
     files["script.js"] = ensureLiveScript(files["script.js"] || "", waNumber);
   } catch { /* optional */ }
 
-  // Optional debug: which provider + shell produced this site
+  // Optional debug: which provider produced this site
   try {
     files["ai-provider.json"] = JSON.stringify(
-      {
-        provider: aiMeta.provider || "shell",
-        model: aiMeta.model || "multiShell",
-        mode: "shell+json",
-        shell: shellId,
-        niche: bp.id || niche.id,
-        at: new Date().toISOString(),
-      },
+      { provider: aiMeta.provider || "shell", model: aiMeta.model || "premiumShell", mode: "shell+json", at: new Date().toISOString() },
       null,
       2
     );
