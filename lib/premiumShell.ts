@@ -3,8 +3,8 @@ import { normalizeSitePlan, defaultPlanForNiche, type SitePlan } from "./sitePla
 import { resolveTemplateFamily, type FamilyPage, type TemplateFamily } from "./templateFamilies";
 import { assembleHomeMain, assembleServicesBody, assembleListingBody } from "./siteBlocks";
 import type { CatalogItem, CatalogSeed } from "./extractCatalog";
-import { COMMERCE_BOOKING_RUNTIME } from "./staticCommerceRuntime";
-import { catalogFromTitles, isShoppableFamily } from "./extractCatalog";
+import { COMMERCE_BOOKING_RUNTIME, ensureCommerceRuntime } from "./staticCommerceRuntime";
+import { catalogFromTitles, isShoppableFamily, modeForFamily } from "./extractCatalog";
 /**
  * Deterministic premium shell (craft: ifitnessng.pages.dev).
  */
@@ -40,6 +40,9 @@ export type ShellContent = {
   /** Structured sellable / bookable items */
   products: CatalogItem[];
   shoppable: boolean;
+  cartMode: "commerce" | "booking" | "brochure";
+  cartAddLabel: string;
+  cartCheckoutLabel: string;
 };
 const E = (s: string) =>
   String(s || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
@@ -270,9 +273,14 @@ export function contentFromProfile(
   const plan = defaultPlanForNiche(opts.nicheId);
   const family = resolveTemplateFamily(opts.nicheId);
   const shoppable = isShoppableFamily(family.id);
+  const cartMode = modeForFamily(family.id);
   const products: CatalogItem[] = (opts as { products?: CatalogItem[] }).products?.length
     ? (opts as { products: CatalogItem[] }).products
     : catalogFromTitles(titles, imgs, family.id);
+  const cartAddLabel =
+    cartMode === "booking" ? "Add to booking" : cartMode === "commerce" ? "Add to cart" : "Select";
+  const cartCheckoutLabel =
+    cartMode === "booking" ? "Book on WhatsApp" : "Checkout on WhatsApp";
   return {
     brand,
     logoUrl: profile.profilePic || "",
@@ -305,6 +313,9 @@ export function contentFromProfile(
     plan,
     products,
     shoppable,
+    cartMode,
+    cartAddLabel,
+    cartCheckoutLabel,
   };
 }
 
@@ -343,6 +354,9 @@ export function parseShellContentJson(
         ? (j as { products: CatalogItem[] }).products
         : fallback.products,
       shoppable: fallback.shoppable,
+      cartMode: fallback.cartMode,
+      cartAddLabel: fallback.cartAddLabel,
+      cartCheckoutLabel: fallback.cartCheckoutLabel,
     };
   } catch {
     return fallback;
@@ -379,7 +393,7 @@ export function renderShellSite(
 
   const pageShell = (file: string, title: string, body: string) => {
     const x = chrome(content, file);
-    return `${head(title + " · " + content.brand, desc, content.theme.googleFontsHref)}<body data-wa="${E(content.waNumber)}">${x.header}<main><section class="page-top"><div class="section-inner"><h1 data-goke="heading">${E(title)}</h1><p data-goke="text">${E(content.lead)}</p></div></section>${body}</main>${x.footer}${x.tabbar}</body></html>`;
+    return `${head(title + " · " + content.brand, desc, content.theme.googleFontsHref)}<body data-wa="${E(content.waNumber)}" data-goke-cart-mode="${E(content.cartMode || "commerce")}">${x.header}<main><section class="page-top"><div class="section-inner"><h1 data-goke="heading">${E(title)}</h1><p data-goke="text">${E(content.lead)}</p></div></section>${body}</main>${x.footer}${x.tabbar}</body></html>`;
   };
 
   const aboutBody = `<section class="section" data-goke="section" data-section-name="about"><div class="section-inner split"><div class="split-media"><img src="${E(content.aboutImage)}" alt="" data-goke="image"/></div><div class="split-copy"><h2 data-goke="heading">${E(content.aboutTitle)}</h2>${aboutPs}<ul class="list-check">${aboutLi}</ul></div></div></section>`;
@@ -408,14 +422,14 @@ export function renderShellSite(
   const files: Record<string, string> = {};
   const indexMain = assembleHomeMain(plan, content);
   files["index.html"] =
-    `${head(content.brand + " — " + content.kicker, desc, content.theme.googleFontsHref)}<body data-wa="${E(content.waNumber)}">${ch.header}<main>${indexMain}</main>${ch.footer}${ch.tabbar}</body></html>`;
+    `${head(content.brand + " — " + content.kicker, desc, content.theme.googleFontsHref)}<body data-wa="${E(content.waNumber)}" data-goke-cart-mode="${E(content.cartMode || "commerce")}">${ch.header}<main>${indexMain}</main>${ch.footer}${ch.tabbar}</body></html>`;
 
   const pages: FamilyPage[] = family.pages;
   for (const p of pages) {
     if (p.file === "index.html") continue;
     let body = aboutBody;
     if (p.role === "about") body = aboutBody;
-    else if (p.role === "services") body = servicesBody;
+    else if (p.role === "services") body = content.shoppable ? assembleListingBody(content, p.title) : servicesBody;
     else if (p.role === "gallery") body = galleryBody;
     else if (p.role === "contact") body = contactBody;
     else if (p.role === "listing") body = assembleListingBody(content, p.title);
@@ -432,11 +446,12 @@ export function renderShellSite(
   }
 
   files["styles.css"] = shellCss(content.theme);
-  files["script.js"] =
+  files["script.js"] = ensureCommerceRuntime(
     shellJs() +
-    (content.shoppable || (content.products && content.products.length)
-      ? "\n" + COMMERCE_BOOKING_RUNTIME
-      : "");
+      (content.shoppable || (content.products && content.products.length)
+        ? "\n" + COMMERCE_BOOKING_RUNTIME
+        : "")
+  );
   files["pages.json"] = JSON.stringify(
     {
       family: family.id,
@@ -449,8 +464,12 @@ export function renderShellSite(
   );
   const catalogSeed: CatalogSeed = {
     currency: "NGN",
+    mode: content.cartMode || "commerce",
     items: content.products || [],
     shoppable: content.shoppable,
+    addLabel: content.cartAddLabel || "Add to cart",
+    checkoutLabel: content.cartCheckoutLabel || "Checkout on WhatsApp",
+    cartNoun: content.cartMode === "booking" ? "booking" : "cart",
     updatedAt: new Date().toISOString(),
   };
   files["catalog.json"] = JSON.stringify(catalogSeed, null, 2);

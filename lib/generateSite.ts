@@ -476,6 +476,9 @@ export async function generateSite(
     products: catalogSeed.items,
   });
   fallbackContent.shoppable = catalogSeed.shoppable;
+  fallbackContent.cartMode = catalogSeed.mode;
+  fallbackContent.cartAddLabel = catalogSeed.addLabel;
+  fallbackContent.cartCheckoutLabel = catalogSeed.checkoutLabel;
   // Prefer real logo/avatar fields on profile
   fallbackContent.logoUrl =
     (profile as { logoUrl?: string }).logoUrl ||
@@ -510,9 +513,11 @@ export async function generateSite(
     opulentPromptBlock(nicheForDirection, brandName),
     sitePlanMenuForPrompt(),
     `Catalogue (from captions — use as products when shoppable; NEVER invent prices; use null/Ask on WhatsApp if unknown):\n${catalogSeed.items.map((it) => `- ${it.name} | ${it.priceLabel} | ${it.id}`).join("\n") || "(none)"}`,
-    catalogSeed.shoppable
-      ? "This niche is shoppable: include products: [{id,name,description,price (number|null),priceLabel,image,kind}] mirroring the catalogue. Do not invent ₦ amounts."
-      : "Brochure niche: products optional; focus on services and story.",
+    catalogSeed.mode === "commerce"
+      ? "COMMERCE niche: include products with realistic ₦ prices (numbers). Site has Add to cart → Checkout on WhatsApp."
+      : catalogSeed.mode === "booking"
+        ? "BOOKING niche: include services with realistic ₦ prices. Site has Add to booking → Book on WhatsApp."
+        : "Brochure niche: products optional; focus on story and contact.",
     "Return JSON only. No markdown fences. Include plan + copy fields. Include products array when shoppable.",
   ].join("\n\n");
 
@@ -546,6 +551,9 @@ export async function generateSite(
   } catch { /* keep caption catalog */ }
   if (!content.products?.length) content.products = catalogSeed.items;
   content.shoppable = catalogSeed.shoppable || content.shoppable;
+  content.cartMode = catalogSeed.mode;
+  content.cartAddLabel = catalogSeed.addLabel;
+  content.cartCheckoutLabel = catalogSeed.checkoutLabel;
   const files = renderShellSite(content, imageNicheId || bp.id || niche.id);
   try {
     files["script.js"] = ensureLiveScript(files["script.js"] || "", waNumber);
