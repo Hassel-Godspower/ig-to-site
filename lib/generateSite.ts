@@ -18,6 +18,7 @@ import {
   shellSystemPromptOpulent,
 } from "./opulentDirection";
 import { sitePlanMenuForPrompt } from "./sitePlan";
+import { resolveTemplateFamily } from "./templateFamilies";
 
 /**
  * Multi-page niche-aware static site via Groq.
@@ -479,10 +480,13 @@ export async function generateSite(
 
   const brandName = profile.name || profile.username || "Business";
   const nicheForDirection = imageNicheId || bp.id || niche.id;
+  const family = resolveTemplateFamily(nicheForDirection);
   const userPrompt = [
     `Brand: ${brandName}`,
     `Bio: ${profile.bio || ""}`,
     `Niche: ${bp.label || niche.id} (${nicheForDirection})`,
+    `Template family: ${family.id} (${family.label}) — pages: ${family.pages.map((p) => p.title).join(" · ")}`,
+    `Default CTA: ${family.primaryCtaDefault}`,
     `Primary CTA hint: ${bp.primaryCTA || "Contact"}`,
     `WhatsApp: ${waNumber || "none"}`,
     `Logo/avatar: ${(profile as { logoUrl?: string; profilePicUrl?: string }).logoUrl || (profile as { profilePicUrl?: string }).profilePicUrl || ""}`,
@@ -517,7 +521,7 @@ export async function generateSite(
   }
 
   const content = parseShellContentJson(raw, fallbackContent, imageNicheId || bp.id || niche.id);
-  const files = renderShellSite(content);
+  const files = renderShellSite(content, imageNicheId || bp.id || niche.id);
   try {
     files["script.js"] = ensureLiveScript(files["script.js"] || "", waNumber);
   } catch { /* optional */ }

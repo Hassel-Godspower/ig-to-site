@@ -1,5 +1,6 @@
 import { resolveOpulentDirection } from "./opulentDirection";
 import { normalizeSitePlan, defaultPlanForNiche, type SitePlan } from "./sitePlan";
+import { resolveTemplateFamily, type FamilyPage, type TemplateFamily } from "./templateFamilies";
 import { assembleHomeMain, assembleServicesBody } from "./siteBlocks";
 /**
  * Deterministic premium shell (craft: ifitnessng.pages.dev).
@@ -261,6 +262,7 @@ export function contentFromProfile(
     image: imgs[i % imgs.length],
   }));
   const plan = defaultPlanForNiche(opts.nicheId);
+  const family = resolveTemplateFamily(opts.nicheId);
   return {
     brand,
     logoUrl: profile.profilePic || "",
@@ -268,7 +270,7 @@ export function contentFromProfile(
     headlineLine1: brand.split(" ")[0] || brand,
     headlineLine2: "crafted with intention.",
     lead: bio.slice(0, 200) || `${brand} is built for clients who value clarity, craft, and a composed experience — from first look to final contact.`,
-    primaryCta: opts.primaryCta || "Get in touch",
+    primaryCta: opts.primaryCta || family.primaryCtaDefault,
     secondaryCta: "Explore",
     metrics: [
       { value: "01", label: "Discover" },
@@ -331,10 +333,22 @@ export function parseShellContentJson(
   }
 }
 
-export function renderShellSite(c: ShellContent): Record<string, string> {
+export function renderShellSite(
+  c: ShellContent,
+  nicheId?: string
+): Record<string, string> {
   const desc = c.lead.slice(0, 160);
-  const plan = c.plan || defaultPlanForNiche("general_business");
-  const content: ShellContent = { ...c, nav: plan.nav?.length ? plan.nav : c.nav, plan };
+  const family = resolveTemplateFamily(nicheId || "general_business");
+  const plan = c.plan || defaultPlanForNiche(nicheId || family.id);
+  // Prefer family nav (unique IA) when plan nav is generic 5-page
+  // Family owns multi-page IA (clinic doctors, estate properties, etc.)
+  const nav = family.pages.map((p) => ({ href: p.file, label: p.title }));
+  const content: ShellContent = {
+    ...c,
+    nav,
+    plan: { ...plan, nav },
+    primaryCta: c.primaryCta || family.primaryCtaDefault,
+  };
   const ch = chrome(content, "index.html");
 
   const aboutPs = content.aboutParagraphs.map((p) => `<p data-goke="text">${E(p)}</p>`).join("");
@@ -347,50 +361,83 @@ export function renderShellSite(c: ShellContent): Record<string, string> {
     )
     .join("");
 
-  const indexMain = assembleHomeMain(plan, content);
-  const index = `${head(content.brand + " — " + content.kicker, desc, content.theme.googleFontsHref)}<body data-wa="${E(content.waNumber)}">${ch.header}<main>${indexMain}</main>${ch.footer}${ch.tabbar}</body></html>`;
-
-  const titles = plan.pageTitles || {};
-  const page = (file: string, title: string, body: string) => {
+  const pageShell = (file: string, title: string, body: string) => {
     const x = chrome(content, file);
     return `${head(title + " · " + content.brand, desc, content.theme.googleFontsHref)}<body data-wa="${E(content.waNumber)}">${x.header}<main><section class="page-top"><div class="section-inner"><h1 data-goke="heading">${E(title)}</h1><p data-goke="text">${E(content.lead)}</p></div></section>${body}</main>${x.footer}${x.tabbar}</body></html>`;
   };
 
-  return {
-    "index.html": index,
-    "about.html": page(
-      "about.html",
-      titles.about || "About",
-      `<section class="section" data-goke="section" data-section-name="about"><div class="section-inner split"><div class="split-media"><img src="${E(content.aboutImage)}" alt="" data-goke="image"/></div><div class="split-copy"><h2 data-goke="heading">${E(content.aboutTitle)}</h2>${aboutPs}<ul class="list-check">${aboutLi}</ul></div></div></section>`
-    ),
-    "services.html": page(
-      "services.html",
-      titles.services || "Services",
-      assembleServicesBody(plan, content)
-    ),
-    "gallery.html": page(
-      "gallery.html",
-      titles.gallery || "Gallery",
-      `<section class="section" data-goke="section" data-section-name="gallery"><div class="section-inner"><div class="mosaic">${mosaic}</div></div></section>`
-    ),
-    "contact.html": page(
-      "contact.html",
-      titles.contact || "Contact",
-      `<section class="section" data-goke="section" data-section-name="contact"><div class="section-inner contact-layout"><div class="panel"><h2 style="margin-bottom:1rem" data-goke="heading">${E(content.ctaTitle)}</h2><p style="color:var(--muted);margin-bottom:1.5rem" data-goke="text">${E(content.ctaBody)}</p><form id="contact-form"><div class="field"><label for="name">Name</label><input id="name" name="name" required data-goke="text"/></div><div class="field"><label for="email">Email</label><input id="email" name="email" type="email"/></div><div class="field"><label for="message">Message</label><textarea id="message" name="message" required></textarea></div><button type="submit" class="btn btn-primary" data-goke="button">Send via WhatsApp</button></form></div><div class="panel"><h3 data-goke="heading">${E(content.brand)}</h3><p style="color:var(--muted)" data-goke="text">${E(content.footerBlurb)}</p></div></div></section>`
-    ),
-    "styles.css": shellCss(content.theme),
-    "script.js": shellJs(),
-    "pages.json": JSON.stringify(
-      {
-        pages: content.nav.map((n) => ({
-          file: n.href,
-          title: n.label,
-        })),
-        plan,
-      },
-      null,
-      2
-    ),
-  };
+  const aboutBody = `<section class="section" data-goke="section" data-section-name="about"><div class="section-inner split"><div class="split-media"><img src="${E(content.aboutImage)}" alt="" data-goke="image"/></div><div class="split-copy"><h2 data-goke="heading">${E(content.aboutTitle)}</h2>${aboutPs}<ul class="list-check">${aboutLi}</ul></div></div></section>`;
+  const servicesBody = assembleServicesBody(plan, content);
+  const galleryBody = `<section class="section" data-goke="section" data-section-name="gallery"><div class="section-inner"><div class="mosaic">${mosaic}</div></div></section>`;
+  const contactBody = `<section class="section" data-goke="section" data-section-name="contact"><div class="section-inner contact-layout"><div class="panel"><h2 style="margin-bottom:1rem" data-goke="heading">${E(content.ctaTitle)}</h2><p style="color:var(--muted);margin-bottom:1.5rem" data-goke="text">${E(content.ctaBody)}</p><form id="contact-form"><div class="field"><label for="name">Name</label><input id="name" name="name" required data-goke="text"/></div><div class="field"><label for="email">Email</label><input id="email" name="email" type="email"/></div><div class="field"><label for="message">Message</label><textarea id="message" name="message" required></textarea></div><button type="submit" class="btn btn-primary" data-goke="button">Send via WhatsApp</button></form></div><div class="panel"><h3 data-goke="heading">${E(content.brand)}</h3><p style="color:var(--muted)" data-goke="text">${E(content.footerBlurb)}</p></div></div></section>`;
+  const listingBody = `<section class="section" data-goke="section" data-section-name="listing"><div class="section-inner"><p class="section-label" data-goke="text">${E(family.label)}</p><h2 class="section-title" data-goke="heading">Browse</h2><div class="svc-grid">${content.services
+    .map(
+      (s) =>
+        `<article class="svc-card reveal" data-goke="container"><img src="${E(s.image)}" alt="${E(s.title)}" loading="lazy" data-goke="image"/><div class="body"><p class="tag" data-goke="text">${E(s.tag)}</p><h3 data-goke="heading">${E(s.title)}</h3><p data-goke="text">${E(s.body)}</p><a href="contact.html" class="btn btn-ghost btn-sm" data-goke="button">${E(content.primaryCta)}</a></div></article>`
+    )
+    .join("")}</div></div></section>`;
+  const teamBody = `<section class="section" data-goke="section" data-section-name="team"><div class="section-inner"><p class="section-label" data-goke="text">People</p><h2 class="section-title" data-goke="heading">The team</h2><div class="svc-grid">${content.services
+    .slice(0, 4)
+    .map(
+      (s, i) =>
+        `<article class="svc-card reveal" data-goke="container"><img src="${E(content.gallery[i % content.gallery.length]?.src || s.image)}" alt="${E(s.title)}" loading="lazy" data-goke="image"/><div class="body"><h3 data-goke="heading">${E(s.title)}</h3><p data-goke="text">${E(s.body)}</p></div></article>`
+    )
+    .join("")}</div></div></section>`;
+  const bookingBody = contactBody.replace(
+    'data-section-name="contact"',
+    'data-section-name="booking"'
+  );
+  const proofBody = `<section class="section" data-goke="section" data-section-name="proof"><div class="section-inner"><p class="section-label" data-goke="text">Proof</p><h2 class="section-title" data-goke="heading">Results &amp; notes</h2><div class="quotes">${content.quotes.length ? content.quotes.map((q) => `<blockquote class="quote"><p data-goke="text">${E(q.text)}</p><footer data-goke="text">— ${E(q.author)}</footer></blockquote>`).join("") : content.aboutParagraphs.map((p) => `<blockquote class="quote"><p data-goke="text">${E(p)}</p></blockquote>`).join("")}</div><div class="numbers" style="margin-top:2rem">${content.metrics.map((m) => `<div class="num-card"><strong data-goke="text">${E(m.value)}</strong><span data-goke="text">${E(m.label)}</span></div>`).join("")}</div></div></section>`;
+
+  const files: Record<string, string> = {};
+  const indexMain = assembleHomeMain(plan, content);
+  files["index.html"] =
+    `${head(content.brand + " — " + content.kicker, desc, content.theme.googleFontsHref)}<body data-wa="${E(content.waNumber)}">${ch.header}<main>${indexMain}</main>${ch.footer}${ch.tabbar}</body></html>`;
+
+  const pages: FamilyPage[] = family.pages;
+  for (const p of pages) {
+    if (p.file === "index.html") continue;
+    let body = aboutBody;
+    if (p.role === "about") body = aboutBody;
+    else if (p.role === "services") body = servicesBody;
+    else if (p.role === "gallery") body = galleryBody;
+    else if (p.role === "contact") body = contactBody;
+    else if (p.role === "listing") body = listingBody;
+    else if (p.role === "team") body = teamBody;
+    else if (p.role === "booking") body = bookingBody;
+    else if (p.role === "proof" || p.role === "detail") body = proofBody;
+    else body = servicesBody;
+    files[p.file] = pageShell(p.file, p.title, body);
+  }
+
+  // Ensure core contact exists for WA even if family omitted
+  if (!files["contact.html"] && !files["appointment.html"] && !files["booking.html"]) {
+    files["contact.html"] = pageShell("contact.html", "Contact", contactBody);
+  }
+
+  files["styles.css"] = shellCss(content.theme);
+  files["script.js"] = shellJs();
+  files["pages.json"] = JSON.stringify(
+    {
+      family: family.id,
+      gokeTemplateId: family.gokeTemplateId,
+      pages: pages.map((p) => ({ file: p.file, title: p.title, role: p.role })),
+      plan,
+    },
+    null,
+    2
+  );
+  files["family.json"] = JSON.stringify(
+    {
+      id: family.id,
+      label: family.label,
+      gokeTemplateId: family.gokeTemplateId,
+      primaryCta: family.primaryCtaDefault,
+    },
+    null,
+    2
+  );
+
+  return files;
 }
 

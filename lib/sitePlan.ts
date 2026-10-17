@@ -1,3 +1,4 @@
+import { resolveTemplateFamily, sitePlanFromFamily } from "./templateFamilies";
 /**
  * Site plan — AI chooses composition; engine assembles blocks.
  * Unique arrangement per job/niche without free-form HTML.
@@ -55,145 +56,10 @@ const DEFAULT_NAV: SitePlan["nav"] = [
 
 /** Deterministic default plan from niche — used when AI omits plan */
 export function defaultPlanForNiche(nicheId: string): SitePlan {
-  const o = resolveOpulentDirection(nicheId);
-  return planFromArchetype(o.archetype, nicheId);
+  const family = resolveTemplateFamily(nicheId);
+  return sitePlanFromFamily(family);
 }
 
-function planFromArchetype(a: LuxuryArchetype, nicheId: string): SitePlan {
-  const id = (nicheId || "").toLowerCase();
-
-  if (a === "athletic_edge" || a === "technical_opulence") {
-    return {
-      hero: "hero_asymmetric",
-      sections: ["marquee", "services_bento", "about_split", "metrics_row", "gallery_mosaic", "cta_panel"],
-      cardStyle: "bento",
-      nav: fitnessNav(id),
-      pageTitles: fitnessTitles(id),
-      density: "rich",
-    };
-  }
-
-  if (a === "quiet_authority" || a === "clinical_precision") {
-    return {
-      hero: "hero_authority",
-      sections: ["services_list", "about_split", "metrics_row", "cta_band"],
-      cardStyle: "list",
-      nav: [
-        { href: "index.html", label: "Home" },
-        { href: "about.html", label: "About" },
-        { href: "services.html", label: id.includes("estate") ? "Listings" : "Practice" },
-        { href: "gallery.html", label: "Insights" },
-        { href: "contact.html", label: "Contact" },
-      ],
-      density: "sparse",
-    };
-  }
-
-  if (a === "product_clarity" || a === "editorial_craft") {
-    return {
-      hero: "hero_asymmetric",
-      sections: ["services_bento", "about_split", "gallery_mosaic", "cta_panel"],
-      cardStyle: "bento",
-      nav: DEFAULT_NAV,
-      density: "balanced",
-    };
-  }
-
-  if (a === "sensorial_indulgence") {
-    return {
-      hero: "hero_fullbleed",
-      sections: ["offerings_editorial", "about_split", "gallery_mosaic", "quotes", "cta_band"],
-      cardStyle: "editorial",
-      nav: [
-        { href: "index.html", label: "Home" },
-        { href: "about.html", label: "Story" },
-        { href: "services.html", label: id.includes("bar") ? "Menu" : "Menu" },
-        { href: "gallery.html", label: "Gallery" },
-        { href: "contact.html", label: "Reserve" },
-      ],
-      pageTitles: {
-        about: "Story",
-        services: "Menu",
-        gallery: "Gallery",
-        contact: "Reserve",
-      },
-      density: "balanced",
-    };
-  }
-
-  if (a === "modern_heritage") {
-    return {
-      hero: "hero_fullbleed",
-      sections: ["services_grid", "about_split", "gallery_mosaic", "cta_band"],
-      cardStyle: "grid",
-      nav: [
-        { href: "index.html", label: "Home" },
-        { href: "about.html", label: "Maison" },
-        { href: "services.html", label: "Collection" },
-        { href: "gallery.html", label: "Lookbook" },
-        { href: "contact.html", label: "Contact" },
-      ],
-      pageTitles: {
-        about: "Maison",
-        services: "Collection",
-        gallery: "Lookbook",
-        contact: "Contact",
-      },
-      density: "sparse",
-    };
-  }
-
-  if (a === "warm_institution") {
-    return {
-      hero: "hero_fullbleed",
-      sections: ["services_grid", "about_split", "metrics_row", "gallery_mosaic", "cta_band"],
-      cardStyle: "grid",
-      nav: DEFAULT_NAV,
-      density: "balanced",
-    };
-  }
-
-  // exotic_sanctuary (spa) and default opulent
-  return {
-    hero: "hero_fullbleed",
-    sections: ["offerings_editorial", "about_split", "gallery_mosaic", "quotes", "cta_band"],
-    cardStyle: "editorial",
-    nav: [
-      { href: "index.html", label: "Home" },
-      { href: "about.html", label: "About" },
-      { href: "services.html", label: "Treatments" },
-      { href: "gallery.html", label: "Gallery" },
-      { href: "contact.html", label: "Book" },
-    ],
-    pageTitles: {
-      about: "About",
-      services: "Treatments",
-      gallery: "Gallery",
-      contact: "Book",
-    },
-    density: "sparse",
-  };
-}
-
-function fitnessNav(id: string): SitePlan["nav"] {
-  if (/fitness|gym|train/.test(id)) {
-    return [
-      { href: "index.html", label: "Home" },
-      { href: "about.html", label: "Studio" },
-      { href: "services.html", label: "Training" },
-      { href: "gallery.html", label: "Floor" },
-      { href: "contact.html", label: "Join" },
-    ];
-  }
-  return DEFAULT_NAV;
-}
-
-function fitnessTitles(id: string): SitePlan["pageTitles"] {
-  if (/fitness|gym|train/.test(id)) {
-    return { about: "Studio", services: "Training", gallery: "Floor", contact: "Join" };
-  }
-  return undefined;
-}
 
 const HERO_SET = new Set<string>([
   "hero_fullbleed",
@@ -280,6 +146,8 @@ nav: array of {href, label} for index/about/services/gallery/contact html files
 pageTitles: optional { about, services, gallery, contact } labels
 
 Pick a combination that feels native to THIS niche — not a generic startup landing page.
+Page filenames and nav labels are controlled by the template family (clinic → doctors/appointment; estate → properties; stay → rooms/booking).
+You may reorder home sections; do not invent arbitrary page files outside the family.
 Include a "plan" object in your JSON with: hero, sections, cardStyle, nav, pageTitles (optional).
 `.trim();
 }
