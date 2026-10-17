@@ -2,6 +2,7 @@ import { resolveOpulentDirection } from "./opulentDirection";
 import { normalizeSitePlan, defaultPlanForNiche, type SitePlan } from "./sitePlan";
 import { resolveTemplateFamily, type FamilyPage, type TemplateFamily } from "./templateFamilies";
 import { assembleHomeMain, assembleServicesBody, assembleListingBody } from "./siteBlocks";
+import { assembleCartPageBody, buildBookingCatalogJson, BOOKING_CART_CSS } from "./bookingPages";
 import type { CatalogItem, CatalogSeed } from "./extractCatalog";
 import { COMMERCE_BOOKING_RUNTIME, ensureCommerceRuntime } from "./staticCommerceRuntime";
 import { catalogFromTitles, isShoppableFamily, modeForFamily } from "./extractCatalog";
@@ -240,12 +241,20 @@ function head(title: string, desc: string, fontsHref?: string) {
 <link rel="stylesheet" href="styles.css"/><script src="script.js" defer></script></head>`;
 }
 function chrome(c: ShellContent, cur: string) {
-  const nav = c.nav.map((n) => `<a href="${n.href}"${n.href === cur ? ' aria-current="page"' : ""}>${E(n.label)}</a>`).join("");
+  const nav = c.nav
+    .map((n) => {
+      const badge =
+        n.href === "cart.html"
+          ? '<span class="goke-cart-badge goke-cart-count" style="display:none">0</span>'
+          : "";
+      return `<a href="${n.href}" class="${n.href === "cart.html" ? "goke-nav-cart" : ""}"${n.href === cur ? ' aria-current="page"' : ""}>${E(n.label)}${badge}</a>`;
+    })
+    .join("");
   const logo = c.logoUrl ? `<img src="${E(c.logoUrl)}" alt="${E(c.brand)}" width="40" height="40"/>` : "";
   const header = `<header class="site-header"><div class="nav-bar"><a href="index.html" class="brand" id="site-title" data-goke="link">${logo}<span>${E(c.brand)}</span></a>
 <button type="button" class="nav-toggle" aria-label="Menu" aria-expanded="false" aria-controls="mobileNav"><span></span><span></span><span></span></button>
 <nav class="desktop-nav site-nav" id="site-nav" data-goke="nav" aria-label="Main">${nav}</nav>
-<div class="header-ctas"><a href="contact.html" class="btn btn-primary btn-sm" data-goke="button">${E(c.primaryCta)}</a></div>
+<div class="header-ctas">${c.shoppable ? `<a href="cart.html" class="btn btn-ghost btn-sm goke-nav-cart" data-goke="button">${c.cartMode === "booking" ? "Booking" : "Cart"}<span class="goke-cart-badge goke-cart-count" style="display:none">0</span></a>` : ""}<a href="${c.shoppable ? "cart.html" : "contact.html"}" class="btn btn-primary btn-sm" data-goke="button">${E(c.primaryCta)}</a></div>
 <div class="mobile-nav" id="mobileNav" hidden>${nav}<a href="contact.html" class="cta">${E(c.primaryCta)}</a></div></div></header>`;
   const footer = `<footer class="site-footer"><div class="footer-grid"><div><a href="index.html" class="brand">${logo}<span>${E(c.brand)}</span></a><p>${E(c.footerBlurb)}</p></div>
 <div class="footer-col"><h4>Explore</h4>${c.nav.map((n) => `<a href="${n.href}">${E(n.label)}</a>`).join("")}</div>
@@ -372,7 +381,17 @@ export function renderShellSite(
   const plan = c.plan || defaultPlanForNiche(nicheId || family.id);
   // Prefer family nav (unique IA) when plan nav is generic 5-page
   // Family owns multi-page IA (clinic doctors, estate properties, etc.)
-  const nav = family.pages.map((p) => ({ href: p.file, label: p.title }));
+  let nav = family.pages.map((p) => ({ href: p.file, label: p.title }));
+
+  // Ensure cart/booking page in nav when shoppable
+  if (content.shoppable && !nav.some((n) => n.href === "cart.html")) {
+    const label = content.cartMode === "booking" ? "Booking" : "Cart";
+    const contactIdx = nav.findIndex((n) => n.href === "contact.html");
+    const entry = { href: "cart.html", label };
+    if (contactIdx >= 0) nav.splice(contactIdx, 0, entry);
+    else nav.push(entry);
+  }
+
   const content: ShellContent = {
     ...c,
     nav,
@@ -434,18 +453,25 @@ export function renderShellSite(
     else if (p.role === "contact") body = contactBody;
     else if (p.role === "listing") body = assembleListingBody(content, p.title);
     else if (p.role === "team") body = teamBody;
-    else if (p.role === "booking") body = bookingBody;
+    else if (p.role === "booking") body = assembleCartPageBody(content);
     else if (p.role === "proof" || p.role === "detail") body = proofBody;
     else body = servicesBody;
     files[p.file] = pageShell(p.file, p.title, body);
   }
 
   // Ensure core contact exists for WA even if family omitted
+  if (content.shoppable && !files["cart.html"]) {
+    files["cart.html"] = pageShell(
+      "cart.html",
+      content.cartMode === "booking" ? "Booking" : "Cart",
+      assembleCartPageBody(content)
+    );
+  }
   if (!files["contact.html"] && !files["appointment.html"] && !files["booking.html"]) {
     files["contact.html"] = pageShell("contact.html", "Contact", contactBody);
   }
 
-  files["styles.css"] = shellCss(content.theme);
+  files["styles.css"] = shellCss(content.theme) + "\n" + BOOKING_CART_CSS;
   files["script.js"] = ensureCommerceRuntime(
     shellJs() +
       (content.shoppable || (content.products && content.products.length)
@@ -462,17 +488,25 @@ export function renderShellSite(
     null,
     2
   );
-  const catalogSeed: CatalogSeed = {
-    currency: "NGN",
-    mode: content.cartMode || "commerce",
-    items: content.products || [],
-    shoppable: content.shoppable,
-    addLabel: content.cartAddLabel || "Add to cart",
-    checkoutLabel: content.cartCheckoutLabel || "Checkout on WhatsApp",
-    cartNoun: content.cartMode === "booking" ? "booking" : "cart",
-    updatedAt: new Date().toISOString(),
-  };
-  files["catalog.json"] = JSON.stringify(catalogSeed, null, 2);
+  const mode = content.cartMode === "booking" ? "booking" : "commerce";
+  const catalogFile = buildBookingCatalogJson(
+    content.products || [],
+    content.waNumber,
+    content.cartMode === "brochure" ? "commerce" : mode
+  );
+  files["catalog.json"] = JSON.stringify(
+    {
+      ...catalogFile,
+      shoppable: content.shoppable,
+      addLabel: content.cartAddLabel || "Add to cart",
+      checkoutLabel: content.cartCheckoutLabel || "Checkout on WhatsApp",
+      cartNoun: content.cartMode === "booking" ? "booking" : "cart",
+      updatedAt: new Date().toISOString(),
+      items: content.products || [],
+    },
+    null,
+    2
+  );
   files["family.json"] = JSON.stringify(
     {
       id: family.id,

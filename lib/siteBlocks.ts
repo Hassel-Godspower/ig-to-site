@@ -269,7 +269,8 @@ export function assembleListingBody(c: ShellContent, listingTitle = "Shop"): str
   const checkoutLabel = c.cartCheckoutLabel || "Checkout on WhatsApp";
   const grid = productsGridHtml(items, addLabel);
   if (!grid) return assembleServicesBody(c.plan, c);
-  return `<section class="section" data-goke="section" data-section-name="listing"><div class="section-inner"><p class="section-label" data-goke="text">${E(listingTitle)}</p><h2 class="section-title" data-goke="heading">${E(listingTitle)}</h2><div class="svc-grid goke-product-grid">${grid}</div><div class="cta-panel" style="margin-top:2rem;text-align:center"><p class="goke-cart-empty" data-goke="text" style="color:var(--muted)">Your list is empty — add items above.</p><p class="goke-cart-full" style="display:none;margin-bottom:12px"><span class="goke-cart-count">0</span> selected · <strong class="goke-cart-total">₦0</strong></p><button type="button" class="btn btn-primary goke-cart-checkout" data-goke="button">${E(checkoutLabel)}</button></div></div></section>`;
+  return `<section class="section" data-goke="section" data-section-name="listing"><div class="section-inner"><p class="section-label" data-goke="text">${E(listingTitle)}</p><h2 class="section-title" data-goke="heading">${E(listingTitle)}</h2><div class="svc-grid goke-product-grid">${grid}</div><div class="cta-panel" style="margin-top:2rem;text-align:center"><p class="goke-cart-empty" data-goke="text" style="color:var(--muted)">Your list is empty — add items above.</p><p class="goke-cart-full" style="display:none;margin-bottom:12px"><span class="goke-cart-count">0</span> selected · <strong class="goke-cart-total">₦0</strong></p><p style="margin-bottom:12px"><a href="cart.html" class="btn btn-primary" data-goke="button">${E(checkoutLabel)}</a></p>
+<button type="button" class="btn btn-ghost goke-cart-checkout" data-goke="button">Quick send</button></div></div></section>`;
 }
 
 export function assembleHomeProductsSection(c: ShellContent): string {
@@ -279,7 +280,7 @@ export function assembleHomeProductsSection(c: ShellContent): string {
   const grid = productsGridHtml(items, addLabel);
   const title = c.cartMode === "booking" ? "Book a service" : "Shop the collection";
   const href =
-    c.nav?.find((n) => /shop|menu|inventory|services|treatment|room|course/i.test(n.href + n.label))?.href ||
-    "services.html";
+    c.nav?.find((n) => /shop|menu|inventory|services|treatment|room|course|cart|booking/i.test(n.href + n.label))?.href ||
+    (c.shoppable ? "cart.html" : "services.html");
   return `<section class="section site-section reveal" data-goke="section" data-section-name="shop"><div class="section-inner"><p class="section-label" data-goke="text">Featured</p><h2 class="section-title" data-goke="heading">${E(title)}</h2><div class="svc-grid goke-product-grid">${grid}</div><p style="margin-top:1.5rem;text-align:center"><a href="${E(href)}" class="btn btn-ghost" data-goke="button">View all</a></p></div></section>`;
 }
