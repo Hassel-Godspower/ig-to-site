@@ -1,56 +1,20 @@
-import { resolveOpulentDirection } from "./opulentDirection";
 /**
- * Deterministic premium shell (craft: ifitnessng.pages.dev).
+ * Content helpers for multi-shell generation.
+ * HTML/CSS rendering lives in lib/shells/ (unique per niche shell).
  */
-export type ShellTheme = {
-  ink: string; ink2: string; surface: string; line: string;
-  text: string; muted: string; accent: string; accentDim: string;
-  accentGlow: string; onAccent: string; mode: "dark" | "light";
-  fontDisplay: string;
-  fontBody: string;
-  googleFontsHref: string;
-  radius: string;
-  radiusLg: string;
-};
-export type ShellService = { tag: string; title: string; body: string; image: string };
-export type ShellContent = {
-  brand: string; logoUrl: string; kicker: string;
-  headlineLine1: string; headlineLine2: string; lead: string;
-  primaryCta: string; secondaryCta: string;
-  metrics: { value: string; label: string }[];
-  marquee: string[]; services: ShellService[];
-  aboutTitle: string; aboutParagraphs: string[]; aboutList: string[]; aboutImage: string;
-  gallery: { src: string; alt: string }[];
-  quotes: { text: string; author: string }[];
-  ctaTitle: string; ctaBody: string; footerBlurb: string;
-  nav: { href: string; label: string }[];
-  waNumber: string; theme: ShellTheme;
-};
+import { shellIdForNiche } from "./shells/registry";
+import { themeForShell } from "./shells/themes";
+import type { ShellContent, ShellService, ShellTheme } from "./shells/types";
+
+export type { ShellContent, ShellService, ShellTheme };
+
 const E = (s: string) =>
   String(s || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
 
+/** @deprecated Prefer themeForShell(shellId) — kept for contentFromProfile */
 export function themeForNiche(nicheId: string, brandPrimary?: string): ShellTheme {
-  const o = resolveOpulentDirection(nicheId || "general_business");
-  const accent =
-    brandPrimary && /^#[0-9a-fA-F]{6}$/.test(brandPrimary) ? brandPrimary : o.accent;
-  return {
-    ink: o.ink,
-    ink2: o.ink2,
-    surface: o.surface,
-    line: o.mode === "dark" ? "rgba(255,255,255,0.08)" : "rgba(40,30,20,0.12)",
-    text: o.text,
-    muted: o.muted,
-    accent,
-    accentDim: `${accent}26`,
-    accentGlow: `${accent}59`,
-    onAccent: o.onAccent,
-    mode: o.mode,
-    fontDisplay: o.fontDisplay,
-    fontBody: o.fontBody,
-    googleFontsHref: o.googleFontsHref,
-    radius: o.radius,
-    radiusLg: o.radiusLg,
-  };
+  const shellId = shellIdForNiche(nicheId || "general_business");
+  return themeForShell(shellId, brandPrimary);
 }
 
 export function shellCss(theme: ShellTheme): string {

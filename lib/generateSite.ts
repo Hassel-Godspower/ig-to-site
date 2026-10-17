@@ -11,8 +11,10 @@ import { ensureCommerceBookingScript } from "./staticCommerceRuntime";
 import {
   contentFromProfile,
   parseShellContentJson,
-  renderShellSite,
 } from "./premiumShell";
+import { shellIdForNiche } from "./shells/registry";
+import { renderShellById } from "./shells/render";
+import { themeForShell } from "./shells/themes";
 
 /**
  * Multi-page niche-aware static site via Groq.
@@ -452,7 +454,7 @@ export async function generateSite(
   const galleryUrls = resolveGalleryUrls(profile, imageNicheId);
   const titles = captionTitles(profile);
 
-  // ── Premium shell: AI = copy JSON; HTML/CSS/JS = deterministic (ifitness bar) ──
+  // ── Multi-shell: AI = copy JSON; HTML/CSS = distinct shell per niche ──
   const fallbackContent = contentFromProfile(profile, {
     waNumber,
     galleryUrls,
@@ -507,15 +509,25 @@ export async function generateSite(
   }
 
   const content = parseShellContentJson(raw, fallbackContent);
-  const files = renderShellSite(content);
+  // Distinct shell per niche (structure + CSS), not a single fixed template
+  const shellId = shellIdForNiche(bp.id || niche.id || imageNicheId || "general_business");
+  content.theme = themeForShell(shellId, content.theme?.accent);
+  const files = renderShellById(shellId, content);
   try {
     files["script.js"] = ensureLiveScript(files["script.js"] || "", waNumber);
   } catch { /* optional */ }
 
-  // Optional debug: which provider produced this site
+  // Optional debug: which provider + shell produced this site
   try {
     files["ai-provider.json"] = JSON.stringify(
-      { provider: aiMeta.provider || "shell", model: aiMeta.model || "premiumShell", mode: "shell+json", at: new Date().toISOString() },
+      {
+        provider: aiMeta.provider || "shell",
+        model: aiMeta.model || "multiShell",
+        mode: "shell+json",
+        shell: shellId,
+        niche: bp.id || niche.id,
+        at: new Date().toISOString(),
+      },
       null,
       2
     );
