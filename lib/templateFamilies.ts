@@ -366,15 +366,17 @@ export function resolveTemplateFamily(nicheId: string): TemplateFamily {
   const id = (nicheId || "general").toLowerCase().replace(/-/g, "_");
 
   const rules: [RegExp, TemplateFamilyId][] = [
-    [/spa|wellness|massage|beauty|salon|nail|bodywork/, "spa"],
-    [/restaurant|food|dining|cafe|coffee|bakery|bar_lounge|lounge|catering/, "dine"],
+    [/spa|wellness|massage|nail|bodywork|hair_salon|barber/, "spa"],
+    [/restaurant|food|dining|cafe|coffee|bakery|bar_lounge|lounge|catering|qsr|fast_food/, "dine"],
     [/fitness|gym|train|pt\b|coach/, "fitness"],
-    [/clinic|dental|pharmacy|healthcare|hospital/, "clinic"],
+    [/clinic|dental|healthcare|hospital/, "clinic"],
+    [/(^|_)pharmacy($|_)/, "clinic"], // id pharmacy only, not pharmacy_retail
     [/real_estate|estate|property|short_let/, "estate"],
     [/hotel|stay|lodge|resort/, "stay"],
-    [/fashion|luxe|jewelry|boutique|ankara|african_wear|tailor/, "luxe"],
-    [/commerce|ecommerce|e_commerce|shop|retail|store/, "commerce"],
+    [/fashion|luxe|jewelry|boutique|ankara|african_wear|tailor|cosmetics|fragrance|perfume|beauty_retail/, "luxe"],
+    [/electronics|gadget|phone|laptop|appliance|supermarket|grocery|minimart|convenience|pharmacy_retail|building|materials|cement|furniture|farm|produce|agro|commerce|ecommerce|e_commerce|shop|retail|store/, "commerce"],
     [/auto|car|dealership|mechanic|vehicle/, "auto"],
+    [/ride_hailing|mobility|bolt|uber|transport|logistics/, "app"],
     [/law|legal|accounting|tax|audit|consultant|professional|agency|marketing/, "pro"],
     [/portfolio|photo|video|creative|design/, "portfolio"],
     [/school|education|course|academy|lesson/, "edu"],

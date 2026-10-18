@@ -47,6 +47,7 @@ export const LEGACY_TO_BLUEPRINT: Record<string, string> = {
   restaurant_food: "restaurant_dining",
   beauty_salon: "hair_salon",
   ecommerce_retail: "fashion_boutique",
+  // also: electronics_retail, cosmetics_fragrance, supermarket_grocery
   legal_professional: "law_firm",
   education: "school_education",
   creative_portfolio: "creative_agency",
@@ -59,6 +60,19 @@ export const LEGACY_TO_BLUEPRINT: Record<string, string> = {
   church_faith: "church_faith",
   tech_saas: "tech_saas",
   general_business: "general_business",
+  electronics_retail: "ecommerce_retail",
+  gadgets_phones: "ecommerce_retail",
+  cosmetics_fragrance: "ecommerce_retail",
+  beauty_retail: "ecommerce_retail",
+  supermarket_grocery: "ecommerce_retail",
+  convenience_minimart: "ecommerce_retail",
+  ride_hailing: "tech_saas",
+  pharmacy_retail: "ecommerce_retail",
+  building_materials: "ecommerce_retail",
+  furniture_home: "ecommerce_retail",
+  farm_produce: "ecommerce_retail",
+
+  mobility_transport: "tech_saas",
 };
 
 export function toLegacyNicheId(id: string): string {
