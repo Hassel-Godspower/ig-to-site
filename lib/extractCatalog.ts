@@ -74,13 +74,11 @@ function firstLine(caption: string): string {
 
 /** Sales / product families */
 export function isCommerceFamily(familyId: string): boolean {
-  // Template families that sell goods / menu items with cart
   return /^(commerce|luxe|dine|auto)$/.test(familyId);
 }
 
-/** Blueprint / keyword ids that should use commerce cart even before family resolve */
 export function isRetailBlueprint(id: string): boolean {
-  return /electronics|gadget|phone|laptop|appliance|cosmetics|fragrance|perfume|beauty_retail|supermarket|grocery|minimart|convenience|fashion|jewelry|boutique|ecommerce|retail|shop/.test(
+  return /electronics|gadget|phone|laptop|appliance|cosmetics|fragrance|perfume|beauty_retail|supermarket|grocery|minimart|convenience|fashion|jewelry|boutique|ecommerce|retail|shop|pharmacy|building|furniture|farm|produce|agro/.test(
     (id || "").toLowerCase()
   );
 }
@@ -181,6 +179,11 @@ const DEMO: Record<string, DemoRow[]> = {
     { name: "Agency engagement", description: "Start a sales or let brief.", price: 0, kind: "listing" },
     { name: "Valuation request", description: "Professional opinion of value.", price: 50000, kind: "service" },
   ],
+  general: [
+    { name: "Standard package", description: "Core offer for new clients.", price: 25000, kind: "service" },
+    { name: "Premium package", description: "Extended support and delivery.", price: 55000, kind: "service" },
+    { name: "Consultation", description: "Talk through your needs.", price: 10000, kind: "service" },
+  ],
 
   pharmacy: [
     { name: "Paracetamol 500mg pack", description: "Everyday pain relief (OTC).", price: 800, kind: "product" },
@@ -214,11 +217,37 @@ const DEMO: Record<string, DemoRow[]> = {
     { name: "Palm oil 5L", description: "Local quality oil.", price: 12000, kind: "product" },
     { name: "Seasonal vegetable mix", description: "Leafy and garden produce.", price: 4000, kind: "product" },
   ],
-  general: [
-    { name: "Standard package", description: "Core offer for new clients.", price: 25000, kind: "service" },
-    { name: "Premium package", description: "Extended support and delivery.", price: 55000, kind: "service" },
-    { name: "Consultation", description: "Talk through your needs.", price: 10000, kind: "service" },
+  electronics: [
+    { name: "Wireless earbuds Pro", description: "Noise isolation, long battery, clear calls.", price: 45000, kind: "product" },
+    { name: "Power bank 20000mAh", description: "Fast charge for phones and tablets.", price: 28000, kind: "product" },
+    { name: "Smart Android TV 43\"", description: "Streaming-ready, sharp 4K picture.", price: 320000, kind: "product" },
+    { name: "Laptop stand aluminium", description: "Ergonomic desk setup.", price: 18000, kind: "product" },
+    { name: "USB-C hub 7-in-1", description: "Ports for work and travel.", price: 35000, kind: "product" },
+    { name: "Phone case + tempered glass", description: "Everyday protection pack.", price: 8500, kind: "product" },
   ],
+  cosmetics: [
+    { name: "Vitamin C serum 30ml", description: "Brightening daily serum.", price: 18500, kind: "product" },
+    { name: "Matte lipstick set", description: "Long-wear, rich pigment.", price: 12000, kind: "product" },
+    { name: "Eau de parfum 50ml", description: "Signature scent, lasting trail.", price: 45000, kind: "product" },
+    { name: "SPF 50 day cream", description: "Light protection for Lagos sun.", price: 16000, kind: "product" },
+    { name: "Body oil glow", description: "Hydration with soft sheen.", price: 14000, kind: "product" },
+    { name: "Makeup brush kit", description: "Essential tools for clean application.", price: 22000, kind: "product" },
+  ],
+  supermarket: [
+    { name: "Family rice 10kg", description: "Staple quality grain.", price: 18000, kind: "product" },
+    { name: "Cooking oil 5L", description: "Everyday kitchen essential.", price: 12000, kind: "product" },
+    { name: "Breakfast cereal pack", description: "Quick mornings, full flavour.", price: 6500, kind: "product" },
+    { name: "Fresh produce basket", description: "Seasonal fruits & vegetables.", price: 9000, kind: "product" },
+    { name: "Household cleaner set", description: "Home essentials bundle.", price: 7500, kind: "product" },
+    { name: "Beverages multipack", description: "Soft drinks for the week.", price: 5500, kind: "product" },
+  ],
+  mobility: [
+    { name: "City ride (approx.)", description: "Short trips across town — confirm on chat.", price: 2500, kind: "service" },
+    { name: "Airport transfer", description: "Fixed-route comfort to/from airport.", price: 15000, kind: "service" },
+    { name: "Hourly hire", description: "Driver on standby for errands.", price: 12000, kind: "service" },
+    { name: "Intercity seat", description: "Book a seat for longer routes.", price: 8000, kind: "service" },
+  ],
+
 };
 
 
@@ -315,34 +344,6 @@ export const FAMILY_PRODUCT_IMAGES: Record<string, string[]> = {
     u("photo-1600607687939-ce8a6c25118c"), // interior
     u("photo-1600047509807-ba8f99d2cd00"), // property
   ],
-  general: [
-    u("photo-1497366216548-37526070297c"),
-    u("photo-1523275335684-37898b6baf30"),
-    u("photo-1544161515-4ab6ce6db874"),
-    u("photo-1517248135467-4c7edcad34c4"),
-    u("photo-1556761175-5973dc0f32e7"),
-    u("photo-1507679799987-c73779587ccf"),
-  ],
-};
-
-export function productImagesForFamily(familyId: string): string[] {
-  const id = (familyId || "general").toLowerCase();
-  if (FAMILY_PRODUCT_IMAGES[id]) return FAMILY_PRODUCT_IMAGES[id];
-  if (/electronics|gadget|phone|laptop|appliance/.test(id)) return FAMILY_PRODUCT_IMAGES.electronics || FAMILY_PRODUCT_IMAGES.commerce;
-  if (/pharmacy/.test(id)) return FAMILY_PRODUCT_IMAGES.pharmacy || FAMILY_PRODUCT_IMAGES.commerce;
-  if (/building|cement|materials/.test(id)) return FAMILY_PRODUCT_IMAGES.building || FAMILY_PRODUCT_IMAGES.commerce;
-  if (/furniture|sofa/.test(id)) return FAMILY_PRODUCT_IMAGES.furniture || FAMILY_PRODUCT_IMAGES.commerce;
-  if (/farm|produce|agro|agric/.test(id)) return FAMILY_PRODUCT_IMAGES.farm || FAMILY_PRODUCT_IMAGES.commerce;
-  if (/cosmetic|fragrance|perfume|beauty_retail/.test(id)) return FAMILY_PRODUCT_IMAGES.cosmetics || FAMILY_PRODUCT_IMAGES.luxe;
-  if (/supermarket|grocery|minimart|convenience/.test(id)) return FAMILY_PRODUCT_IMAGES.supermarket || FAMILY_PRODUCT_IMAGES.commerce;
-  if (/ride|mobility|bolt|uber|transport/.test(id)) return FAMILY_PRODUCT_IMAGES.mobility || FAMILY_PRODUCT_IMAGES.auto;
-  if (isCommerceFamily(id)) return FAMILY_PRODUCT_IMAGES.commerce;
-  if (isBookingFamily(id)) return FAMILY_PRODUCT_IMAGES.spa;
-  return FAMILY_PRODUCT_IMAGES.general;
-}
-
-
-
 
   pharmacy: [
     u("photo-1584308666744-24d5c474f2ae"),
@@ -377,35 +378,68 @@ export function productImagesForFamily(familyId: string): string[] {
     u("photo-1461354464878-ad803748e6c6"),
   ],
   electronics: [
-    { name: "Wireless earbuds Pro", description: "Noise isolation, long battery, clear calls.", price: 45000, kind: "product" },
-    { name: "Power bank 20000mAh", description: "Fast charge for phones and tablets.", price: 28000, kind: "product" },
-    { name: "Smart Android TV 43\"", description: "Streaming-ready, sharp 4K picture.", price: 320000, kind: "product" },
-    { name: "Laptop stand aluminium", description: "Ergonomic desk setup.", price: 18000, kind: "product" },
-    { name: "USB-C hub 7-in-1", description: "Ports for work and travel.", price: 35000, kind: "product" },
-    { name: "Phone case + tempered glass", description: "Everyday protection pack.", price: 8500, kind: "product" },
+    u("photo-1511707171634-5f897ff02aa9"),
+    u("photo-1498049794561-7780e7231661"),
+    u("photo-1505740420928-5e560c06d30e"),
+    u("photo-1525547719533-c1d8b8e8d4a0"),
+    u("photo-1585386959984-a4155224a1ad"),
+    u("photo-1550009158-9ebf69173e03"),
   ],
   cosmetics: [
-    { name: "Vitamin C serum 30ml", description: "Brightening daily serum.", price: 18500, kind: "product" },
-    { name: "Matte lipstick set", description: "Long-wear, rich pigment.", price: 12000, kind: "product" },
-    { name: "Eau de parfum 50ml", description: "Signature scent, lasting trail.", price: 45000, kind: "product" },
-    { name: "SPF 50 day cream", description: "Light protection for Lagos sun.", price: 16000, kind: "product" },
-    { name: "Body oil glow", description: "Hydration with soft sheen.", price: 14000, kind: "product" },
-    { name: "Makeup brush kit", description: "Essential tools for clean application.", price: 22000, kind: "product" },
+    u("photo-1596462502278-27bfdc403348"),
+    u("photo-1522335789203-aabd1fc54bc9"),
+    u("photo-1541643600914-78b084683601"),
+    u("photo-1571781926299-e363d68fff31"),
+    u("photo-1512496015851-a90fb38ba796"),
+    u("photo-1598440947619-2c35fc9aa908"),
   ],
   supermarket: [
-    { name: "Family rice 10kg", description: "Staple quality grain.", price: 18000, kind: "product" },
-    { name: "Cooking oil 5L", description: "Everyday kitchen essential.", price: 12000, kind: "product" },
-    { name: "Breakfast cereal pack", description: "Quick mornings, full flavour.", price: 6500, kind: "product" },
-    { name: "Fresh produce basket", description: "Seasonal fruits & vegetables.", price: 9000, kind: "product" },
-    { name: "Household cleaner set", description: "Home essentials bundle.", price: 7500, kind: "product" },
-    { name: "Beverages multipack", description: "Soft drinks for the week.", price: 5500, kind: "product" },
+    u("photo-1542838132-92c53300491e"),
+    u("photo-1604719312566-8912e9227c6a"),
+    u("photo-1578916175868-cac3705e8e19"),
+    u("photo-1534723452862-4c874180d2dc"),
+    u("photo-1506617420156-8e453697f8c0"),
+    u("photo-1583258292688-f7e0e8f8d6d8"),
   ],
   mobility: [
-    { name: "City ride (approx.)", description: "Short trips across town — confirm on chat.", price: 2500, kind: "service" },
-    { name: "Airport transfer", description: "Fixed-route comfort to/from airport.", price: 15000, kind: "service" },
-    { name: "Hourly hire", description: "Driver on standby for errands.", price: 12000, kind: "service" },
-    { name: "Intercity seat", description: "Book a seat for longer routes.", price: 8000, kind: "service" },
+    u("photo-1449965408869-eaa3f722e40d"),
+    u("photo-1502877338535-766e1452684a"),
+    u("photo-1552519507-da3b142c6e3d"),
+    u("photo-1492144534655-ae79c964c9d7"),
+    u("photo-1449824913935-59a10b8d2000"),
+    u("photo-1517940310602-26535839fe89"),
   ],
+  general: [
+    u("photo-1497366216548-37526070297c"),
+    u("photo-1523275335684-37898b6baf30"),
+    u("photo-1544161515-4ab6ce6db874"),
+    u("photo-1517248135467-4c7edcad34c4"),
+    u("photo-1556761175-5973dc0f32e7"),
+    u("photo-1507679799987-c73779587ccf"),
+  ],
+};
+
+export function productImagesForFamily(familyId: string): string[] {
+  const id = (familyId || "general").toLowerCase();
+  if (FAMILY_PRODUCT_IMAGES[id]) return FAMILY_PRODUCT_IMAGES[id];
+  if (/electronics|gadget|phone|laptop|appliance/.test(id))
+    return FAMILY_PRODUCT_IMAGES.electronics || FAMILY_PRODUCT_IMAGES.commerce;
+  if (/pharmacy/.test(id)) return FAMILY_PRODUCT_IMAGES.pharmacy || FAMILY_PRODUCT_IMAGES.commerce;
+  if (/building|cement|materials/.test(id))
+    return FAMILY_PRODUCT_IMAGES.building || FAMILY_PRODUCT_IMAGES.commerce;
+  if (/furniture|sofa/.test(id)) return FAMILY_PRODUCT_IMAGES.furniture || FAMILY_PRODUCT_IMAGES.commerce;
+  if (/farm|produce|agro|agric/.test(id)) return FAMILY_PRODUCT_IMAGES.farm || FAMILY_PRODUCT_IMAGES.commerce;
+  if (/cosmetic|fragrance|perfume|beauty_retail/.test(id))
+    return FAMILY_PRODUCT_IMAGES.cosmetics || FAMILY_PRODUCT_IMAGES.luxe;
+  if (/supermarket|grocery|minimart|convenience/.test(id))
+    return FAMILY_PRODUCT_IMAGES.supermarket || FAMILY_PRODUCT_IMAGES.commerce;
+  if (/ride|mobility|bolt|uber|transport/.test(id))
+    return FAMILY_PRODUCT_IMAGES.mobility || FAMILY_PRODUCT_IMAGES.auto;
+  if (isCommerceFamily(id)) return FAMILY_PRODUCT_IMAGES.commerce;
+  if (isBookingFamily(id)) return FAMILY_PRODUCT_IMAGES.spa;
+  return FAMILY_PRODUCT_IMAGES.general;
+}
+
 
 export function seedDemoCatalog(
   familyId: string,
