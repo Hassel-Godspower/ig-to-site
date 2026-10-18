@@ -27,22 +27,70 @@ export function emptyDocument(jobId?: string): GokeDocument {
   };
 }
 
-/** Apply design tokens as CSS variables on :root inside the iframe */
+/**
+ * Apply design tokens as CSS variables on :root inside the iframe.
+ *
+ * Generated premium shells use --text / --ink / --muted (and body rules in styles.css).
+ * Forcing body { color: DEFAULT dark-on-white } caused FOUC: light text from the site,
+ * then dark text after the editor attached — independent of the real background.
+ *
+ * When a designed site is detected, we only bridge --goke-* for widgets and do NOT
+ * override body color/background.
+ */
 export function applyTokensToDocument(
   doc: Document,
   tokens: DesignTokens
 ): void {
   const root = doc.documentElement;
-  root.style.setProperty("--goke-primary", tokens.colors.primary);
+  const cs =
+    typeof doc.defaultView?.getComputedStyle === "function"
+      ? doc.defaultView.getComputedStyle(root)
+      : null;
+
+  const siteText =
+    (cs?.getPropertyValue("--text") || "").trim() ||
+    (cs?.getPropertyValue("--goke-text") || "").trim();
+  const siteMuted =
+    (cs?.getPropertyValue("--muted") || "").trim() ||
+    (cs?.getPropertyValue("--goke-muted") || "").trim();
+  const siteBg =
+    (cs?.getPropertyValue("--ink") || "").trim() ||
+    (cs?.getPropertyValue("--goke-bg") || "").trim() ||
+    (cs?.getPropertyValue("--bg") || "").trim();
+  const siteAccent =
+    (cs?.getPropertyValue("--accent") || "").trim() ||
+    (cs?.getPropertyValue("--goke-primary") || "").trim();
+
+  const hasDesignedTheme = !!(
+    siteText ||
+    doc.querySelector('link[href*="styles.css"]') ||
+    doc.querySelector("style#goke-shell-theme") ||
+    doc.body?.getAttribute("data-goke-cart-mode") ||
+    doc.querySelector("[data-section-name]")
+  );
+
+  const primary = siteAccent || tokens.colors.primary;
+  const text = hasDesignedTheme && siteText ? siteText : tokens.colors.text;
+  const muted = hasDesignedTheme && siteMuted ? siteMuted : tokens.colors.muted;
+  const background =
+    hasDesignedTheme && siteBg ? siteBg : tokens.colors.background;
+
+  root.style.setProperty("--goke-primary", primary);
   root.style.setProperty("--goke-secondary", tokens.colors.secondary);
-  root.style.setProperty("--goke-text", tokens.colors.text);
-  root.style.setProperty("--goke-muted", tokens.colors.muted);
-  root.style.setProperty("--goke-bg", tokens.colors.background);
+  root.style.setProperty("--goke-text", text);
+  root.style.setProperty("--goke-muted", muted);
+  root.style.setProperty("--goke-bg", background);
   root.style.setProperty("--goke-font-heading", tokens.fonts.heading);
   root.style.setProperty("--goke-font-body", tokens.fonts.body);
+  root.style.setProperty("--primary-color", primary);
 
-  // Also keep legacy primary used by generateSite
-  root.style.setProperty("--primary-color", tokens.colors.primary);
+  // Keep shell vars in sync so kits using either naming stay consistent
+  if (hasDesignedTheme) {
+    if (siteText) root.style.setProperty("--text", siteText);
+    if (siteMuted) root.style.setProperty("--muted", siteMuted);
+    if (siteBg) root.style.setProperty("--ink", siteBg);
+    if (siteAccent) root.style.setProperty("--accent", siteAccent);
+  }
 
   let tag = doc.getElementById(TOKENS_STYLE_ID) as HTMLStyleElement | null;
   if (!tag) {
@@ -50,7 +98,22 @@ export function applyTokensToDocument(
     tag.id = TOKENS_STYLE_ID;
     doc.head?.appendChild(tag);
   }
-  tag.textContent = `:root {
+
+  if (hasDesignedTheme) {
+    // Bridge only — never paint body over the generated theme (stops white→dark text flash)
+    tag.textContent = `:root {
+  --goke-primary: ${primary};
+  --goke-secondary: ${tokens.colors.secondary};
+  --goke-text: ${text};
+  --goke-muted: ${muted};
+  --goke-bg: ${background};
+  --goke-font-heading: ${tokens.fonts.heading};
+  --goke-font-body: ${tokens.fonts.body};
+  --primary-color: ${primary};
+}
+/* Designed site: do not override body color/background — styles.css owns the look */`;
+  } else {
+    tag.textContent = `:root {
   --goke-primary: ${tokens.colors.primary};
   --goke-secondary: ${tokens.colors.secondary};
   --goke-text: ${tokens.colors.text};
@@ -62,6 +125,7 @@ export function applyTokensToDocument(
 }
 body { font-family: var(--goke-font-body); color: var(--goke-text); background: var(--goke-bg); }
 h1, h2, h3, h4, h5, h6 { font-family: var(--goke-font-heading); }`;
+  }
 
   ensureGoogleFontsInDocument(doc, [tokens.fonts.heading, tokens.fonts.body]);
 }
