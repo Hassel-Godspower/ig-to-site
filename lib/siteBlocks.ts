@@ -269,8 +269,9 @@ export function assembleListingBody(c: ShellContent, listingTitle = "Shop"): str
   const checkoutLabel = c.cartCheckoutLabel || "Checkout on WhatsApp";
   const grid = productsGridHtml(items, addLabel);
   if (!grid) return assembleServicesBody(c.plan, c);
-  return `<section class="section" data-goke="section" data-section-name="listing"><div class="section-inner"><p class="section-label" data-goke="text">${E(listingTitle)}</p><h2 class="section-title" data-goke="heading">${E(listingTitle)}</h2><div class="svc-grid goke-product-grid">${grid}</div><div class="cta-panel" style="margin-top:2rem;text-align:center"><p class="goke-cart-empty" data-goke="text" style="color:var(--muted)">Your list is empty — add items above.</p><p class="goke-cart-full" style="display:none;margin-bottom:12px"><span class="goke-cart-count">0</span> selected · <strong class="goke-cart-total">₦0</strong></p><p style="margin-bottom:12px"><a href="cart.html" class="btn btn-primary" data-goke="button">${E(checkoutLabel)}</a></p>
-<button type="button" class="btn btn-ghost goke-cart-checkout" data-goke="button">Quick send</button></div></div></section>`;
+  return `<section class="section" data-goke="section" data-section-name="listing"><div class="section-inner"><p class="section-label" data-goke="text">${E(listingTitle)}</p><h2 class="section-title" data-goke="heading">${E(listingTitle)}</h2><div class="svc-grid goke-product-grid">${grid}</div><div class="cta-panel" style="margin-top:2rem;text-align:center"><p class="goke-cart-empty" data-goke="text" style="color:var(--muted)">Your list is empty — add items above.</p><p class="goke-cart-full" style="display:none;margin-bottom:12px"><span class="goke-cart-count">0</span> selected · <strong class="goke-cart-total">₦0</strong></p><p style="margin-bottom:12px"><a href="${c.cartMode === "commerce" ? "checkout.html" : "cart.html"}" class="btn btn-primary" data-goke="button">${E(c.cartMode === "commerce" ? "Go to cart" : checkoutLabel)}</a></p>
+<a href="cart.html" class="btn btn-ghost" style="margin-right:8px" data-goke="button">View cart</a>
+<button type="button" class="btn btn-ghost goke-cart-checkout" data-goke="button">Quick WhatsApp</button></div></div></section>`;
 }
 
 export function assembleHomeProductsSection(c: ShellContent): string {

@@ -3,6 +3,12 @@ import { normalizeSitePlan, defaultPlanForNiche, type SitePlan } from "./sitePla
 import { resolveTemplateFamily, type FamilyPage, type TemplateFamily } from "./templateFamilies";
 import { assembleHomeMain, assembleServicesBody, assembleListingBody } from "./siteBlocks";
 import { assembleCartPageBody, buildBookingCatalogJson, BOOKING_CART_CSS } from "./bookingPages";
+import {
+  assembleCommerceCartBody,
+  assembleCommerceCheckoutBody,
+  productsScriptTag,
+  AURELIA_CART_CSS,
+} from "./commercePages";
 import type { CatalogItem, CatalogSeed } from "./extractCatalog";
 import { COMMERCE_BOOKING_RUNTIME, ensureCommerceRuntime } from "./staticCommerceRuntime";
 import { catalogFromTitles, isShoppableFamily, modeForFamily } from "./extractCatalog";
@@ -391,6 +397,13 @@ export function renderShellSite(
     if (contactIdx >= 0) nav.splice(contactIdx, 0, entry);
     else nav.push(entry);
   }
+  if (
+    c.shoppable &&
+    c.cartMode === "commerce" &&
+    !nav.some((n) => n.href === "checkout.html")
+  ) {
+    /* checkout reachable from cart; optional in nav */
+  }
 
   const content: ShellContent = {
     ...c,
@@ -453,27 +466,51 @@ export function renderShellSite(
     else if (p.role === "contact") body = contactBody;
     else if (p.role === "listing") body = assembleListingBody(content, p.title);
     else if (p.role === "team") body = teamBody;
-    else if (p.role === "booking") body = assembleCartPageBody(content);
+    else if (p.role === "booking" || p.file === "cart.html") {
+      body =
+        content.cartMode === "booking"
+          ? assembleCartPageBody(content)
+          : assembleCommerceCartBody(content);
+    }
     else if (p.role === "proof" || p.role === "detail") body = proofBody;
     else body = servicesBody;
     files[p.file] = pageShell(p.file, p.title, body);
   }
 
   // Ensure core contact exists for WA even if family omitted
-  if (content.shoppable && !files["cart.html"]) {
+  // Always emit mode-correct cart (booking form vs Aurelia commerce cart)
+  if (content.shoppable) {
+    const cartBody =
+      content.cartMode === "booking"
+        ? assembleCartPageBody(content)
+        : assembleCommerceCartBody(content);
     files["cart.html"] = pageShell(
       "cart.html",
       content.cartMode === "booking" ? "Booking" : "Cart",
-      assembleCartPageBody(content)
+      cartBody
+    );
+  }
+  // Aurelia-style checkout for sales niches only
+  if (content.shoppable && content.cartMode === "commerce") {
+    files["checkout.html"] = pageShell(
+      "checkout.html",
+      "Checkout",
+      assembleCommerceCheckoutBody(content)
     );
   }
   if (!files["contact.html"] && !files["appointment.html"] && !files["booking.html"]) {
     files["contact.html"] = pageShell("contact.html", "Contact", contactBody);
   }
 
-  files["styles.css"] = shellCss(content.theme) + "\n" + BOOKING_CART_CSS;
+  files["styles.css"] =
+    shellCss(content.theme) + "\n" + BOOKING_CART_CSS + "\n" + AURELIA_CART_CSS;
+  const productsBoot =
+    content.products?.length
+      ? productsScriptTag(content.products).replace(/^<script>/, "").replace(/<\/script>$/, "")
+      : "";
   files["script.js"] = ensureCommerceRuntime(
-    shellJs() +
+    (productsBoot ? productsBoot + "\n" : "") +
+      shellJs() +
       (content.shoppable || (content.products && content.products.length)
         ? "\n" + COMMERCE_BOOKING_RUNTIME
         : "")
