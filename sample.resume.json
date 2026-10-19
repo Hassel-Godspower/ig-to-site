@@ -1,0 +1,76 @@
+{
+  "$schema": "https://raw.githubusercontent.com/jsonresume/resume-schema/v1.0.0/schema.json",
+  "basics": {
+    "name": "Richard Hendriks",
+    "label": "Programmer",
+    "email": "richard.hendriks@mail.com",
+    "phone": "(912) 555-4321",
+    "url": "http://richardhendricks.example.com",
+    "summary": "Applied information theory and product leadership. Former Hooli engineer; Pied Piper founder.",
+    "location": {
+      "city": "San Francisco",
+      "countryCode": "US",
+      "region": "California"
+    },
+    "profiles": [
+      {
+        "network": "LinkedIn",
+        "url": "https://www.linkedin.com/in/example"
+      }
+    ]
+  },
+  "work": [
+    {
+      "name": "Pied Piper",
+      "position": "CEO/President",
+      "startDate": "2013-12-01",
+      "endDate": "2014-12-01",
+      "highlights": [
+        "Won TechCrunch Disrupt",
+        "Built compression platform approaching theoretical limits"
+      ]
+    }
+  ],
+  "education": [
+    {
+      "institution": "University of Oklahoma",
+      "area": "Information Technology",
+      "studyType": "Bachelor",
+      "endDate": "2014-01-01"
+    }
+  ],
+  "skills": [
+    {
+      "name": "Web Development",
+      "keywords": [
+        "HTML",
+        "CSS",
+        "Javascript"
+      ]
+    },
+    {
+      "name": "Compression",
+      "keywords": [
+        "Mpeg",
+        "MP4"
+      ]
+    }
+  ],
+  "projects": [
+    {
+      "name": "Miss Direction",
+      "description": "Mapping experiment",
+      "highlights": [
+        "AIHacks award"
+      ],
+      "url": "http://missdirection.example.com"
+    }
+  ],
+  "awards": [
+    {
+      "title": "Digital Compression Pioneer Award",
+      "date": "2014-11-01",
+      "awarder": "Techcrunch"
+    }
+  ]
+}
