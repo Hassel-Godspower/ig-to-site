@@ -1,10 +1,12 @@
 /**
  * Server-side CV PDF → rough ProfessionalProfile.
- * Uses pdf-parse when available; falls back to empty structure with raw text notes.
+ * Optional dependency: pdf-parse (npm install pdf-parse)
  *
- * npm: pdf-parse
+ * Uses createRequire so TypeScript does not fail the build when
+ * the package is missing at typecheck time; runtime still needs it for PDF text.
  */
 
+import { createRequire } from "node:module";
 import type { ProfessionalProfile, ExperienceItem, EducationItem } from "./professionalProfile";
 import { emptyProfessionalProfile, detectPersona } from "./professionalProfile";
 
@@ -13,6 +15,23 @@ export type ParseCvResult = {
   rawText: string;
   warnings: string[];
 };
+
+type PdfParseFn = (data: Buffer) => Promise<{ text?: string }>;
+
+function loadPdfParse(): PdfParseFn | null {
+  try {
+    // Avoid static `import "pdf-parse"` so `tsc` does not require the module.
+    const require = createRequire(__filename);
+    const mod = require("pdf-parse") as PdfParseFn | { default: PdfParseFn };
+    if (typeof mod === "function") return mod;
+    if (mod && typeof (mod as { default: PdfParseFn }).default === "function") {
+      return (mod as { default: PdfParseFn }).default;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
 
 function extractEmail(text: string): string | undefined {
   const m = text.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i);
@@ -51,14 +70,10 @@ function parseExperience(block: string): ExperienceItem[] {
   const items: ExperienceItem[] = [];
   let current: ExperienceItem | null = null;
   for (const line of lines) {
-    if (/^[•\-\u2022]/.test(line) || /^[a-z]/.test(line) === false && line.length > 80) {
-      // bullet-ish
-      if (current && /^[•\-\u2022*]/.test(line)) {
-        current.bullets.push(line.replace(/^[•\-\u2022*]+\s*/, ""));
-        continue;
-      }
+    if (current && /^[•\-\u2022*]/.test(line)) {
+      current.bullets.push(line.replace(/^[•\-\u2022*]+\s*/, ""));
+      continue;
     }
-    // New role heuristic: "Title at Company" or "Title — Company"
     const role = line.match(/^(.+?)\s+(?:at|@|—|-|–|,)\s+(.+)$/i);
     if (role && line.length < 120) {
       if (current) items.push(current);
@@ -68,9 +83,6 @@ function parseExperience(block: string): ExperienceItem[] {
         bullets: [],
       };
       continue;
-    }
-    if (current && /^[•\-\u2022*]/.test(line)) {
-      current.bullets.push(line.replace(/^[•\-\u2022*]+\s*/, ""));
     }
   }
   if (current) items.push(current);
@@ -108,7 +120,13 @@ function guessName(text: string): string {
   const first = text
     .split(/\n/)
     .map((l) => l.trim())
-    .find((l) => l.length > 2 && l.length < 60 && !/@/.test(l) && !/curriculum|resume|cv/i.test(l));
+    .find(
+      (l) =>
+        l.length > 2 &&
+        l.length < 60 &&
+        !/@/.test(l) &&
+        !/curriculum|resume|cv/i.test(l)
+    );
   return first || "Professional";
 }
 
@@ -120,17 +138,24 @@ export async function parseCvPdf(buffer: Buffer): Promise<ParseCvResult> {
   const warnings: string[] = [];
   let rawText = "";
 
+  const pdfParse = loadPdfParse();
+  if (!pdfParse) {
+    warnings.push(
+      "pdf-parse is not installed. Run: npm install pdf-parse — then redeploy."
+    );
+    return {
+      profile: emptyProfessionalProfile({ source: "cv", fullName: "Professional" }),
+      rawText: "",
+      warnings,
+    };
+  }
+
   try {
-    // Dynamic import so build still works if dep not installed yet
-    const pdfParse = (await import("pdf-parse")).default as (
-      data: Buffer
-    ) => Promise<{ text: string }>;
     const parsed = await pdfParse(buffer);
     rawText = (parsed.text || "").replace(/\r/g, "\n");
   } catch (e) {
     warnings.push(
-      "pdf-parse unavailable or failed — install `pdf-parse` and retry. " +
-        (e instanceof Error ? e.message : String(e))
+      "PDF parse failed: " + (e instanceof Error ? e.message : String(e))
     );
     return {
       profile: emptyProfessionalProfile({ source: "cv", fullName: "Professional" }),
@@ -140,7 +165,9 @@ export async function parseCvPdf(buffer: Buffer): Promise<ParseCvResult> {
   }
 
   if (rawText.length < 40) {
-    warnings.push("Very little text extracted from PDF (scanned image?). Prefer a text-based CV.");
+    warnings.push(
+      "Very little text extracted from PDF (scanned image?). Prefer a text-based CV."
+    );
   }
 
   const expBlock = sectionAfter(
@@ -148,7 +175,10 @@ export async function parseCvPdf(buffer: Buffer): Promise<ParseCvResult> {
     /\b(EXPERIENCE|WORK EXPERIENCE|WORK HISTORY|EMPLOYMENT)\b/i
   );
   const eduBlock = sectionAfter(rawText, /\b(EDUCATION|ACADEMIC)\b/i);
-  const skillsBlock = sectionAfter(rawText, /\b(SKILLS|TECHNICAL SKILLS|CORE COMPETENCIES)\b/i);
+  const skillsBlock = sectionAfter(
+    rawText,
+    /\b(SKILLS|TECHNICAL SKILLS|CORE COMPETENCIES)\b/i
+  );
   const aboutBlock =
     sectionAfter(rawText, /\b(SUMMARY|PROFILE|ABOUT|OBJECTIVE)\b/i) ||
     rawText.slice(0, 600);
@@ -167,7 +197,9 @@ export async function parseCvPdf(buffer: Buffer): Promise<ParseCvResult> {
   profile.persona = detectPersona(profile);
 
   if (!profile.experience.length) {
-    warnings.push("Could not structure experience — LLM generation will use raw text more heavily.");
+    warnings.push(
+      "Could not structure experience — generation will lean on raw text / editor."
+    );
   }
 
   return { profile, rawText, warnings };
