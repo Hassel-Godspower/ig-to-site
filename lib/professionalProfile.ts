@@ -1,6 +1,7 @@
 /**
- * Shared schema for LinkedIn / CV → professional website.
- * Aligns loosely with JSON Resume concepts without requiring the full schema.
+ * Professional / career presence schema for gòke.
+ * Aligned with JSON Resume sections (basics, work, education, skills, projects, …)
+ * without requiring the full @jsonresume/schema runtime dependency.
  */
 
 export type ExperienceItem = {
@@ -9,7 +10,9 @@ export type ExperienceItem = {
   location?: string;
   start?: string;
   end?: string | "Present";
+  /** Impact bullets — prefer over long summary (JSON Resume highlights) */
   bullets: string[];
+  url?: string;
 };
 
 export type EducationItem = {
@@ -17,16 +20,31 @@ export type EducationItem = {
   degree?: string;
   field?: string;
   year?: string;
+  score?: string;
 };
 
 export type ProjectItem = {
   name: string;
   description?: string;
   url?: string;
+  highlights?: string[];
+  keywords?: string[];
+};
+
+export type SkillGroup = {
+  name: string;
+  keywords: string[];
+};
+
+export type AwardItem = {
+  title: string;
+  date?: string;
+  awarder?: string;
+  summary?: string;
 };
 
 export type ProfessionalProfile = {
-  source: "linkedin" | "cv" | "linkedin+cv" | "manual";
+  source: "linkedin" | "cv" | "linkedin+cv" | "manual" | "json_resume";
   fullName: string;
   headline?: string;
   location?: string;
@@ -38,10 +56,14 @@ export type ProfessionalProfile = {
   website?: string;
   experience: ExperienceItem[];
   education: EducationItem[];
+  /** Flat skills (legacy) — also mirrored into skillGroups when possible */
   skills: string[];
+  /** JSON Resume style grouped skills */
+  skillGroups?: SkillGroup[];
   projects?: ProjectItem[];
   certifications?: string[];
-  /** Detected persona for blueprint / imagery */
+  awards?: AwardItem[];
+  languages?: { language: string; fluency?: string }[];
   persona?:
     | "consultant"
     | "engineer"
@@ -57,7 +79,7 @@ export function emptyProfessionalProfile(
   partial?: Partial<ProfessionalProfile>
 ): ProfessionalProfile {
   return {
-    source: "manual",
+    source: partial?.source || "manual",
     fullName: partial?.fullName || "Professional",
     headline: partial?.headline,
     location: partial?.location,
@@ -70,24 +92,33 @@ export function emptyProfessionalProfile(
     experience: partial?.experience || [],
     education: partial?.education || [],
     skills: partial?.skills || [],
+    skillGroups: partial?.skillGroups,
     projects: partial?.projects || [],
     certifications: partial?.certifications || [],
+    awards: partial?.awards || [],
+    languages: partial?.languages || [],
     persona: partial?.persona || "general",
   };
 }
 
-/** Heuristic persona from headline + skills */
 export function detectPersona(p: ProfessionalProfile): ProfessionalProfile["persona"] {
   const blob = `${p.headline || ""} ${p.about || ""} ${p.skills.join(" ")} ${p.experience
-    .map((e) => e.title)
+    .map((e) => `${e.title} ${e.company}`)
     .join(" ")}`.toLowerCase();
-  if (/lawyer|legal|counsel|attorney|barrister/.test(blob)) return "lawyer";
-  if (/design|ui|ux|brand|figma|creative director/.test(blob)) return "designer";
-  if (/engineer|developer|software|devops|fullstack|backend|frontend/.test(blob))
+  if (/lawyer|legal|counsel|attorney|barrister|solicitor/.test(blob)) return "lawyer";
+  if (/design|ui|ux|brand|figma|creative director|art director/.test(blob)) return "designer";
+  if (/engineer|developer|software|devops|fullstack|backend|frontend|sre/.test(blob))
     return "engineer";
-  if (/founder|ceo|co-founder|startup/.test(blob)) return "founder";
-  if (/market|growth|seo|content|brand strateg/.test(blob)) return "marketer";
-  if (/consult|advisor|coach|strategy/.test(blob)) return "consultant";
-  if (/creator|writer|podcast|youtube|influencer/.test(blob)) return "creator";
+  if (/founder|ceo|co-founder|startup|managing director/.test(blob)) return "founder";
+  if (/market|growth|seo|content strateg|brand strateg|demand gen/.test(blob)) return "marketer";
+  if (/consult|advisor|coach|strategy|fractional/.test(blob)) return "consultant";
+  if (/creator|writer|podcast|youtube|influencer|journalist/.test(blob)) return "creator";
   return "general";
+}
+
+/** Ensure skillGroups exist from flat skills */
+export function ensureSkillGroups(p: ProfessionalProfile): SkillGroup[] {
+  if (p.skillGroups?.length) return p.skillGroups;
+  if (!p.skills.length) return [];
+  return [{ name: "Core", keywords: p.skills.slice(0, 40) }];
 }
