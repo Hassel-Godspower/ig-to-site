@@ -1,8 +1,7 @@
 "use client";
 
 /**
- * Homepage second door: LinkedIn URL + optional CV PDF.
- * Wire onSubmit to POST /api/generate-professional then router.push(`/preview/${jobId}`).
+ * Homepage door: LinkedIn URL + optional CV PDF → professional site.
  */
 
 import { useState } from "react";
@@ -39,11 +38,8 @@ export function ProfessionalUpload() {
         return;
       }
       setWarnings(data.warnings || []);
-      // TODO: after jobStore wiring:
-      // router.push(`/preview/${data.jobId}`);
       if (data.jobId) {
-        const path = data.previewPath || `/preview-simple/${data.jobId}`;
-        window.location.href = path;
+        window.location.href = data.previewPath || `/preview-simple/${data.jobId}`;
         return;
       }
       setError("Generated but no jobId returned");
@@ -55,37 +51,64 @@ export function ProfessionalUpload() {
   }
 
   return (
-    <section id="professional" className="gk-professional-upload">
-      <h2>LinkedIn / CV → website</h2>
-      <p>
-        Paste your LinkedIn profile link, upload your CV PDF, or both. gòke builds a
-        professional personal site you can edit and publish — not a screenshot of LinkedIn.
+    <section id="professional" className="gk-professional-upload" style={{ marginTop: "2rem" }}>
+      <p className="gk-kicker" style={{ marginBottom: 8 }}>
+        LinkedIn / CV
       </p>
-      <form onSubmit={onSubmit}>
-        <label>
+      <h2 style={{ marginTop: 0 }}>Your career, as a real website</h2>
+      <p style={{ opacity: 0.85, maxWidth: 520 }}>
+        Paste your LinkedIn profile, upload a PDF CV, or both. We build a personal brand site —
+        experience timeline, skills, projects — not a copy of LinkedIn.
+      </p>
+      <form
+        onSubmit={onSubmit}
+        style={{
+          display: "grid",
+          gap: 12,
+          maxWidth: 480,
+          marginTop: 16,
+        }}
+      >
+        <label style={{ display: "grid", gap: 6, fontSize: 14 }}>
           LinkedIn profile URL
           <input
             type="url"
             placeholder="https://www.linkedin.com/in/your-name"
             value={linkedinUrl}
             onChange={(e) => setLinkedinUrl(e.target.value)}
+            style={{
+              padding: "12px 14px",
+              borderRadius: 10,
+              border: "1px solid rgba(255,255,255,0.12)",
+              background: "rgba(0,0,0,0.25)",
+              color: "inherit",
+            }}
           />
         </label>
-        <label>
-          CV (PDF)
+        <label style={{ display: "grid", gap: 6, fontSize: 14 }}>
+          CV (PDF) — recommended
           <input
             type="file"
             accept="application/pdf,.pdf"
             onChange={(e) => setFile(e.target.files?.[0] || null)}
           />
         </label>
-        <button type="submit" disabled={loading}>
+        <button
+          type="submit"
+          disabled={loading}
+          className="gk-btn gk-btn-primary"
+          style={{ justifySelf: "start", marginTop: 4 }}
+        >
           {loading ? "Building your site…" : "Generate professional site"}
         </button>
       </form>
-      {error && <p role="alert">{error}</p>}
+      {error && (
+        <p role="alert" style={{ color: "#f87171", marginTop: 12 }}>
+          {error}
+        </p>
+      )}
       {warnings.length > 0 && (
-        <ul>
+        <ul style={{ fontSize: 13, opacity: 0.8, marginTop: 8 }}>
           {warnings.map((w) => (
             <li key={w}>{w}</li>
           ))}
