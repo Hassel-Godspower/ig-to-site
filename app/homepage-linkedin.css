@@ -1,0 +1,14 @@
+/* Optional: import in globals if stack spacing is tight */
+.gk-start-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  min-width: 0;
+}
+.gk-professional-card {
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+[data-theme="light"] .gk-professional-card,
+html.light .gk-professional-card {
+  border-top-color: rgba(0, 0, 0, 0.08);
+}

@@ -1,5 +1,6 @@
 import { SiteHeader } from "./components/marketing/SiteHeader";
 import { HeroUpload } from "./components/marketing/HeroUpload";
+import { ProfessionalUpload } from "./components/marketing/ProfessionalUpload";
 import { DemoVideos } from "./components/marketing/DemoVideos";
 import { HeroRotator } from "./components/marketing/HeroRotator";
 import { HowItWorks } from "./components/marketing/HowItWorks";
@@ -11,7 +12,8 @@ import { SiteFooter } from "./components/marketing/SiteFooter";
 import Link from "next/link";
 
 /**
- * Lean homepage + clear pricing scope
+ * Lean homepage — IG path first, LinkedIn/CV path directly under it.
+ * Narrative: social presence → website you own (business or professional).
  */
 export default function HomePage() {
   return (
@@ -24,7 +26,10 @@ export default function HomePage() {
             <div>
               <HeroRotator />
             </div>
-            <HeroUpload />
+            <div className="gk-start-stack">
+              <HeroUpload />
+              <ProfessionalUpload />
+            </div>
           </div>
         </section>
 
@@ -36,8 +41,8 @@ export default function HomePage() {
             <div className="gk-section-head">
               <h2>See the transformation</h2>
               <p>
-                An Instagram presence becomes a multi-page site clients can browse
-                and act on — with WhatsApp-ready calls to action.
+                A social profile becomes a multi-page site people can browse and
+                act on — with clear calls to action, not another list of links.
               </p>
             </div>
             <DemoVideos />
@@ -58,10 +63,10 @@ export default function HomePage() {
 
         <section className="gk-cta-band">
           <div className="gk-container">
-            <h2>Ready when your Instagram is</h2>
+            <h2>Ready when your presence is</h2>
             <p>
-              Type your handle or upload an export — preview free, pay once to go
-              live on yourusername.pages.dev.
+              Instagram handle, data export, LinkedIn, or CV — generate free, edit
+              in the browser, pay once to go live on yourusername.pages.dev.
             </p>
             <a href="#start" className="gk-btn gk-btn-primary gk-btn-lg">
               Generate my site
