@@ -1,10 +1,12 @@
 "use client";
 
 /**
- * Homepage door: LinkedIn URL + optional CV PDF → professional site.
+ * Second door under Instagram on the homepage:
+ * LinkedIn URL +/or CV PDF → professional personal site.
  */
 
 import { useState } from "react";
+import GeneratingIndicator from "@/app/components/GeneratingIndicator";
 
 export function ProfessionalUpload() {
   const [linkedinUrl, setLinkedinUrl] = useState("");
@@ -35,85 +37,121 @@ export function ProfessionalUpload() {
       if (!res.ok) {
         setError(data.error || "Generation failed");
         setWarnings(data.warnings || []);
+        setLoading(false);
         return;
       }
       setWarnings(data.warnings || []);
       if (data.jobId) {
-        window.location.href = data.previewPath || `/preview-simple/${data.jobId}`;
+        window.location.href =
+          data.previewPath || `/preview-simple/${data.jobId}`;
         return;
       }
       setError("Generated but no jobId returned");
+      setLoading(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
-    } finally {
       setLoading(false);
     }
   }
 
   return (
-    <section id="professional" className="gk-professional-upload" style={{ marginTop: "2rem" }}>
-      <p className="gk-kicker" style={{ marginBottom: 8 }}>
-        LinkedIn / CV
+    <div
+      className="gk-upload-card gk-professional-card"
+      id="professional"
+      style={{ marginTop: "1.25rem" }}
+    >
+      <p className="gk-kicker" style={{ marginBottom: "0.35rem" }}>
+        Or start from LinkedIn / CV
       </p>
-      <h2 style={{ marginTop: 0 }}>Your career, as a real website</h2>
-      <p style={{ opacity: 0.85, maxWidth: 520 }}>
-        Paste your LinkedIn profile, upload a PDF CV, or both. We build a personal brand site —
-        experience timeline, skills, projects — not a copy of LinkedIn.
-      </p>
-      <form
-        onSubmit={onSubmit}
+      <h2 style={{ marginTop: 0, fontSize: "1.25rem" }}>
+        Your career, as a real website
+      </h2>
+      <p
         style={{
-          display: "grid",
-          gap: 12,
-          maxWidth: 480,
-          marginTop: 16,
+          margin: "0 0 1rem",
+          fontSize: 14,
+          color: "var(--gk-muted, #9ca3af)",
+          lineHeight: 1.55,
         }}
       >
-        <label style={{ display: "grid", gap: 6, fontSize: 14 }}>
+        For consultants, job seekers, and professionals. Paste a LinkedIn profile
+        link, upload a PDF CV, or both — we build a personal brand site (experience,
+        skills, projects), not a screenshot of LinkedIn.
+      </p>
+
+      <form onSubmit={onSubmit} className="gk-handle-form">
+        <label className="gk-label">
           LinkedIn profile URL
           <input
             type="url"
+            className="gk-input"
             placeholder="https://www.linkedin.com/in/your-name"
             value={linkedinUrl}
             onChange={(e) => setLinkedinUrl(e.target.value)}
-            style={{
-              padding: "12px 14px",
-              borderRadius: 10,
-              border: "1px solid rgba(255,255,255,0.12)",
-              background: "rgba(0,0,0,0.25)",
-              color: "inherit",
-            }}
+            disabled={loading}
+            autoComplete="url"
           />
         </label>
-        <label style={{ display: "grid", gap: 6, fontSize: 14 }}>
-          CV (PDF) — recommended
+
+        <label className="gk-label" style={{ marginTop: 10 }}>
+          CV (PDF) — recommended for best results
           <input
             type="file"
             accept="application/pdf,.pdf"
+            disabled={loading}
             onChange={(e) => setFile(e.target.files?.[0] || null)}
+            style={{ marginTop: 6, fontSize: 13 }}
           />
+          {file && (
+            <span
+              style={{
+                display: "block",
+                marginTop: 4,
+                fontSize: 12,
+                color: "var(--gk-muted, #9ca3af)",
+              }}
+            >
+              Selected: {file.name}
+            </span>
+          )}
         </label>
+
+        {error && <p className="gk-upload-error">{error}</p>}
+        {warnings.length > 0 && (
+          <ul
+            style={{
+              fontSize: 12,
+              color: "var(--gk-muted, #9ca3af)",
+              margin: "8px 0 0",
+              paddingLeft: 18,
+            }}
+          >
+            {warnings.map((w) => (
+              <li key={w}>{w}</li>
+            ))}
+          </ul>
+        )}
+
         <button
           type="submit"
-          disabled={loading}
           className="gk-btn gk-btn-primary"
-          style={{ justifySelf: "start", marginTop: 4 }}
+          disabled={loading}
+          style={{ marginTop: 14, width: "100%" }}
         >
-          {loading ? "Building your site…" : "Generate professional site"}
+          {loading ? (
+            <GeneratingIndicator
+              phrases={[
+                "Reading your profile",
+                "Structuring experience",
+                "Building your site",
+                "Polishing",
+              ]}
+            />
+          ) : (
+            "Generate professional site"
+          )}
         </button>
       </form>
-      {error && (
-        <p role="alert" style={{ color: "#f87171", marginTop: 12 }}>
-          {error}
-        </p>
-      )}
-      {warnings.length > 0 && (
-        <ul style={{ fontSize: 13, opacity: 0.8, marginTop: 8 }}>
-          {warnings.map((w) => (
-            <li key={w}>{w}</li>
-          ))}
-        </ul>
-      )}
-    </section>
+    </div>
   );
 }
