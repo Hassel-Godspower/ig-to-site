@@ -4,9 +4,9 @@ import { SiteHeader } from "../components/marketing/SiteHeader";
 import { SiteFooter } from "../components/marketing/SiteFooter";
 
 export const metadata: Metadata = {
-  title: "You don’t own Instagram — Own your online presence | gòke",
+  title: "You don’t own Instagram or LinkedIn — Own your online presence | gòke",
   description:
-    "Instagram is powerful for discovery — but it’s rented space. gòke turns your Instagram content into a website you control: generate, edit, publish.",
+    "Instagram or LinkedIn is powerful for discovery — but it’s rented space. gòke turns your Instagram or LinkedIn content into a website you control: generate, edit, publish.",
 };
 
 const roles = [
