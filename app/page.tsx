@@ -1,6 +1,7 @@
 import { SiteHeader } from "./components/marketing/SiteHeader";
 import { HeroUpload } from "./components/marketing/HeroUpload";
 import { ProfessionalUpload } from "./components/marketing/ProfessionalUpload";
+import { ProfessionalRotator } from "./components/marketing/ProfessionalRotator";
 import { DemoVideos } from "./components/marketing/DemoVideos";
 import { HeroRotator } from "./components/marketing/HeroRotator";
 import { HowItWorks } from "./components/marketing/HowItWorks";
@@ -12,8 +13,10 @@ import { SiteFooter } from "./components/marketing/SiteFooter";
 import Link from "next/link";
 
 /**
- * Lean homepage — IG path first, LinkedIn/CV path directly under it.
- * Narrative: social presence → website you own (business or professional).
+ * Two equal doors on the homepage:
+ * 1) Instagram → business site
+ * 2) LinkedIn / CV → professional site
+ * Each door has its own rotator + upload widget in its own section.
  */
 export default function HomePage() {
   return (
@@ -21,15 +24,27 @@ export default function HomePage() {
       <SiteHeader />
 
       <main>
-        <section className="gk-hero" id="start">
+        {/* —— Instagram / business —— */}
+        <section className="gk-hero" id="start" aria-labelledby="ig-path-heading">
           <div className="gk-container gk-hero-grid">
             <div>
               <HeroRotator />
             </div>
-            <div className="gk-start-stack">
-              <HeroUpload />
-              <ProfessionalUpload />
+            <HeroUpload />
+          </div>
+        </section>
+
+        {/* —— LinkedIn / CV / professional —— */}
+        <section
+          className="gk-section gk-section-alt gk-professional-section"
+          id="professional"
+          aria-labelledby="pro-path-heading"
+        >
+          <div className="gk-container gk-hero-grid">
+            <div>
+              <ProfessionalRotator />
             </div>
+            <ProfessionalUpload />
           </div>
         </section>
 
@@ -41,17 +56,21 @@ export default function HomePage() {
             <div className="gk-section-head">
               <h2>See the transformation</h2>
               <p>
-                A social profile becomes a multi-page site people can browse and
-                act on — with clear calls to action, not another list of links.
+                A social or career profile becomes a multi-page site people can
+                browse and act on — with clear calls to action, not another list
+                of links.
               </p>
             </div>
             <DemoVideos />
             <div className="gk-demo-actions">
               <a href="#start" className="gk-btn gk-btn-primary">
-                Generate my site
+                Start from Instagram
+              </a>
+              <a href="#professional" className="gk-btn gk-btn-ghost">
+                Start from LinkedIn / CV
               </a>
               <Link href="/how-to-export" className="gk-btn gk-btn-ghost">
-                How to export Instagram data
+                Instagram export guide
               </Link>
             </div>
           </div>
@@ -65,12 +84,17 @@ export default function HomePage() {
           <div className="gk-container">
             <h2>Ready when your presence is</h2>
             <p>
-              Instagram handle, data export, LinkedIn, or CV — generate free, edit
-              in the browser, pay once to go live on yourusername.pages.dev.
+              Instagram handle or export · LinkedIn profile or CV — generate free,
+              edit in the browser, pay once to go live.
             </p>
-            <a href="#start" className="gk-btn gk-btn-primary gk-btn-lg">
-              Generate my site
-            </a>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 12, justifyContent: "center" }}>
+              <a href="#start" className="gk-btn gk-btn-primary gk-btn-lg">
+                Instagram path
+              </a>
+              <a href="#professional" className="gk-btn gk-btn-ghost gk-btn-lg">
+                LinkedIn / CV path
+              </a>
+            </div>
           </div>
         </section>
       </main>
