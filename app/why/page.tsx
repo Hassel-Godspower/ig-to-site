@@ -4,7 +4,7 @@ import { SiteHeader } from "../components/marketing/SiteHeader";
 import { SiteFooter } from "../components/marketing/SiteFooter";
 
 export const metadata: Metadata = {
-  title: "Why gòke — Stop renting a link. Own a website.",
+  title: "Why gòke — Stop renting a profile. Own a website.",
   description:
     "gòke turns an Instagram data export into a real multi-section website you can edit visually. Free to generate. ₦20,000 once to publish.",
 };
@@ -53,7 +53,7 @@ const compareRows = [
   {
     elsewhere: "Blank builders",
     cost: "Hours redesigning content you already posted",
-    goke: "Generate from Instagram export first",
+    goke: "Generate from Instagram or LinkedIn export first",
   },
   {
     elsewhere: "Store-first apps",
@@ -103,7 +103,7 @@ export default function WhyGokePage() {
               <em>Own a website.</em>
             </h1>
             <p className="gk-why-lead">
-              Your Instagram becomes a real website — then you edit, then you publish. Free to
+              Your presence becomes a real website — then you edit, then you publish. Free to
               generate. One payment when you go live.
             </p>
             <div className="gk-demo-actions">
@@ -181,7 +181,7 @@ export default function WhyGokePage() {
           <div className="gk-container">
             <div className="gk-section-head">
               <h2>Why people switch to gòke</h2>
-              <p>Six reasons Instagram-native businesses choose generation + edit + publish.</p>
+              <p>Six reasons businesses and professionals choose generation + edit + publish.</p>
             </div>
             <div className="gk-why-reasons">
               {reasons.map((r) => (
@@ -248,7 +248,7 @@ export default function WhyGokePage() {
             <div>
               <h2>Who gòke is for</h2>
               <ul className="gk-why-list">
-                <li>Instagram-native businesses that already have content and trust on the app</li>
+                <li>businesses and professionals that already have content and trust on the app</li>
                 <li>Coaches, clinics, spas, boutiques, studios, and service brands</li>
                 <li>Anyone tired of “just a link” but not ready for a heavy ops platform</li>
                 <li>Owners who want a credible site this week, not a three-month redesign</li>
@@ -264,7 +264,7 @@ export default function WhyGokePage() {
               <p className="gk-why-boundary">
                 gòke is intentional about that boundary:{" "}
                 <strong>
-                  excellent at the website from Instagram; not pretending to be your entire
+                  excellent at the website from Instagram or LinkedIn; not pretending to be your entire
                   warehouse system.
                 </strong>
               </p>
@@ -288,8 +288,8 @@ export default function WhyGokePage() {
         {/* CTA */}
         <section className="gk-cta-band">
           <div className="gk-container">
-            <h2>Export your Instagram data. Upload. Open your site in the editor.</h2>
-            <p>Stop renting a link. Own a website.</p>
+            <h2>Bring Instagram, LinkedIn, or a CV. Generate. Edit. Publish when ready.</h2>
+            <p>Stop renting a profile. Own a website.</p>
             <div className="gk-demo-actions" style={{ justifyContent: "center" }}>
               <Link href="/#start" className="gk-btn gk-btn-primary gk-btn-lg">
                 Generate my site
