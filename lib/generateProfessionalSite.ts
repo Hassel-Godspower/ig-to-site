@@ -18,6 +18,11 @@ function esc(s: string): string {
     .replace(/"/g, "&quot;");
 }
 
+
+function arr<T>(v: T[] | null | undefined): T[] {
+  return Array.isArray(v) ? v : [];
+}
+
 function firstName(full: string): string {
   return (full || "there").trim().split(/\s+/)[0] || "there";
 }
@@ -37,8 +42,11 @@ function navItems(profile: ProfessionalProfile): { href: string; label: string }
     { href: "index.html", label: "Home" },
     { href: "about.html", label: "About" },
   ];
-  if (profile.experience.length) items.push({ href: "experience.html", label: "Experience" });
-  if (profile.projects.length) items.push({ href: "projects.html", label: "Work" });
+  if (arr(profile.experience).length > 0) {
+    items.push({ href: "experience.html", label: "Experience" });
+  }
+  // Always offer Work page for multipage IA (content may be filled in editor)
+  items.push({ href: "projects.html", label: "Work" });
   items.push({ href: "services.html", label: "Services" });
   items.push({ href: "contact.html", label: "Contact" });
   return items;
@@ -68,7 +76,7 @@ function shell(
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>${esc(pageTitle)} · ${name}</title>
-  <meta name="description" content="${esc(profile.headline || profile.about.slice(0, 155) || name)}" />
+  <meta name="description" content="${esc(profile.headline || (profile.about || "").slice(0, 155) || name)}" />
   <meta property="og:title" content="${esc(pageTitle)} · ${name}" />
   <meta property="og:description" content="${esc(profile.headline || "")}" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -124,7 +132,7 @@ function heroBlock(profile: ProfessionalProfile, theme: ProTheme): string {
   const name = esc(profile.fullName);
   const headline = esc(profile.headline || "Professional");
   const aboutLead = esc(
-    profile.about.slice(0, 220) ||
+    (profile.about || "").slice(0, 220) ||
       `${profile.fullName} builds clarity, credibility, and results for clients who value craft.`
   );
   const cta = contactHref(profile);
@@ -201,11 +209,11 @@ function heroBlock(profile: ProfessionalProfile, theme: ProTheme): string {
 }
 
 function statsBlock(profile: ProfessionalProfile): string {
-  const years = profile.experience.length
-    ? Math.min(20, Math.max(profile.experience.length * 2, 3))
+  const years = arr(profile.experience).length
+    ? Math.min(20, Math.max(arr(profile.experience).length * 2, 3))
     : 5;
-  const skills = Math.max(profile.skills.length, 8);
-  const roles = Math.max(profile.experience.length, 3);
+  const skills = Math.max(arr(profile.skills).length, 8);
+  const roles = Math.max(arr(profile.experience).length, 3);
   return `
     <section class="stats reveal" data-goke="section" data-section-name="Stats">
       <div class="wrap stats-grid">
@@ -275,8 +283,8 @@ function servicesBlock(profile: ProfessionalProfile, theme: ProTheme): string {
           ];
 
   // If skills present, weave first skill into third card title lightly
-  if (profile.skills[0] && programs[2]) {
-    programs[2].body += ` Strengths include ${profile.skills.slice(0, 3).join(", ")}.`;
+  if (arr(profile.skills)[0] && programs[2]) {
+    programs[2].body += ` Strengths include ${arr(profile.skills).slice(0, 3).join(", ")}.`;
   }
 
   return `
@@ -529,9 +537,9 @@ export function generateProfessionalSiteFiles(
             : ""
         }
         ${
-          profile.skills.length
+          arr(profile.skills).length
             ? `<h2 data-goke="heading" style="margin-top:2rem">Skills</h2>
-        <div class="skill-cloud">${profile.skills
+        <div class="skill-cloud">${arr(profile.skills)
           .slice(0, 24)
           .map((s) => `<span data-goke="text">${esc(s)}</span>`)
           .join("")}</div>`
@@ -553,8 +561,8 @@ export function generateProfessionalSiteFiles(
         <h1 data-goke="heading">Experience</h1>
         <div class="timeline">
           ${
-            profile.experience.length
-              ? profile.experience
+            arr(profile.experience).length
+              ? arr(profile.experience)
                   .map(
                     (ex) => `
           <article class="timeline-item">
@@ -572,9 +580,9 @@ export function generateProfessionalSiteFiles(
           }
         </div>
         ${
-          profile.education.length
+          arr(profile.education).length
             ? `<h2 data-goke="heading" style="margin-top:2.5rem">Education</h2>
-        <div class="timeline">${profile.education
+        <div class="timeline">${arr(profile.education)
           .map(
             (ed) => `
           <article class="timeline-item">
@@ -601,8 +609,8 @@ export function generateProfessionalSiteFiles(
         <h1 data-goke="heading">Projects</h1>
         <div class="program-list">
           ${
-            profile.projects.length
-              ? profile.projects
+            arr(profile.projects).length
+              ? arr(profile.projects)
                   .map(
                     (p, i) => `
           <article class="program-card">
