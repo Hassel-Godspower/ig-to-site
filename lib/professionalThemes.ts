@@ -88,18 +88,20 @@ export const PRO_THEMES: Record<ProThemeId, ProTheme> = {
   },
 };
 
-export function themeForPersona(persona: string): ProTheme {
+export function themeForPersona(persona?: string | null): ProTheme {
   switch (persona) {
-    case "coach":
     case "designer":
+    case "consultant":
+    case "general":
       return PRO_THEMES.editorial_coach;
     case "creator":
+    case "marketer":
       return PRO_THEMES.creator_bold;
     case "engineer":
     case "founder":
       return PRO_THEMES.expert_clean;
-    case "consultant":
     case "lawyer":
+      return PRO_THEMES.consultant_ink;
     default:
       return PRO_THEMES.consultant_ink;
   }

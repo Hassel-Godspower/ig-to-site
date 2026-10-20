@@ -227,8 +227,9 @@ function statsBlock(profile: ProfessionalProfile): string {
 
 function servicesBlock(profile: ProfessionalProfile, theme: ProTheme): string {
   const persona = profile.persona || "consultant";
+  // Persona union: consultant | engineer | designer | founder | lawyer | marketer | creator | general
   const programs =
-    persona === "coach"
+    persona === "consultant" || persona === "designer" || persona === "general"
       ? [
           {
             n: "01",
@@ -498,7 +499,7 @@ function buildJs(): string {
 export function generateProfessionalSiteFiles(
   profile: ProfessionalProfile
 ): Record<string, string> {
-  const theme = themeForPersona(profile.persona || "consultant");
+  const theme = themeForPersona(profile.persona || "general");
   const files: Record<string, string> = {};
 
   // HOME
