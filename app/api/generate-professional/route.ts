@@ -179,7 +179,6 @@ export async function POST(req: NextRequest) {
         {
           editorMode: "advanced",
           createdVia: "professional",
-          editorMode: "advanced",
           source: profile.source,
           persona: profile.persona,
           name: profile.fullName,
