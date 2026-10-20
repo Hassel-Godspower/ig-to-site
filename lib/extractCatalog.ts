@@ -263,6 +263,8 @@ export const FAMILY_PRODUCT_IMAGES: Record<string, string[]> = {
     u("photo-1560343090-f0409e92791a"), // sneakers
     u("photo-1542291026-7eec264c27ff"), // red shoe
     u("photo-1526170375885-4d8ecf77b99f"), // camera
+    u("photo-1472851294608-062f824d29cc"),
+    u("photo-1441986300917-64674bd600d8"),
   ],
   luxe: [
     u("photo-1515562141207-7a88fb7ce338"), // jewelry
@@ -352,6 +354,7 @@ export const FAMILY_PRODUCT_IMAGES: Record<string, string[]> = {
     u("photo-1576602976047-174e57a70ce0"),
     u("photo-1631549916768-4119b2e5f926"),
     u("photo-1587854692152-cbe660dbde88"),
+    u("photo-1607613009820-a29f7bb81c04"),
   ],
   building: [
     u("photo-1504307651254-35680f356dfd"),
@@ -360,6 +363,7 @@ export const FAMILY_PRODUCT_IMAGES: Record<string, string[]> = {
     u("photo-1621905251189-08b45d6a269e"),
     u("photo-1541888946425-d81bb19240f5"),
     u("photo-1590073242678-70eea72e0f44"),
+    u("photo-1589939705384-5185137a7f0f"),
   ],
   furniture: [
     u("photo-1555041469-a586c61ea9bc"),
@@ -368,6 +372,8 @@ export const FAMILY_PRODUCT_IMAGES: Record<string, string[]> = {
     u("photo-1586023492125-27b2c045efd7"),
     u("photo-1556228453-efd6c1ff04f6"),
     u("photo-1616486338812-3dadae4b4ace"),
+    u("photo-1618221195710-dd6b41faaea6"),
+    u("photo-1538688525198-9b88f6f53126"),
   ],
   farm: [
     u("photo-1464226184884-fa280b87c399"),
@@ -376,6 +382,8 @@ export const FAMILY_PRODUCT_IMAGES: Record<string, string[]> = {
     u("photo-1574944204950-d1cdb63d9e8d"),
     u("photo-1625246333195-78d9c38ad449"),
     u("photo-1461354464878-ad803748e6c6"),
+    u("photo-1500382017468-9049fed747ef"),
+    u("photo-1574943320219-553eb213f72d"),
   ],
   electronics: [
     u("photo-1511707171634-5f897ff02aa9"),
@@ -384,6 +392,7 @@ export const FAMILY_PRODUCT_IMAGES: Record<string, string[]> = {
     u("photo-1525547719533-c1d8b8e8d4a0"),
     u("photo-1585386959984-a4155224a1ad"),
     u("photo-1550009158-9ebf69173e03"),
+    u("photo-1517336714731-489689fd1ca8"),
   ],
   cosmetics: [
     u("photo-1596462502278-27bfdc403348"),
@@ -392,6 +401,7 @@ export const FAMILY_PRODUCT_IMAGES: Record<string, string[]> = {
     u("photo-1571781926299-e363d68fff31"),
     u("photo-1512496015851-a90fb38ba796"),
     u("photo-1598440947619-2c35fc9aa908"),
+    u("photo-1522335789203-aabd92fc4fc3"),
   ],
   supermarket: [
     u("photo-1542838132-92c53300491e"),
@@ -400,6 +410,7 @@ export const FAMILY_PRODUCT_IMAGES: Record<string, string[]> = {
     u("photo-1534723452862-4c874180d2dc"),
     u("photo-1506617420156-8e453697f8c0"),
     u("photo-1583258292688-f7e0e8f8d6d8"),
+    u("photo-1578911373434-0cb395d2cbfb"),
   ],
   mobility: [
     u("photo-1449965408869-eaa3f722e40d"),
@@ -408,6 +419,7 @@ export const FAMILY_PRODUCT_IMAGES: Record<string, string[]> = {
     u("photo-1492144534655-ae79c964c9d7"),
     u("photo-1449824913935-59a10b8d2000"),
     u("photo-1517940310602-26535839fe89"),
+    u("photo-1511919884225-5b59b5eb0f61"),
   ],
   general: [
     u("photo-1497366216548-37526070297c"),

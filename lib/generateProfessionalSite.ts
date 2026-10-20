@@ -9,6 +9,7 @@
 
 import type { ProfessionalProfile } from "./professionalProfile";
 import { themeForPersona, type ProTheme } from "./professionalThemes";
+import { pickPortrait, pickWorkspace, pickGallery } from "./professionalMedia";
 
 function esc(s: string): string {
   return String(s || "")
@@ -136,9 +137,10 @@ function heroBlock(profile: ProfessionalProfile, theme: ProTheme): string {
       `${profile.fullName} builds clarity, credibility, and results for clients who value craft.`
   );
   const cta = contactHref(profile);
-  const photo = profile.photoUrl
-    ? `<img src="${esc(profile.photoUrl)}" alt="${name}" data-goke="image" />`
-    : `<div class="photo-fallback" aria-hidden="true">${esc(firstName(profile.fullName).charAt(0))}</div>`;
+  const portraitSrc =
+    profile.photoUrl ||
+    pickPortrait(profile.fullName, profile.persona);
+  const photo = `<img src="${esc(portraitSrc)}" alt="${name}" data-goke="image" width="900" height="1125" />`;
 
   if (theme.heroStyle === "split_portrait") {
     return `
@@ -204,6 +206,22 @@ function heroBlock(profile: ProfessionalProfile, theme: ProTheme): string {
           <button type="submit" class="btn btn-primary" data-goke="button">${esc(theme.ctaPrimary)}</button>
         </form>
         <p class="muted tiny">Get a response — not a newsletter trap.</p>
+      </div>
+    </section>`;
+}
+
+
+function galleryStrip(profile: ProfessionalProfile): string {
+  const imgs = pickGallery(profile.fullName, profile.persona, 6);
+  return `
+    <section class="gallery-strip reveal" data-goke="section" data-section-name="Gallery">
+      <div class="wrap gallery-grid">
+        ${imgs
+          .map(
+            (src, i) =>
+              `<img src="${esc(src)}" alt="" data-goke="image" loading="lazy" width="600" height="400" />`
+          )
+          .join("")}
       </div>
     </section>`;
 }
@@ -426,6 +444,16 @@ h1 em, h2 em { font-style: normal; color: var(--accent); }
 @media (min-width: 720px) { .stats-grid { grid-template-columns: repeat(4, 1fr); } }
 .stats strong { display: block; font-size: 1.75rem; font-family: var(--display); }
 .stats span { font-size: 0.8rem; opacity: 0.9; }
+.gallery-strip { padding: 0 0 2.5rem; }
+.gallery-grid {
+  display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.65rem;
+}
+@media (min-width: 720px) {
+  .gallery-grid { grid-template-columns: repeat(3, 1fr); }
+}
+.gallery-grid img {
+  width: 100%; aspect-ratio: 4/3; object-fit: cover; border-radius: 12px;
+}
 .programs, .page-section { padding: 3.5rem 0; }
 .program-list { display: grid; gap: 1.5rem; margin-top: 2rem; }
 .program-card {
@@ -510,6 +538,7 @@ export function generateProfessionalSiteFiles(
     "index.html",
     `${heroBlock(profile, theme)}
     ${statsBlock(profile)}
+    ${galleryStrip(profile)}
     ${servicesBlock(profile, theme)}
     <section class="page-section reveal" data-goke="section" data-section-name="CTA">
       <div class="wrap" style="text-align:center">
@@ -532,6 +561,7 @@ export function generateProfessionalSiteFiles(
         <h1 data-goke="heading">${esc(profile.fullName)}</h1>
         <p class="hero-role" data-goke="text">${esc(profile.headline || "")}</p>
         <p data-goke="text">${esc(profile.about || "Add your story in the editor — who you help, how you work, and what success looks like.")}</p>
+        <img src="${esc(profile.photoUrl || pickWorkspace(profile.fullName, profile.persona))}" alt="" data-goke="image" style="margin-top:1.5rem;border-radius:16px;width:100%;max-height:360px;object-fit:cover" width="1200" height="360" />
         ${
           profile.location
             ? `<p class="muted" data-goke="text">${esc(profile.location)}</p>`
