@@ -1,11 +1,29 @@
 "use client";
 
 /**
- * LinkedIn / CV upload card — lives in #professional section with ProfessionalRotator.
+ * LinkedIn / CV upload — accepts www.linkedin.com/in/... without requiring https://
  */
 
 import { useState } from "react";
 import GeneratingIndicator from "@/app/components/GeneratingIndicator";
+
+/** Client-side mirror of lib/normalizeLinkedInUrl (keep in sync) */
+function normalizeLinkedInUrl(input: string): string | null {
+  let s = (input || "").trim().replace(/^['"]|['"]$/g, "");
+  if (!s) return null;
+  if (s.startsWith("/in/")) s = `www.linkedin.com${s}`;
+  if (!/^https?:\/\//i.test(s)) s = `https://${s.replace(/^\/\//, "")}`;
+  try {
+    const u = new URL(s);
+    const host = u.hostname.replace(/^www\./i, "").toLowerCase();
+    if (host !== "linkedin.com") return null;
+    const m = u.pathname.match(/\/in\/([A-Za-z0-9\-_%]+)/i);
+    if (!m?.[1]) return null;
+    return `https://www.linkedin.com/in/${m[1].replace(/\/$/, "")}`;
+  } catch {
+    return null;
+  }
+}
 
 export function ProfessionalUpload() {
   const [linkedinUrl, setLinkedinUrl] = useState("");
@@ -18,14 +36,25 @@ export function ProfessionalUpload() {
     e.preventDefault();
     setError(null);
     setWarnings([]);
-    if (!linkedinUrl.trim() && !file) {
+
+    const raw = linkedinUrl.trim();
+    const normalized = raw ? normalizeLinkedInUrl(raw) : null;
+
+    if (raw && !normalized) {
+      setError(
+        "That doesn’t look like a LinkedIn profile link. Example: www.linkedin.com/in/your-name"
+      );
+      return;
+    }
+    if (!normalized && !file) {
       setError("Paste a LinkedIn profile URL and/or upload a CV PDF.");
       return;
     }
+
     setLoading(true);
     try {
       const fd = new FormData();
-      if (linkedinUrl.trim()) fd.set("linkedinUrl", linkedinUrl.trim());
+      if (normalized) fd.set("linkedinUrl", normalized);
       if (file) fd.set("cv", file);
 
       const res = await fetch("/api/generate-professional", {
@@ -67,10 +96,11 @@ export function ProfessionalUpload() {
           lineHeight: 1.55,
         }}
       >
-        Profile link, PDF CV, or both. Text-based PDFs work best.
+        Profile link, PDF CV, or both. You can paste{" "}
+        <code style={{ fontSize: 12 }}>www.linkedin.com/in/…</code> — https is optional.
       </p>
 
-      <form onSubmit={onSubmit} className="gk-handle-form">
+      <form onSubmit={onSubmit} className="gk-handle-form" noValidate>
         <div className="gk-field" style={{ marginBottom: 14 }}>
           <label
             htmlFor="goke-linkedin-url"
@@ -79,11 +109,16 @@ export function ProfessionalUpload() {
           >
             LinkedIn profile URL
           </label>
+          {/* type=text — native type=url rejects www. without https */}
           <input
             id="goke-linkedin-url"
-            type="url"
+            type="text"
+            inputMode="url"
+            autoCapitalize="off"
+            autoCorrect="off"
+            spellCheck={false}
             className="gk-input"
-            placeholder="https://www.linkedin.com/in/your-name"
+            placeholder="www.linkedin.com/in/your-name"
             value={linkedinUrl}
             onChange={(e) => setLinkedinUrl(e.target.value)}
             disabled={loading}
@@ -98,7 +133,7 @@ export function ProfessionalUpload() {
             className="gk-label"
             style={{ display: "block", marginBottom: 6, fontSize: 13 }}
           >
-            CV (PDF) — recommended
+            CV (PDF) — recommended if enrichment is unavailable
           </label>
           <input
             id="goke-cv-file"
