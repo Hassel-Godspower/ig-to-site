@@ -177,8 +177,9 @@ export async function POST(req: NextRequest) {
       "editor-meta.json",
       JSON.stringify(
         {
-          editorMode: "simple",
+          editorMode: "advanced",
           createdVia: "professional",
+          editorMode: "advanced",
           source: profile.source,
           persona: profile.persona,
           name: profile.fullName,
@@ -197,7 +198,7 @@ export async function POST(req: NextRequest) {
         id: jobId,
         status: "draft",
         parsedUsername: slug,
-        editorMode: "simple",
+        editorMode: "advanced",
         customerName: profile.fullName,
         phone: profile.phone,
         email: profile.email,
@@ -216,14 +217,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       jobId,
       defaultUsername: slug,
-      editorMode: "simple",
+      editorMode: "advanced",
       path: "professional",
       name: profile.fullName,
       persona: profile.persona,
       source: profile.source,
       warnings,
-      previewPath: `/preview-simple/${jobId}`,
-      advancedPreviewPath: `/preview/${jobId}`,
+      previewPath: `/preview/${jobId}`,
+      simplePreviewPath: `/preview-simple/${jobId}`,
     });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);
