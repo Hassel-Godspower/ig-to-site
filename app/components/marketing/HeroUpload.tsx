@@ -65,7 +65,7 @@ export function HeroUpload() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Generation failed");
-      router.push(`/preview/${data.jobId}?mode=simple`);
+      router.push(`/preview/${data.jobId}`);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Something went wrong");
       setLoading(false);
@@ -98,6 +98,22 @@ export function HeroUpload() {
 
   return (
     <div className="gk-upload-card" id="start">
+      <p
+        className="gk-desktop-note"
+        style={{
+          margin: "0 0 1rem",
+          fontSize: 12,
+          lineHeight: 1.45,
+          color: "var(--gk-muted, #9ca3af)",
+          padding: "8px 10px",
+          borderRadius: 8,
+          background: "var(--gk-surface-2, rgba(167,139,250,0.08))",
+          border: "1px solid var(--gk-border, rgba(255,255,255,0.08))",
+        }}
+      >
+        Design and edit best on a desktop or tablet — phone is fine for small text changes.
+      </p>
+
       <div className="gk-path-tabs" role="tablist" aria-label="How to start">
         <button
           type="button"

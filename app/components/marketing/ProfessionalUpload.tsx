@@ -1,5 +1,9 @@
 "use client";
 
+/**
+ * LinkedIn / CV → full gòke editor (/preview) with Desktop · Tablet · Mobile.
+ */
+
 import { useState } from "react";
 import GeneratingIndicator from "@/app/components/GeneratingIndicator";
 
@@ -19,6 +23,9 @@ function normalizeLinkedInUrl(input: string): string | null {
     return null;
   }
 }
+
+const DESKTOP_NOTE =
+  "Design and edit best on a desktop or tablet — phone is fine for small text changes.";
 
 export function ProfessionalUpload() {
   const [linkedinUrl, setLinkedinUrl] = useState("");
@@ -70,8 +77,9 @@ export function ProfessionalUpload() {
       }
       setWarnings(data.warnings || []);
       if (data.jobId) {
+        // Full editor: Desktop / Tablet / Mobile + structure + components
         window.location.href =
-          data.previewPath || `/preview-simple/${data.jobId}`;
+          data.previewPath || `/preview/${data.jobId}`;
         return;
       }
       setError("Generated but no jobId returned");
@@ -90,14 +98,29 @@ export function ProfessionalUpload() {
       <h2 style={{ marginTop: 0, fontSize: "1.25rem" }}>Build from your career data</h2>
       <p
         style={{
-          margin: "0 0 1rem",
+          margin: "0 0 0.75rem",
           fontSize: 14,
           color: "var(--gk-muted, #9ca3af)",
           lineHeight: 1.55,
         }}
       >
         Free path: LinkedIn URL opens a starter site you edit, or upload a{" "}
-        <strong>text-based PDF CV</strong> for richer content. No paid LinkedIn API required.
+        <strong>text-based PDF CV</strong> for richer content.
+      </p>
+      <p
+        className="gk-desktop-note"
+        style={{
+          margin: "0 0 1rem",
+          fontSize: 12,
+          lineHeight: 1.45,
+          color: "var(--gk-muted, #9ca3af)",
+          padding: "8px 10px",
+          borderRadius: 8,
+          background: "var(--gk-surface-2, rgba(167,139,250,0.08))",
+          border: "1px solid var(--gk-border, rgba(255,255,255,0.08))",
+        }}
+      >
+        {DESKTOP_NOTE}
       </p>
 
       <form onSubmit={onSubmit} className="gk-handle-form" noValidate>
@@ -141,7 +164,14 @@ export function ProfessionalUpload() {
             style={{ display: "block", width: "100%", fontSize: 13 }}
           />
           {file ? (
-            <span style={{ display: "block", marginTop: 6, fontSize: 12, color: "var(--gk-muted)" }}>
+            <span
+              style={{
+                display: "block",
+                marginTop: 6,
+                fontSize: 12,
+                color: "var(--gk-muted)",
+              }}
+            >
               Selected: {file.name}
             </span>
           ) : null}
@@ -169,7 +199,7 @@ export function ProfessionalUpload() {
               id="goke-paste"
               className="gk-input"
               rows={5}
-              placeholder="Name&#10;Headline&#10;About…&#10;Experience bullets…"
+              placeholder={"Name\nHeadline\nAbout…\nExperience bullets…"}
               value={pasteText}
               onChange={(e) => setPasteText(e.target.value)}
               disabled={loading}
@@ -180,7 +210,14 @@ export function ProfessionalUpload() {
 
         {error ? <p className="gk-upload-error">{error}</p> : null}
         {warnings.length > 0 ? (
-          <ul style={{ fontSize: 12, color: "var(--gk-muted)", margin: "8px 0 0", paddingLeft: 18 }}>
+          <ul
+            style={{
+              fontSize: 12,
+              color: "var(--gk-muted)",
+              margin: "8px 0 0",
+              paddingLeft: 18,
+            }}
+          >
             {warnings.map((w) => (
               <li key={w}>{w}</li>
             ))}
