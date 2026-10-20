@@ -13,7 +13,7 @@ const WHATSAPP_COMMUNITY =
 export const metadata: Metadata = {
   title: "Gòke Builders — Build websites. Sell them. Build your income.",
   description:
-    "Build websites with gòke for clients or yourself. Students, designers, freelancers, tech enthusiasts, and business owners — not a marketplace; a site you own.",
+    "Build business and professional websites with gòke for clients or yourself. Students, designers, freelancers, tech enthusiasts, and business owners — not a marketplace; a site you own.",
 };
 
 const audiences = [
@@ -63,7 +63,7 @@ const steps = [
   {
     n: "01",
     title: "Try gòke",
-    body: "Create your first website. Start with a business, brand, or idea.",
+    body: "Create your first website. Start from Instagram, LinkedIn / CV, or a client brief.",
   },
   {
     n: "02",
