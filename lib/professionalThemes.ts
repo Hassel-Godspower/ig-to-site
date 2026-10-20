@@ -1,13 +1,22 @@
 /**
- * Personal-brand design families (inspired by high-end portfolio / coach / expert sites).
- * Not LinkedIn clones — multipage editorial sites.
+ * Professional site themes + layout modes.
+ * Inspired by public portfolio craft patterns (sticky identity rail,
+ * project tables, work-first grids, long single-page). Not copies of
+ * any specific author's site.
  */
 
+export type ProLayoutMode =
+  | "split_sticky" // engineer: sticky left identity + scroll proof
+  | "long_single" // creator/minimal: one HTML, anchor nav
+  | "multipage_editorial" // consultant/coach: multi HTML
+  | "work_grid"; // designer: work-first
+
 export type ProThemeId =
-  | "editorial_coach" // Nadejiah-like: warm, serif accents, programs
-  | "expert_clean" // Jisan / Neil-like: white, bold name, stats
-  | "creator_bold" // Pete-like: large type over photo energy
-  | "consultant_ink"; // deep, restrained authority
+  | "editorial_coach"
+  | "expert_clean"
+  | "creator_bold"
+  | "consultant_ink"
+  | "engineer_halcyon"; // dark + one accent (craft engineer family)
 
 export type ProTheme = {
   id: ProThemeId;
@@ -20,12 +29,29 @@ export type ProTheme = {
   accentSoft: string;
   displayFont: string;
   bodyFont: string;
-  heroStyle: "split_portrait" | "message_first" | "name_focus" | "cinematic";
+  heroStyle: "split_portrait" | "message_first" | "name_focus" | "cinematic" | "sticky_rail";
   ctaPrimary: string;
   ctaSecondary: string;
+  layout: ProLayoutMode;
 };
 
 export const PRO_THEMES: Record<ProThemeId, ProTheme> = {
+  engineer_halcyon: {
+    id: "engineer_halcyon",
+    label: "Engineer craft",
+    bg: "#0a192f",
+    surface: "#112240",
+    text: "#e6f1ff",
+    muted: "#8892b0",
+    accent: "#64ffda",
+    accentSoft: "rgba(100, 255, 218, 0.12)",
+    displayFont: "system-ui, -apple-system, \"Segoe UI\", sans-serif",
+    bodyFont: "system-ui, -apple-system, \"Segoe UI\", sans-serif",
+    heroStyle: "sticky_rail",
+    ctaPrimary: "Get in touch",
+    ctaSecondary: "View work",
+    layout: "split_sticky",
+  },
   editorial_coach: {
     id: "editorial_coach",
     label: "Editorial coach",
@@ -40,6 +66,7 @@ export const PRO_THEMES: Record<ProThemeId, ProTheme> = {
     heroStyle: "message_first",
     ctaPrimary: "Work with me",
     ctaSecondary: "About",
+    layout: "multipage_editorial",
   },
   expert_clean: {
     id: "expert_clean",
@@ -55,6 +82,7 @@ export const PRO_THEMES: Record<ProThemeId, ProTheme> = {
     heroStyle: "split_portrait",
     ctaPrimary: "Let's talk",
     ctaSecondary: "View work",
+    layout: "multipage_editorial",
   },
   creator_bold: {
     id: "creator_bold",
@@ -70,6 +98,7 @@ export const PRO_THEMES: Record<ProThemeId, ProTheme> = {
     heroStyle: "cinematic",
     ctaPrimary: "Read the story",
     ctaSecondary: "Contact",
+    layout: "long_single",
   },
   consultant_ink: {
     id: "consultant_ink",
@@ -83,26 +112,62 @@ export const PRO_THEMES: Record<ProThemeId, ProTheme> = {
     displayFont: "Syne, system-ui, sans-serif",
     bodyFont: "system-ui, -apple-system, sans-serif",
     heroStyle: "name_focus",
-    ctaPrimary: "Start analysis",
-    ctaSecondary: "Services",
+    ctaPrimary: "Start a conversation",
+    ctaSecondary: "Experience",
+    layout: "multipage_editorial",
   },
 };
 
 export function themeForPersona(persona?: string | null): ProTheme {
   switch (persona) {
+    case "engineer":
+      return PRO_THEMES.engineer_halcyon;
     case "designer":
-    case "consultant":
-    case "general":
-      return PRO_THEMES.editorial_coach;
+      return {
+        ...PRO_THEMES.expert_clean,
+        layout: "work_grid",
+        heroStyle: "split_portrait",
+      };
     case "creator":
     case "marketer":
       return PRO_THEMES.creator_bold;
-    case "engineer":
     case "founder":
-      return PRO_THEMES.expert_clean;
+      return {
+        ...PRO_THEMES.engineer_halcyon,
+        accent: "#64ffda",
+        layout: "split_sticky",
+      };
+    case "consultant":
+    case "general":
+      return PRO_THEMES.editorial_coach;
     case "lawyer":
       return PRO_THEMES.consultant_ink;
     default:
       return PRO_THEMES.consultant_ink;
   }
+}
+
+/** Prefer fewer pages when profile content is thin */
+export function resolveLayout(
+  theme: ProTheme,
+  contentScore: number
+): ProLayoutMode {
+  if (contentScore < 2 && theme.layout === "multipage_editorial") {
+    return "long_single";
+  }
+  return theme.layout;
+}
+
+export function contentScore(profile: {
+  experience?: unknown[];
+  projects?: unknown[];
+  skills?: unknown[];
+  about?: string;
+}): number {
+  let s = 0;
+  if ((profile.experience?.length || 0) > 0) s += 2;
+  if ((profile.projects?.length || 0) > 0) s += 2;
+  if ((profile.skills?.length || 0) > 3) s += 1;
+  if ((profile.about || "").length > 80) s += 1;
+  return s;
 }
