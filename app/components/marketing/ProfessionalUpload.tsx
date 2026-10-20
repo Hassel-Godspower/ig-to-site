@@ -1,13 +1,8 @@
 "use client";
 
-/**
- * LinkedIn / CV upload — accepts www.linkedin.com/in/... without requiring https://
- */
-
 import { useState } from "react";
 import GeneratingIndicator from "@/app/components/GeneratingIndicator";
 
-/** Client-side mirror of lib/normalizeLinkedInUrl (keep in sync) */
 function normalizeLinkedInUrl(input: string): string | null {
   let s = (input || "").trim().replace(/^['"]|['"]$/g, "");
   if (!s) return null;
@@ -27,10 +22,12 @@ function normalizeLinkedInUrl(input: string): string | null {
 
 export function ProfessionalUpload() {
   const [linkedinUrl, setLinkedinUrl] = useState("");
+  const [pasteText, setPasteText] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [warnings, setWarnings] = useState<string[]>([]);
+  const [showPaste, setShowPaste] = useState(false);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -46,8 +43,10 @@ export function ProfessionalUpload() {
       );
       return;
     }
-    if (!normalized && !file) {
-      setError("Paste a LinkedIn profile URL and/or upload a CV PDF.");
+    if (!normalized && !file && pasteText.trim().length < 40) {
+      setError(
+        "Add a LinkedIn URL, a PDF CV, or paste your About / experience text."
+      );
       return;
     }
 
@@ -56,6 +55,7 @@ export function ProfessionalUpload() {
       const fd = new FormData();
       if (normalized) fd.set("linkedinUrl", normalized);
       if (file) fd.set("cv", file);
+      if (pasteText.trim().length >= 40) fd.set("pasteText", pasteText.trim());
 
       const res = await fetch("/api/generate-professional", {
         method: "POST",
@@ -90,14 +90,14 @@ export function ProfessionalUpload() {
       <h2 style={{ marginTop: 0, fontSize: "1.25rem" }}>Build from your career data</h2>
       <p
         style={{
-          margin: "0 0 1.15rem",
+          margin: "0 0 1rem",
           fontSize: 14,
           color: "var(--gk-muted, #9ca3af)",
           lineHeight: 1.55,
         }}
       >
-        Profile link, PDF CV, or both. You can paste{" "}
-        <code style={{ fontSize: 12 }}>www.linkedin.com/in/…</code> — https is optional.
+        Free path: LinkedIn URL opens a starter site you edit, or upload a{" "}
+        <strong>text-based PDF CV</strong> for richer content. No paid LinkedIn API required.
       </p>
 
       <form onSubmit={onSubmit} className="gk-handle-form" noValidate>
@@ -109,20 +109,17 @@ export function ProfessionalUpload() {
           >
             LinkedIn profile URL
           </label>
-          {/* type=text — native type=url rejects www. without https */}
           <input
             id="goke-linkedin-url"
             type="text"
             inputMode="url"
             autoCapitalize="off"
-            autoCorrect="off"
             spellCheck={false}
             className="gk-input"
             placeholder="www.linkedin.com/in/your-name"
             value={linkedinUrl}
             onChange={(e) => setLinkedinUrl(e.target.value)}
             disabled={loading}
-            autoComplete="url"
             style={{ width: "100%", display: "block" }}
           />
         </div>
@@ -133,7 +130,7 @@ export function ProfessionalUpload() {
             className="gk-label"
             style={{ display: "block", marginBottom: 6, fontSize: 13 }}
           >
-            CV (PDF) — recommended if enrichment is unavailable
+            CV (PDF) — best free results
           </label>
           <input
             id="goke-cv-file"
@@ -144,29 +141,46 @@ export function ProfessionalUpload() {
             style={{ display: "block", width: "100%", fontSize: 13 }}
           />
           {file ? (
-            <span
-              style={{
-                display: "block",
-                marginTop: 6,
-                fontSize: 12,
-                color: "var(--gk-muted, #9ca3af)",
-              }}
-            >
+            <span style={{ display: "block", marginTop: 6, fontSize: 12, color: "var(--gk-muted)" }}>
               Selected: {file.name}
             </span>
           ) : null}
         </div>
 
+        <button
+          type="button"
+          className="gk-btn gk-btn-ghost"
+          style={{ marginBottom: 12, fontSize: 13 }}
+          onClick={() => setShowPaste((v) => !v)}
+        >
+          {showPaste ? "Hide" : "Or paste"} About / experience text
+        </button>
+
+        {showPaste ? (
+          <div className="gk-field" style={{ marginBottom: 14 }}>
+            <label
+              htmlFor="goke-paste"
+              className="gk-label"
+              style={{ display: "block", marginBottom: 6, fontSize: 13 }}
+            >
+              Paste profile text
+            </label>
+            <textarea
+              id="goke-paste"
+              className="gk-input"
+              rows={5}
+              placeholder="Name&#10;Headline&#10;About…&#10;Experience bullets…"
+              value={pasteText}
+              onChange={(e) => setPasteText(e.target.value)}
+              disabled={loading}
+              style={{ width: "100%", display: "block", resize: "vertical" }}
+            />
+          </div>
+        ) : null}
+
         {error ? <p className="gk-upload-error">{error}</p> : null}
         {warnings.length > 0 ? (
-          <ul
-            style={{
-              fontSize: 12,
-              color: "var(--gk-muted, #9ca3af)",
-              margin: "8px 0 0",
-              paddingLeft: 18,
-            }}
-          >
+          <ul style={{ fontSize: 12, color: "var(--gk-muted)", margin: "8px 0 0", paddingLeft: 18 }}>
             {warnings.map((w) => (
               <li key={w}>{w}</li>
             ))}
