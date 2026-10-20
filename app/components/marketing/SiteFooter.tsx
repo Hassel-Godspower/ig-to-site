@@ -21,7 +21,7 @@ export function SiteFooter() {
               <span className="gk-logo-word">gòke</span>
             </div>
             <p className="gk-footer-tagline">
-              Instagram to a real website — generate, edit visually, publish when
+              Instagram or LinkedIn / CV to a real website — generate, edit, publish when
               you&apos;re ready.
             </p>
             <p className="gk-footer-by">
@@ -50,7 +50,8 @@ export function SiteFooter() {
             <h4>Help</h4>
             <Link href="/how-to-export">Export guide</Link>
             <a href="/#about-goke">About</a>
-            <a href="/#start">Generate site</a>
+            <a href="/#start">Instagram path</a>
+            <a href="/#professional">LinkedIn / CV path</a>
             <a href="/#demo">View demo</a>
             <a href={WA} target="_blank" rel="noopener noreferrer">
               Contact on WhatsApp

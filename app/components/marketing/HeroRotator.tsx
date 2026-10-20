@@ -10,17 +10,17 @@ type Slide = {
   points: string[];
 };
 
-/** Platform functions — rotates in the hero text area only */
+/** Instagram / business path rotator */
 const SLIDES: Slide[] = [
   {
     eyebrow: "Instagram → website",
     title: "Your Instagram, as a",
     titleAccent: "real website",
     description:
-      "Start with your handle for a simple edit path, or upload an Instagram export for the full visual editor. Publish once when you are ready — not another link-in-bio.",
+      "Start with your handle for a simple path, or upload an Instagram export for the full visual editor. A multi-page site you own — not another link-in-bio.",
     points: [
       "Free to generate & edit",
-      "Simple path for owners · full editor for power users",
+      "Business niches · WhatsApp-ready CTAs",
       "Pay only to publish · ₦20,000 once via Paystack",
     ],
   },
@@ -41,11 +41,23 @@ const SLIDES: Slide[] = [
     title: "Drag, drop,",
     titleAccent: "design freely",
     description:
-      "Upload your Instagram export and open the visual editor — structure tree, components, templates, media, and responsive views. Built for designers and power users.",
+      "Upload your Instagram export and open the visual editor — structure, components, templates, media, and responsive views. For designers and power users.",
     points: [
       "Export → multi-section site",
       "Components, templates & media library",
       "Desktop · tablet · mobile preview",
+    ],
+  },
+  {
+    eyebrow: "Also for professionals",
+    title: "Career presence",
+    titleAccent: "below",
+    description:
+      "Consultants and job seekers: use the LinkedIn / CV section further down the page for a personal brand site from your profile or résumé.",
+    points: [
+      "LinkedIn URL and/or PDF CV",
+      "Experience · skills · projects",
+      "Same editor and publish flow",
     ],
   },
   {
@@ -60,77 +72,64 @@ const SLIDES: Slide[] = [
       "Dashboard access to manage your site",
     ],
   },
-  {
-    eyebrow: "Built for Africa",
-    title: "WhatsApp-first.",
-    titleAccent: "Paystack-native.",
-    description:
-      "CTAs that open chat with your number, niches for spas, boutiques, coaches, clinics, and more — tuned for Instagram-native businesses in Nigeria and across Africa.",
-    points: [
-      "WhatsApp-ready contact & booking CTAs",
-      "30+ business niche blueprints",
-      "Shop & booking blocks on generated sites",
-    ],
-  },
 ];
 
-const INTERVAL_MS = 5200;
-
 export function HeroRotator() {
-  const [active, setActive] = useState(0);
-  const [paused, setPaused] = useState(false);
-  const slide = SLIDES[active];
+  const [index, setIndex] = useState(0);
 
   useEffect(() => {
-    if (paused) return;
-    const reduce =
-      typeof window !== "undefined" &&
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reduce) return;
-    const id = window.setInterval(() => {
-      setActive((i) => (i + 1) % SLIDES.length);
-    }, INTERVAL_MS);
-    return () => window.clearInterval(id);
-  }, [paused]);
+    const id = setInterval(() => {
+      setIndex((i) => (i + 1) % SLIDES.length);
+    }, 5000);
+    return () => clearInterval(id);
+  }, []);
+
+  const s = SLIDES[index];
 
   return (
-    <div
-      className="gk-hero-rotator"
-      onMouseEnter={() => setPaused(true)}
-      onMouseLeave={() => setPaused(false)}
-    >
-      <div className="gk-hero-dots" role="tablist" aria-label="Hero messages">
-        {SLIDES.map((s, i) => (
+    <div className="gk-hero-copy" aria-live="polite">
+      <p className="gk-kicker">{s.eyebrow}</p>
+      <h1 key={`t-${index}`} className="gk-hero-title">
+        {s.title} <em>{s.titleAccent}</em>
+      </h1>
+      <p key={`d-${index}`} className="gk-hero-lead">
+        {s.description}
+      </p>
+      <ul className="gk-hero-points">
+        {s.points.map((p) => (
+          <li key={p}>{p}</li>
+        ))}
+      </ul>
+      <div
+        className="gk-rotator-dots"
+        role="tablist"
+        aria-label="Instagram path highlights"
+        style={{ display: "flex", gap: 8, marginTop: 20 }}
+      >
+        {SLIDES.map((_, i) => (
           <button
-            key={s.eyebrow}
+            key={i}
             type="button"
             role="tab"
-            aria-selected={i === active}
-            aria-label={s.eyebrow}
-            className={`gk-hero-dot${i === active ? " is-active" : ""}`}
-            onClick={() => setActive(i)}
+            aria-selected={i === index}
+            aria-label={`Slide ${i + 1}`}
+            onClick={() => setIndex(i)}
+            style={{
+              width: i === index ? 22 : 8,
+              height: 8,
+              borderRadius: 99,
+              border: "none",
+              cursor: "pointer",
+              background:
+                i === index
+                  ? "var(--gk-accent, #a78bfa)"
+                  : "rgba(167, 139, 250, 0.35)",
+              transition: "width 0.2s ease, background 0.2s ease",
+              padding: 0,
+            }}
           />
         ))}
       </div>
-
-      <div key={active} className="gk-hero-slide">
-        <p className="gk-kicker">{slide.eyebrow}</p>
-        <h1>
-          {slide.title} <em>{slide.titleAccent}</em>
-        </h1>
-        <p className="gk-hero-lead">{slide.description}</p>
-        <ul className="gk-hero-points">
-          {slide.points.map((p) => (
-            <li key={p}>{p}</li>
-          ))}
-        </ul>
-      </div>
-
-      <p className="gk-hero-demo">
-        Prefer proof first? <a href="#live-examples">See live gòke sites</a>
-        {" · "}
-        <a href="#demo">See the transformation</a>
-      </p>
     </div>
   );
 }

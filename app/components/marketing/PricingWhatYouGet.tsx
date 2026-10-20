@@ -4,7 +4,7 @@
 const faqs = [
   {
     q: "What does ₦20,000 include?",
-    a: "Your generated multi-page website, HTTPS hosting on Cloudflare Pages, and a free subdomain in the form yourusername.pages.dev. You get the static site files and a live link when deploy succeeds. Preview and editing stay free until you choose to publish.",
+    a: "Your generated multi-page website (business or professional), HTTPS hosting on Cloudflare Pages, and a free subdomain such as yourusername.pages.dev. Preview and editing stay free until you choose to publish.",
   },
   {
     q: "Is a custom domain included?",
@@ -16,7 +16,7 @@ const faqs = [
   },
   {
     q: "Who can use gòke?",
-    a: "Anyone: business owners, students, tech enthusiasts, designers, freelancers, and agencies. Use Quick start for a simple path, or the full editor if you want deeper control.",
+    a: "Anyone: business owners (Instagram path), consultants and job seekers (LinkedIn / CV path), students, designers, freelancers, and agencies. Quick start or full editor depending on how deep you want to go.",
   },
   {
     q: "Are there extra features after go-live?",

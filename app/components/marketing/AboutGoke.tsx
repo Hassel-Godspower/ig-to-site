@@ -17,10 +17,10 @@ export function AboutGoke() {
           <h2 id="about-goke-title">Who builds gòke</h2>
           <p>
             <strong>gòke</strong> is a product of{" "}
-            <strong>HighValue Solutions</strong> — built for people and businesses
-            in Nigeria and across Africa who already live on Instagram or LinkedIn
-            and need a real website they own: coaches, spas, boutiques, studios,
-            consultants, and professionals — not another bio link or profile page.
+            <strong>HighValue Solutions</strong> — for businesses and professionals in Nigeria and across Africa who already
+            have presence on Instagram or LinkedIn and need a website they own:
+            coaches, spas, boutiques, studios, consultants, and job seekers — not
+            another bio link or locked profile page.
           </p>
           <p style={{ color: "var(--gk-muted)", fontSize: 14, lineHeight: 1.6 }}>
             Payments run through{" "}

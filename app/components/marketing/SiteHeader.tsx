@@ -25,6 +25,9 @@ export function SiteHeader() {
         </Link>
 
         <nav className={`gk-nav${open ? " open" : ""}`} aria-label="Primary">
+          <a href="/#professional" onClick={close}>
+            Career
+          </a>
           <a href="/#how" onClick={close}>
             How it works
           </a>

@@ -1,8 +1,7 @@
 "use client";
 
 /**
- * Second door under Instagram on the homepage:
- * LinkedIn URL +/or CV PDF → professional personal site.
+ * LinkedIn / CV upload card — lives in #professional section with ProfessionalRotator.
  */
 
 import { useState } from "react";
@@ -55,34 +54,33 @@ export function ProfessionalUpload() {
   }
 
   return (
-    <div
-      className="gk-upload-card gk-professional-card"
-      id="professional"
-      style={{ marginTop: "1.25rem" }}
-    >
+    <div className="gk-upload-card gk-professional-card">
       <p className="gk-kicker" style={{ marginBottom: "0.35rem" }}>
-        Or start from LinkedIn / CV
+        LinkedIn / CV
       </p>
-      <h2 style={{ marginTop: 0, fontSize: "1.25rem" }}>
-        Your career, as a real website
-      </h2>
+      <h2 style={{ marginTop: 0, fontSize: "1.25rem" }}>Build from your career data</h2>
       <p
         style={{
-          margin: "0 0 1rem",
+          margin: "0 0 1.15rem",
           fontSize: 14,
           color: "var(--gk-muted, #9ca3af)",
           lineHeight: 1.55,
         }}
       >
-        For consultants, job seekers, and professionals. Paste a LinkedIn profile
-        link, upload a PDF CV, or both — we build a personal brand site (experience,
-        skills, projects), not a screenshot of LinkedIn.
+        Profile link, PDF CV, or both. Text-based PDFs work best.
       </p>
 
       <form onSubmit={onSubmit} className="gk-handle-form">
-        <label className="gk-label">
-          LinkedIn profile URL
+        <div className="gk-field" style={{ marginBottom: 14 }}>
+          <label
+            htmlFor="goke-linkedin-url"
+            className="gk-label"
+            style={{ display: "block", marginBottom: 6, fontSize: 13 }}
+          >
+            LinkedIn profile URL
+          </label>
           <input
+            id="goke-linkedin-url"
             type="url"
             className="gk-input"
             placeholder="https://www.linkedin.com/in/your-name"
@@ -90,34 +88,42 @@ export function ProfessionalUpload() {
             onChange={(e) => setLinkedinUrl(e.target.value)}
             disabled={loading}
             autoComplete="url"
+            style={{ width: "100%", display: "block" }}
           />
-        </label>
+        </div>
 
-        <label className="gk-label" style={{ marginTop: 10 }}>
-          CV (PDF) — recommended for best results
+        <div className="gk-field" style={{ marginBottom: 14 }}>
+          <label
+            htmlFor="goke-cv-file"
+            className="gk-label"
+            style={{ display: "block", marginBottom: 6, fontSize: 13 }}
+          >
+            CV (PDF) — recommended
+          </label>
           <input
+            id="goke-cv-file"
             type="file"
             accept="application/pdf,.pdf"
             disabled={loading}
             onChange={(e) => setFile(e.target.files?.[0] || null)}
-            style={{ marginTop: 6, fontSize: 13 }}
+            style={{ display: "block", width: "100%", fontSize: 13 }}
           />
-          {file && (
+          {file ? (
             <span
               style={{
                 display: "block",
-                marginTop: 4,
+                marginTop: 6,
                 fontSize: 12,
                 color: "var(--gk-muted, #9ca3af)",
               }}
             >
               Selected: {file.name}
             </span>
-          )}
-        </label>
+          ) : null}
+        </div>
 
-        {error && <p className="gk-upload-error">{error}</p>}
-        {warnings.length > 0 && (
+        {error ? <p className="gk-upload-error">{error}</p> : null}
+        {warnings.length > 0 ? (
           <ul
             style={{
               fontSize: 12,
@@ -130,13 +136,13 @@ export function ProfessionalUpload() {
               <li key={w}>{w}</li>
             ))}
           </ul>
-        )}
+        ) : null}
 
         <button
           type="submit"
           className="gk-btn gk-btn-primary"
           disabled={loading}
-          style={{ marginTop: 14, width: "100%" }}
+          style={{ marginTop: 8, width: "100%" }}
         >
           {loading ? (
             <GeneratingIndicator

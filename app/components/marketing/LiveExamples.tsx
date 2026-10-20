@@ -41,8 +41,8 @@ export function LiveExamples() {
         <div className="gk-section-head">
           <h2 id="live-examples-title">Live on the open web</h2>
           <p>
-            Real sites published with gòke — open them, scroll on your phone,
-            then generate yours.
+            Real business sites published with gòke — open them, scroll on your phone,
+            then generate from Instagram or try the LinkedIn / CV path for a personal site.
           </p>
         </div>
         <div
