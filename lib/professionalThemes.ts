@@ -204,13 +204,9 @@ export function contentScore(p: ProfessionalProfile): number {
 
 export function resolveLayout(
   theme: ProfessionalTheme,
-  score: number
+  _score: number
 ): ProLayoutMode {
-  if (score < 2 && theme.layout === "multipage_editorial") {
-    return "long_single";
-  }
-  if (score < 2 && theme.layout === "work_grid") {
-    return "long_single";
-  }
+  // Always keep persona layout; multipage HTML is enforced in the generator.
+  // Thin data still gets full page set (editable placeholders).
   return theme.layout;
 }

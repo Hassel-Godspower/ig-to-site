@@ -247,33 +247,29 @@ if("IntersectionObserver" in window && !window.matchMedia("(prefers-reduced-moti
 `;
 }
 
+/** Always multipage site map — never anchor-only single page */
 function navLinks(
   layout: ProLayoutMode,
   active: string
 ): string {
   const items =
-    layout === "long_single" || layout === "split_sticky"
+    layout === "work_grid"
       ? [
-          { href: "#about", label: "About" },
-          { href: "#experience", label: "Experience" },
-          { href: "#work", label: "Work" },
-          { href: "#contact", label: "Contact" },
+          { href: "index.html", label: "Work" },
+          { href: "about.html", label: "About" },
+          { href: "experience.html", label: "Experience" },
+          { href: "projects.html", label: "Projects" },
+          { href: "skills.html", label: "Skills" },
+          { href: "contact.html", label: "Contact" },
         ]
-      : layout === "work_grid"
-        ? [
-            { href: "index.html", label: "Work" },
-            { href: "about.html", label: "About" },
-            { href: "experience.html", label: "Experience" },
-            { href: "contact.html", label: "Contact" },
-          ]
-        : [
-            { href: "index.html", label: "Home" },
-            { href: "about.html", label: "About" },
-            { href: "experience.html", label: "Experience" },
-            { href: "projects.html", label: "Work" },
-            { href: "skills.html", label: "Skills" },
-            { href: "contact.html", label: "Contact" },
-          ];
+      : [
+          { href: "index.html", label: "Home" },
+          { href: "about.html", label: "About" },
+          { href: "experience.html", label: "Experience" },
+          { href: "projects.html", label: "Work" },
+          { href: "skills.html", label: "Skills" },
+          { href: "contact.html", label: "Contact" },
+        ];
   return items
     .map((n) => {
       const on = n.href === active ? ' class="is-active" aria-current="page"' : "";
@@ -291,11 +287,8 @@ function pageShell(
   opts: { description?: string; active: string; hideHeaderDesktop?: boolean }
 ): string {
   const fonts = googleFontsLink(t);
-  const home =
-    layout === "long_single" || layout === "split_sticky"
-      ? "#top"
-      : "index.html";
-  const cta = "#contact";
+  const home = "index.html";
+  const cta = "contact.html";
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -358,11 +351,12 @@ function buildSplitSticky(
         (p.about || "").slice(0, 280) ||
           "I build thoughtful digital products. Edit this site to tell your story."
       )}</p>
-      <nav class="rail-nav" aria-label="On this page">
-        <a href="#about">About</a>
-        <a href="#experience">Experience</a>
-        <a href="#work">Work</a>
-        <a href="#contact">Contact</a>
+      <nav class="rail-nav" aria-label="Site">
+        <a href="about.html">About</a>
+        <a href="experience.html">Experience</a>
+        <a href="projects.html">Work</a>
+        <a href="skills.html">Skills</a>
+        <a href="contact.html">Contact</a>
       </nav>
       <div class="socials">${socialHtml(p)}</div>
     </aside>
@@ -412,7 +406,7 @@ function buildLongSingle(
         "A clear presence on the open web — edit every line in goke."
     )}</p>
     <p style="margin-top:1.25rem">
-      <a class="btn btn-fill" href="#contact" data-goke="button">${E(
+      <a class="btn btn-fill" href="contact.html" data-goke="button">${E(
         t.ctaPrimary
       )}</a>
     </p>
@@ -598,29 +592,119 @@ function buildMultipage(
   };
 }
 
+function sharedSecondaryPages(
+  p: ProfessionalProfile,
+  t: ProfessionalTheme,
+  layout: ProLayoutMode
+): ProfessionalSiteFiles {
+  const name = p.fullName;
+  return {
+    "about.html": pageShell(
+      "About",
+      name,
+      `<section class="wrap section" data-goke="section" data-section-name="About">
+      <h1 data-goke="heading">About</h1>
+      <p data-goke="text">${E(p.about || "Add your story in the editor.")}</p>
+      ${skillsChips(p)}
+    </section>`,
+      t,
+      layout,
+      { active: "about.html", description: (p.about || "").slice(0, 150) }
+    ),
+    "experience.html": pageShell(
+      "Experience",
+      name,
+      `<section class="wrap section" data-goke="section" data-section-name="Experience">
+      <h1 data-goke="heading">Experience</h1>
+      <div class="timeline">${experienceTimeline(p)}</div>
+    </section>`,
+      t,
+      layout,
+      { active: "experience.html" }
+    ),
+    "projects.html": pageShell(
+      "Work",
+      name,
+      `<section class="wrap section" data-goke="section" data-section-name="Projects">
+      <h1 data-goke="heading">Work</h1>
+      ${projectTable(p)}
+    </section>`,
+      t,
+      layout,
+      { active: "projects.html" }
+    ),
+    "skills.html": pageShell(
+      "Skills",
+      name,
+      `<section class="wrap section" data-goke="section" data-section-name="Skills">
+      <h1 data-goke="heading">Skills</h1>
+      ${
+        skillsChips(p) ||
+        `<p class="muted" data-goke="text">Add skills in the editor.</p>`
+      }
+    </section>`,
+      t,
+      layout,
+      { active: "skills.html" }
+    ),
+    "contact.html": pageShell(
+      "Contact",
+      name,
+      `<div class="wrap">${contactBlock(p, t)}</div>`,
+      t,
+      layout,
+      { active: "contact.html" }
+    ),
+  };
+}
+
 export function generateProfessionalSiteFiles(
   profile: ProfessionalProfile
 ): ProfessionalSiteFiles {
   const theme = themeForProfile(profile);
   const score = contentScore(profile);
+  // Visual layout preference — site is ALWAYS multi-page HTML files
   const layout = resolveLayout(theme, score);
 
   let pages: ProfessionalSiteFiles;
-  switch (layout) {
-    case "split_sticky":
-      pages = buildSplitSticky(profile, theme);
-      break;
-    case "long_single":
-      pages = buildLongSingle(profile, theme);
-      break;
-    case "work_grid":
-      pages = buildWorkGrid(profile, theme);
-      break;
-    default:
-      pages = buildMultipage(profile, theme);
+
+  if (layout === "work_grid") {
+    pages = {
+      ...buildWorkGrid(profile, theme),
+      ...sharedSecondaryPages(profile, theme, "work_grid"),
+    };
+    // work grid index is Work-first; ensure projects/skills/contact exist
+  } else if (layout === "split_sticky") {
+    // Craft sticky-rail HOME, plus full secondary pages
+    pages = {
+      ...buildSplitSticky(profile, theme),
+      ...sharedSecondaryPages(profile, theme, "split_sticky"),
+    };
+  } else if (layout === "long_single") {
+    // Strong multipage with long-form home (not one file only)
+    pages = {
+      ...buildLongSingleAsHome(profile, theme),
+      ...sharedSecondaryPages(profile, theme, "long_single"),
+    };
+  } else {
+    pages = buildMultipage(profile, theme);
   }
 
-  const htmlKeys = Object.keys(pages).filter((k) => k.endsWith(".html"));
+  // Guarantee required multi-page set
+  const required = [
+    "index.html",
+    "about.html",
+    "experience.html",
+    "projects.html",
+    "skills.html",
+    "contact.html",
+  ];
+  const fallback = buildMultipage(profile, theme);
+  for (const f of required) {
+    if (!pages[f]) pages[f] = fallback[f];
+  }
+
+  const htmlKeys = required.filter((k) => pages[k]);
   pages["styles.css"] = shellCss(theme);
   pages["script.js"] = scriptJs();
   pages["profile.json"] = JSON.stringify(profile, null, 2);
@@ -634,10 +718,15 @@ export function generateProfessionalSiteFiles(
       layout,
       theme: theme.id,
       persona: profile.persona,
-      pages: htmlKeys.map((file) => ({
-        file,
-        title: file.replace(".html", "").replace("index", "Home"),
-      })),
+      multipage: true,
+      pages: [
+        { file: "index.html", title: "Home" },
+        { file: "about.html", title: "About" },
+        { file: "experience.html", title: "Experience" },
+        { file: "projects.html", title: "Work" },
+        { file: "skills.html", title: "Skills" },
+        { file: "contact.html", title: "Contact" },
+      ],
     },
     null,
     2
@@ -648,9 +737,50 @@ export function generateProfessionalSiteFiles(
       persona: profile.persona,
       layout,
       theme: theme.id,
+      multipage: true,
     },
     null,
     2
   );
   return pages;
+}
+
+/** Long-form aesthetic HOME only — secondary pages are separate HTML files */
+function buildLongSingleAsHome(
+  p: ProfessionalProfile,
+  t: ProfessionalTheme
+): ProfessionalSiteFiles {
+  const layout: ProLayoutMode = "long_single";
+  const name = p.fullName;
+  const body = `
+  <section class="hero-simple wrap reveal" data-goke="section" data-section-name="Hero">
+    <p class="muted" style="font-size:.75rem;letter-spacing:.08em;text-transform:uppercase">Personal site</p>
+    <h1 data-goke="heading">${E(name)}</h1>
+    <p style="font-size:1.15rem;font-weight:600" data-goke="text">${E(
+      p.headline || "Professional"
+    )}</p>
+    <p class="lead" data-goke="text">${E(
+      (p.about || "").slice(0, 320) ||
+        "A clear presence on the open web — edit every line in goke."
+    )}</p>
+    <p style="margin-top:1.25rem">
+      <a class="btn btn-fill" href="contact.html" data-goke="button">${E(
+        t.ctaPrimary
+      )}</a>
+      <a class="btn" href="about.html" style="margin-left:.5rem" data-goke="button">About</a>
+    </p>
+  </section>
+  <div class="wrap">
+    <section class="section reveal" data-goke="section" data-section-name="Work">
+      <h2><span class="num">01.</span> Selected work</h2>
+      ${projectTable(p)}
+      <p style="margin-top:1rem"><a href="projects.html">All work →</a></p>
+    </section>
+  </div>`;
+  return {
+    "index.html": pageShell("Home", name, body, t, layout, {
+      description: p.headline || name,
+      active: "index.html",
+    }),
+  };
 }
