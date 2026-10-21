@@ -250,20 +250,34 @@ export class Builder {
     this.frameBody.addEventListener(
       "click",
       (e) => {
+        const t = e.target as HTMLElement | null;
+        // While inline-editing, allow native text select / cut / paste
+        if (
+          this.inlineEl &&
+          t &&
+          (t === this.inlineEl || this.inlineEl.contains(t))
+        ) {
+          return;
+        }
+        // Don't steal focus from form fields
+        if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.tagName === "SELECT" || t.isContentEditable)) {
+          return;
+        }
         e.preventDefault();
         e.stopPropagation();
-        this.selectNode(e.target as HTMLElement);
+        this.selectNode(t);
       },
       true
     );
 
-    // Inline text edit — double-click text nodes
+    // Inline text edit — double-click (or walk up to heading/text/link)
     this.frameBody.addEventListener(
       "dblclick",
       (e) => {
+        const target = e.target as HTMLElement;
+        // Allow browser selection behavior after we enable contentEditable
         e.preventDefault();
         e.stopPropagation();
-        const target = e.target as HTMLElement;
         this.startInlineEdit(target);
       },
       true
@@ -436,6 +450,20 @@ export class Builder {
         outline: 2px solid #3b82f6 !important;
         outline-offset: 2px;
       }
+      /* Inline edit affordances */
+      [data-goke="heading"],
+      [data-goke="text"],
+      [data-goke="button"],
+      [data-goke="link"],
+      h1, h2, h3, h4, h5, h6, p, li, a, button, td, th {
+        cursor: text;
+      }
+      [contenteditable="true"] {
+        user-select: text !important;
+        -webkit-user-select: text !important;
+        caret-color: #a78bfa;
+        cursor: text !important;
+      }
     `;
     this.frameHead.appendChild(style);
   }
@@ -595,32 +623,93 @@ export class Builder {
   private inlineEl: HTMLElement | null = null;
   private inlineOriginal = "";
 
+  /** Find nearest element that should accept inline text edit */
+  private resolveInlineTarget(start: HTMLElement | null): HTMLElement | null {
+    if (!start || !this.frameBody) return null;
+    const editableTags = new Set([
+      "H1", "H2", "H3", "H4", "H5", "H6",
+      "P", "SPAN", "A", "BUTTON", "LI", "LABEL",
+      "TD", "TH", "FIGCAPTION", "STRONG", "EM", "SMALL", "B", "I", "U",
+      "BLOCKQUOTE", "DT", "DD", "SUMMARY",
+    ]);
+    const editableGoke = new Set([
+      "heading", "text", "button", "link", "label",
+    ]);
+    let el: HTMLElement | null = start;
+    while (el && el !== this.frameBody) {
+      if (el.nodeType === 1) {
+        const goke = el.getAttribute("data-goke") || "";
+        if (editableGoke.has(goke) || editableTags.has(el.tagName)) {
+          // Prefer leaf text hosts; skip pure layout wrappers marked as section/container
+          if (goke === "section" || goke === "container" || goke === "columns") {
+            el = el.parentElement;
+            continue;
+          }
+          return el;
+        }
+      }
+      el = el.parentElement;
+    }
+    return null;
+  }
+
   startInlineEdit(el: HTMLElement): void {
-    const tag = el.tagName;
-    const editable = [
-      "H1", "H2", "H3", "H4", "H5", "H6", "P", "SPAN", "A", "BUTTON", "LI", "LABEL",
-      "TD", "TH", "FIGCAPTION", "STRONG", "EM", "SMALL",
-    ].includes(tag);
-    if (!editable) return;
-    if (this.inlineEl) this.commitInlineEdit();
+    const target = this.resolveInlineTarget(el);
+    if (!target) return;
+    if (this.inlineEl && this.inlineEl !== target) this.commitInlineEdit();
+    if (this.inlineEl === target) return;
 
-    this.inlineEl = el;
-    this.inlineOriginal = el.textContent || "";
-    el.contentEditable = "true";
-    el.focus();
-    this.selectNode(el);
+    this.inlineEl = target;
+    this.inlineOriginal = target.textContent || "";
+    target.setAttribute("contenteditable", "true");
+    target.contentEditable = "true";
+    // Hint cursor + outline while editing
+    target.style.outline = "2px solid #a78bfa";
+    target.style.outlineOffset = "2px";
+    target.focus();
+    this.selectNode(target);
 
+    // Place caret / select all so cut-replace works immediately
+    try {
+      const doc = this.frameDoc;
+      if (doc) {
+        const range = doc.createRange();
+        range.selectNodeContents(target);
+        const sel = this.frameDoc?.getSelection?.() || doc.defaultView?.getSelection();
+        sel?.removeAllRanges();
+        sel?.addRange(range);
+      }
+    } catch {
+      /* ignore */
+    }
+
+    const onKey = (ev: KeyboardEvent) => {
+      if (ev.key === "Escape") {
+        target.textContent = this.inlineOriginal;
+        this.commitInlineEdit();
+      }
+      // Ctrl/Cmd+Enter commits
+      if (ev.key === "Enter" && (ev.metaKey || ev.ctrlKey)) {
+        ev.preventDefault();
+        this.commitInlineEdit();
+      }
+    };
     const onBlur = () => {
-      el.removeEventListener("blur", onBlur);
+      target.removeEventListener("blur", onBlur);
+      target.removeEventListener("keydown", onKey);
       this.commitInlineEdit();
     };
-    el.addEventListener("blur", onBlur);
+    target.addEventListener("blur", onBlur);
+    target.addEventListener("keydown", onKey);
   }
 
   commitInlineEdit(): void {
     const el = this.inlineEl;
     if (!el) return;
     el.contentEditable = "false";
+    el.removeAttribute("contenteditable");
+    el.style.outline = "";
+    el.style.outlineOffset = "";
     const next = el.textContent || "";
     if (next !== this.inlineOriginal) {
       Undo.addMutation({

@@ -34,8 +34,16 @@ export function decorateEditableDocument(doc: Document): void {
   doc.querySelectorAll("h1, h2, h3, h4, h5, h6").forEach((el) =>
     mark(el, "heading")
   );
-  doc.querySelectorAll("p, li, label, figcaption").forEach((el) => {
+  doc.querySelectorAll("p, li, label, figcaption, td, th, dt, dd, blockquote").forEach((el) => {
     if (el.closest("button, a.btn, .btn, [data-goke='button']")) return;
+    mark(el, "text");
+  });
+  // Spans that hold visible copy (skip icon-only)
+  doc.querySelectorAll("span").forEach((el) => {
+    if (el.closest("button, a.btn, .btn, [data-goke='button'], script, style")) return;
+    const t = (el.textContent || "").trim();
+    if (t.length < 2) return;
+    if (el.querySelector("img, svg")) return;
     mark(el, "text");
   });
   doc.querySelectorAll("img").forEach((el) => mark(el, "image"));
