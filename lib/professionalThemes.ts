@@ -1,173 +1,216 @@
 /**
- * Professional site themes + layout modes.
- * Inspired by public portfolio craft patterns (sticky identity rail,
- * project tables, work-first grids, long single-page). Not copies of
- * any specific author's site.
+ * Persona-driven design systems for professional sites.
+ * Keeps themeForProfile + googleFontsLink (main API) and adds layout modes
+ * for craft portfolio patterns (sticky rail, long single, work grid).
  */
 
+import type { ProfessionalProfile } from "./professionalProfile";
+
 export type ProLayoutMode =
-  | "split_sticky" // engineer: sticky left identity + scroll proof
-  | "long_single" // creator/minimal: one HTML, anchor nav
-  | "multipage_editorial" // consultant/coach: multi HTML
-  | "work_grid"; // designer: work-first
+  | "split_sticky"
+  | "long_single"
+  | "work_grid"
+  | "multipage_editorial";
 
-export type ProThemeId =
-  | "editorial_coach"
-  | "expert_clean"
-  | "creator_bold"
-  | "consultant_ink"
-  | "engineer_halcyon"; // dark + one accent (craft engineer family)
-
-export type ProTheme = {
-  id: ProThemeId;
+export type ProfessionalTheme = {
+  id: string;
   label: string;
-  bg: string;
+  ink: string;
   surface: string;
+  surface2: string;
+  line: string;
   text: string;
   muted: string;
   accent: string;
-  accentSoft: string;
+  onAccent: string;
   displayFont: string;
   bodyFont: string;
-  heroStyle: "split_portrait" | "message_first" | "name_focus" | "cinematic" | "sticky_rail";
-  ctaPrimary: string;
-  ctaSecondary: string;
+  heroStyle: "split" | "centered" | "editorial";
+  radius: string;
+  /** Preferred structure for first generate */
   layout: ProLayoutMode;
+  ctaPrimary: string;
 };
 
-export const PRO_THEMES: Record<ProThemeId, ProTheme> = {
-  engineer_halcyon: {
-    id: "engineer_halcyon",
-    label: "Engineer craft",
-    bg: "#0a192f",
+const THEMES: Record<string, ProfessionalTheme> = {
+  consultant: {
+    id: "consultant",
+    label: "Consultant",
+    ink: "#0c0f14",
+    surface: "#151a22",
+    surface2: "#1c2330",
+    line: "rgba(255,255,255,0.08)",
+    text: "#f4f1ea",
+    muted: "#a8a29e",
+    accent: "#c4a574",
+    onAccent: "#0c0f14",
+    displayFont: '"Cormorant Garamond", Georgia, serif',
+    bodyFont: "system-ui, -apple-system, sans-serif",
+    heroStyle: "editorial",
+    radius: "10px",
+    layout: "multipage_editorial",
+    ctaPrimary: "Start a conversation",
+  },
+  engineer: {
+    id: "engineer",
+    label: "Engineer",
+    /* Halcyon-adjacent craft tokens (original, not a site clone) */
+    ink: "#0a192f",
     surface: "#112240",
+    surface2: "#1a2f4a",
+    line: "rgba(136,146,176,0.25)",
     text: "#e6f1ff",
     muted: "#8892b0",
     accent: "#64ffda",
-    accentSoft: "rgba(100, 255, 218, 0.12)",
+    onAccent: "#0a192f",
     displayFont: "system-ui, -apple-system, \"Segoe UI\", sans-serif",
     bodyFont: "system-ui, -apple-system, \"Segoe UI\", sans-serif",
-    heroStyle: "sticky_rail",
-    ctaPrimary: "Get in touch",
-    ctaSecondary: "View work",
+    heroStyle: "split",
+    radius: "4px",
     layout: "split_sticky",
+    ctaPrimary: "Get in touch",
   },
-  editorial_coach: {
-    id: "editorial_coach",
-    label: "Editorial coach",
-    bg: "#f7f1ea",
-    surface: "#ffffff",
-    text: "#1c1917",
-    muted: "#78716c",
-    accent: "#1a4d3e",
-    accentSoft: "#e8efe9",
-    displayFont: '"Cormorant Garamond", Georgia, serif',
-    bodyFont: "system-ui, -apple-system, \"Segoe UI\", sans-serif",
-    heroStyle: "message_first",
-    ctaPrimary: "Work with me",
-    ctaSecondary: "About",
-    layout: "multipage_editorial",
+  designer: {
+    id: "designer",
+    label: "Designer",
+    ink: "#0d0d0f",
+    surface: "#16161a",
+    surface2: "#1f1f24",
+    line: "rgba(255,255,255,0.1)",
+    text: "#fafafa",
+    muted: "#a1a1aa",
+    accent: "#f472b6",
+    onAccent: "#0d0d0f",
+    displayFont: '"Syne", system-ui, sans-serif',
+    bodyFont: "system-ui, sans-serif",
+    heroStyle: "centered",
+    radius: "16px",
+    layout: "work_grid",
+    ctaPrimary: "View work",
   },
-  expert_clean: {
-    id: "expert_clean",
-    label: "Expert clean",
-    bg: "#ffffff",
-    surface: "#f8fafc",
-    text: "#0f172a",
-    muted: "#64748b",
-    accent: "#6d28d9",
-    accentSoft: "#ede9fe",
-    displayFont: "Syne, system-ui, sans-serif",
-    bodyFont: "system-ui, -apple-system, \"Segoe UI\", sans-serif",
-    heroStyle: "split_portrait",
+  founder: {
+    id: "founder",
+    label: "Founder",
+    ink: "#0a192f",
+    surface: "#112240",
+    surface2: "#1a2f4a",
+    line: "rgba(136,146,176,0.25)",
+    text: "#e6f1ff",
+    muted: "#8892b0",
+    accent: "#64ffda",
+    onAccent: "#0a192f",
+    displayFont: '"Syne", system-ui, sans-serif',
+    bodyFont: "system-ui, sans-serif",
+    heroStyle: "split",
+    radius: "8px",
+    layout: "split_sticky",
     ctaPrimary: "Let's talk",
-    ctaSecondary: "View work",
-    layout: "multipage_editorial",
   },
-  creator_bold: {
-    id: "creator_bold",
-    label: "Creator bold",
-    bg: "#0c0c0c",
-    surface: "#171717",
+  lawyer: {
+    id: "lawyer",
+    label: "Legal",
+    ink: "#0b1220",
+    surface: "#121a2b",
+    surface2: "#1a2438",
+    line: "rgba(255,255,255,0.08)",
+    text: "#f1f5f9",
+    muted: "#94a3b8",
+    accent: "#d4af37",
+    onAccent: "#0b1220",
+    displayFont: '"Cormorant Garamond", Georgia, serif',
+    bodyFont: "system-ui, sans-serif",
+    heroStyle: "editorial",
+    radius: "8px",
+    layout: "multipage_editorial",
+    ctaPrimary: "Contact",
+  },
+  marketer: {
+    id: "marketer",
+    label: "Marketer",
+    ink: "#0f0a12",
+    surface: "#1a1220",
+    surface2: "#24182c",
+    line: "rgba(255,255,255,0.09)",
+    text: "#faf5ff",
+    muted: "#c4b5fd",
+    accent: "#e879f9",
+    onAccent: "#0f0a12",
+    displayFont: '"Syne", system-ui, sans-serif',
+    bodyFont: "system-ui, sans-serif",
+    heroStyle: "centered",
+    radius: "14px",
+    layout: "long_single",
+    ctaPrimary: "Work with me",
+  },
+  creator: {
+    id: "creator",
+    label: "Creator",
+    ink: "#0a0a0a",
+    surface: "#141414",
+    surface2: "#1f1f1f",
+    line: "rgba(255,255,255,0.1)",
     text: "#fafafa",
     muted: "#a3a3a3",
-    accent: "#f59e0b",
-    accentSoft: "#292524",
-    displayFont: "Syne, system-ui, sans-serif",
-    bodyFont: "system-ui, -apple-system, sans-serif",
-    heroStyle: "cinematic",
-    ctaPrimary: "Read the story",
-    ctaSecondary: "Contact",
+    accent: "#fb923c",
+    onAccent: "#0a0a0a",
+    displayFont: '"Syne", system-ui, sans-serif',
+    bodyFont: "system-ui, sans-serif",
+    heroStyle: "centered",
+    radius: "12px",
     layout: "long_single",
+    ctaPrimary: "Say hello",
   },
-  consultant_ink: {
-    id: "consultant_ink",
-    label: "Consultant ink",
-    bg: "#fafafa",
-    surface: "#ffffff",
-    text: "#111827",
-    muted: "#6b7280",
-    accent: "#ea580c",
-    accentSoft: "#fff7ed",
-    displayFont: "Syne, system-ui, sans-serif",
+  general: {
+    id: "general",
+    label: "Professional",
+    ink: "#0b0d12",
+    surface: "#141820",
+    surface2: "#1c2330",
+    line: "rgba(255,255,255,0.08)",
+    text: "#f3f4f6",
+    muted: "#9ca3af",
+    accent: "#a78bfa",
+    onAccent: "#0b0d12",
+    displayFont: '"Syne", system-ui, sans-serif',
     bodyFont: "system-ui, -apple-system, sans-serif",
-    heroStyle: "name_focus",
-    ctaPrimary: "Start a conversation",
-    ctaSecondary: "Experience",
+    heroStyle: "split",
+    radius: "12px",
     layout: "multipage_editorial",
+    ctaPrimary: "Get in touch",
   },
 };
 
-export function themeForPersona(persona?: string | null): ProTheme {
-  switch (persona) {
-    case "engineer":
-      return PRO_THEMES.engineer_halcyon;
-    case "designer":
-      return {
-        ...PRO_THEMES.expert_clean,
-        layout: "work_grid",
-        heroStyle: "split_portrait",
-      };
-    case "creator":
-    case "marketer":
-      return PRO_THEMES.creator_bold;
-    case "founder":
-      return {
-        ...PRO_THEMES.engineer_halcyon,
-        accent: "#64ffda",
-        layout: "split_sticky",
-      };
-    case "consultant":
-    case "general":
-      return PRO_THEMES.editorial_coach;
-    case "lawyer":
-      return PRO_THEMES.consultant_ink;
-    default:
-      return PRO_THEMES.consultant_ink;
-  }
+export function themeForProfile(p: ProfessionalProfile): ProfessionalTheme {
+  const id = p.persona || "general";
+  return THEMES[id] || THEMES.general;
 }
 
-/** Prefer fewer pages when profile content is thin */
+export function googleFontsLink(theme: ProfessionalTheme): string {
+  if (theme.displayFont.includes("Cormorant")) {
+    return "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600&display=swap";
+  }
+  return "https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Inter:wght@400;500;600&display=swap";
+}
+
+/** How much structured content we have (thin → fewer pages) */
+export function contentScore(p: ProfessionalProfile): number {
+  let s = 0;
+  if ((p.experience || []).length > 0) s += 2;
+  if ((p.projects || []).length > 0) s += 2;
+  if ((p.skills || []).length > 3) s += 1;
+  if ((p.about || "").length > 80) s += 1;
+  return s;
+}
+
 export function resolveLayout(
-  theme: ProTheme,
-  contentScore: number
+  theme: ProfessionalTheme,
+  score: number
 ): ProLayoutMode {
-  if (contentScore < 2 && theme.layout === "multipage_editorial") {
+  if (score < 2 && theme.layout === "multipage_editorial") {
+    return "long_single";
+  }
+  if (score < 2 && theme.layout === "work_grid") {
     return "long_single";
   }
   return theme.layout;
-}
-
-export function contentScore(profile: {
-  experience?: unknown[];
-  projects?: unknown[];
-  skills?: unknown[];
-  about?: string;
-}): number {
-  let s = 0;
-  if ((profile.experience?.length || 0) > 0) s += 2;
-  if ((profile.projects?.length || 0) > 0) s += 2;
-  if ((profile.skills?.length || 0) > 3) s += 1;
-  if ((profile.about || "").length > 80) s += 1;
-  return s;
 }
