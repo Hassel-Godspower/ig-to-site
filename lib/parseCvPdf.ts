@@ -1,14 +1,26 @@
 /**
- * Server-side CV PDF → rough ProfessionalProfile.
- * Optional dependency: pdf-parse (npm install pdf-parse)
+ * Server-side CV PDF → ProfessionalProfile.
  *
- * Uses createRequire so TypeScript does not fail the build when
- * the package is missing at typecheck time; runtime still needs it for PDF text.
+ * Supports:
+ *  - pdf-parse v1.x  →  default export function(buffer)
+ *  - pdf-parse v2.x  →  { PDFParse } class with getText()
+ *
+ * Pin recommendation: "pdf-parse": "1.1.1" (simpler + more reliable on many CVs)
+ * or keep ^2.4.x with this loader.
+ *
+ * Runtime: Node only (not Edge).
  */
 
 import { createRequire } from "node:module";
-import type { ProfessionalProfile, ExperienceItem, EducationItem } from "./professionalProfile";
-import { emptyProfessionalProfile, detectPersona } from "./professionalProfile";
+import type {
+  ProfessionalProfile,
+  ExperienceItem,
+  EducationItem,
+} from "./professionalProfile";
+import {
+  emptyProfessionalProfile,
+  detectPersona,
+} from "./professionalProfile";
 
 export type ParseCvResult = {
   profile: ProfessionalProfile;
@@ -16,21 +28,69 @@ export type ParseCvResult = {
   warnings: string[];
 };
 
-type PdfParseFn = (data: Buffer) => Promise<{ text?: string }>;
+type PdfParseV1 = (data: Buffer) => Promise<{ text?: string; numpages?: number }>;
 
-function loadPdfParse(): PdfParseFn | null {
+async function extractTextFromPdf(buffer: Buffer): Promise<{
+  text: string;
+  warnings: string[];
+}> {
+  const warnings: string[] = [];
   try {
-    // Avoid static `import "pdf-parse"` so `tsc` does not require the module.
     const require = createRequire(__filename);
-    const mod = require("pdf-parse") as PdfParseFn | { default: PdfParseFn };
-    if (typeof mod === "function") return mod;
-    if (mod && typeof (mod as { default: PdfParseFn }).default === "function") {
-      return (mod as { default: PdfParseFn }).default;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const mod: any = require("pdf-parse");
+
+    // --- v1: module is a function ---
+    if (typeof mod === "function") {
+      const parsed = await (mod as PdfParseV1)(buffer);
+      return { text: String(parsed?.text || ""), warnings };
     }
-    return null;
+
+    // --- v2: class PDFParse ---
+    const PDFParse = mod.PDFParse || mod.default?.PDFParse || mod.default;
+    if (typeof PDFParse === "function") {
+      try {
+        const data = new Uint8Array(buffer);
+        const parser = new PDFParse({ data });
+        const result = await parser.getText();
+        if (typeof parser.destroy === "function") {
+          try {
+            await parser.destroy();
+          } catch {
+            /* ignore */
+          }
+        }
+        return { text: String(result?.text || ""), warnings };
+      } catch (e) {
+        warnings.push(
+          "pdf-parse v2 failed: " + (e instanceof Error ? e.message : String(e))
+        );
+      }
+    }
+
+    warnings.push(
+      "pdf-parse is installed but API was not recognised. Pin pdf-parse@1.1.1 or upgrade parseCvPdf."
+    );
+    return { text: "", warnings };
   } catch {
-    return null;
+    warnings.push(
+      "pdf-parse is not installed. Run: npm install pdf-parse@1.1.1 — then redeploy."
+    );
+    return { text: "", warnings };
   }
+}
+
+/** Fix common extract artefacts (tab-separated letters, excess whitespace). */
+function normalizeExtractedText(raw: string): string {
+  let t = raw.replace(/\r/g, "\n");
+  // If many single letters separated by tabs/spaces, collapse letter-gaps
+  const letterGapRatio =
+    (t.match(/[A-Za-z]\t+[A-Za-z]/g) || []).length / Math.max(t.length / 20, 1);
+  if (letterGapRatio > 0.15) {
+    t = t.replace(/\t+/g, "");
+  }
+  t = t.replace(/[ \t]+\n/g, "\n").replace(/\n{3,}/g, "\n\n");
+  return t.trim();
 }
 
 function extractEmail(text: string): string | undefined {
@@ -40,13 +100,15 @@ function extractEmail(text: string): string | undefined {
 
 function extractPhone(text: string): string | undefined {
   const m = text.match(
-    /(?:\+?234|0)[\s\-]?[789]\d{2}[\s\-]?\d{3}[\s\-]?\d{4}|\+\d{1,3}[\s\-]?\d{6,14}/
+    /(?:\+?234|0)[\s\-]?[789]\d{2}[\s\-]?\d{3}[\s\-]?\d{4}|\+\d{1,3}[\s\-]?\d{6,14}|\b0[789]\d{9}\b/
   );
   return m?.[0]?.replace(/\s+/g, "");
 }
 
 function extractLinkedIn(text: string): string | undefined {
-  const m = text.match(/https?:\/\/(?:www\.)?linkedin\.com\/in\/[A-Za-z0-9\-_%]+\/?/i);
+  const m = text.match(
+    /https?:\/\/(?:www\.)?linkedin\.com\/in\/[A-Za-z0-9\-_%]+\/?/i
+  );
   return m?.[0];
 }
 
@@ -56,36 +118,113 @@ function sectionAfter(text: string, headers: RegExp): string {
   const start = m.index + m[0].length;
   const rest = text.slice(start);
   const next = rest.search(
-    /\n\s*(EXPERIENCE|WORK HISTORY|EDUCATION|SKILLS|PROJECTS|CERTIFICATIONS|CONTACT)\b/i
+    /\n\s*(?:PROFESSIONAL\s+)?(?:SUMMARY|PROFILE|ABOUT|OBJECTIVE|EXPERIENCE|WORK\s+HISTORY|WORK\s+EXPERIENCE|EMPLOYMENT|EDUCATION|ACADEMIC|CORE\s+SKILLS|SKILLS|TECHNICAL\s+SKILLS|PROJECTS|CERTIFICATIONS|CONTACT|REFERENCES)\b/i
   );
   return (next >= 0 ? rest.slice(0, next) : rest).trim();
 }
 
+/**
+ * Parse experience blocks that look like:
+ *   08/2022 - 10/2025
+ *   IT Professional/Brand Manager (Full time)
+ *   Zikel Cosmetics
+ *   • Designed & Managed...
+ * or:
+ *   IT Professional at Zikel Cosmetics
+ *   Aug 2022 – Oct 2025
+ */
 function parseExperience(block: string): ExperienceItem[] {
   if (!block) return [];
   const lines = block
     .split(/\n+/)
     .map((l) => l.trim())
     .filter(Boolean);
+
   const items: ExperienceItem[] = [];
   let current: ExperienceItem | null = null;
+
+  const dateOnly =
+    /^(?:(?:0?[1-9]|1[0-2])[\/\-.](?:19|20)\d{2}|(?:19|20)\d{2}|(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s*(?:19|20)\d{2})\s*[-–—to]+\s*(?:(?:0?[1-9]|1[0-2])[\/\-.](?:19|20)\d{2}|(?:19|20)\d{2}|(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s*(?:19|20)\d{2}|Present|Current)$/i;
+  const dateInline =
+    /((?:0?[1-9]|1[0-2])[\/\-.](?:19|20)\d{2}|(?:19|20)\d{2})\s*[-–—]\s*((?:0?[1-9]|1[0-2])[\/\-.](?:19|20)\d{2}|(?:19|20)\d{2}|Present|Current)/i;
+
   for (const line of lines) {
-    if (current && /^[•\-\u2022*]/.test(line)) {
-      current.bullets.push(line.replace(/^[•\-\u2022*]+\s*/, ""));
+    // Bullet under current role
+    if (current && /^[•\-\u2022*●]/.test(line)) {
+      current.bullets.push(line.replace(/^[•\-\u2022*●]+\s*/, "").trim());
       continue;
     }
-    const role = line.match(/^(.+?)\s+(?:at|@|—|-|–|,)\s+(.+)$/i);
-    if (role && line.length < 120) {
-      if (current) items.push(current);
+
+    // Pure date line → start new role (title/company on following lines)
+    if (dateOnly.test(line) || (/^\d{2}\/\d{4}/.test(line) && line.length < 40)) {
+      if (current && (current.title || current.company)) items.push(current);
+      const dm = line.match(dateInline) || line.match(/(\S+)\s*[-–—]\s*(\S+)/);
       current = {
-        title: role[1].trim(),
-        company: role[2].trim(),
+        title: "",
+        company: "",
+        start: dm?.[1],
+        end: dm?.[2],
         bullets: [],
       };
       continue;
     }
+
+    // "Title at Company" / "Title — Company"
+    const roleAt = line.match(
+      /^(.{3,80}?)\s+(?:at|@|—|–|-|,)\s+(.{2,80})$/i
+    );
+    if (roleAt && !/^[•\-]/.test(line)) {
+      if (current && current.title) items.push(current);
+      current = {
+        title: roleAt[1].trim(),
+        company: roleAt[2].trim(),
+        bullets: [],
+      };
+      continue;
+    }
+
+    // Title with (Full time) suffix
+    if (
+      current &&
+      !current.title &&
+      line.length < 100 &&
+      !/^https?:/i.test(line)
+    ) {
+      current.title = line.replace(/\s*\((?:Full\s*time|Part\s*time|Contract)\)\s*$/i, "").trim();
+      continue;
+    }
+
+    // Company line after title
+    if (
+      current &&
+      current.title &&
+      !current.company &&
+      line.length < 80 &&
+      !/^[•\-]/.test(line)
+    ) {
+      current.company = line;
+      continue;
+    }
+
+    // Orphan title-looking line starts a role
+    if (
+      !current &&
+      line.length > 5 &&
+      line.length < 90 &&
+      /manager|developer|engineer|designer|officer|assistant|director|lead|consultant|marketer|professional/i.test(
+        line
+      )
+    ) {
+      current = { title: line, company: "", bullets: [] };
+    }
   }
-  if (current) items.push(current);
+
+  if (current && (current.title || current.company || current.bullets.length)) {
+    if (!current.title) current.title = "Role";
+    if (!current.company) current.company = "Organisation";
+    items.push(current);
+  }
+
   return items.slice(0, 12);
 }
 
@@ -109,6 +248,16 @@ function parseEducation(block: string): EducationItem[] {
 
 function parseSkills(block: string): string[] {
   if (!block) return [];
+  // Prefer line-based skills (one skill per line) over comma split of long sentences
+  const lines = block
+    .split(/\n+/)
+    .map((s) => s.trim())
+    .filter((s) => s.length > 1 && s.length < 60 && !/^core skills$/i.test(s));
+
+  if (lines.length >= 3) {
+    return [...new Set(lines)].slice(0, 40);
+  }
+
   return block
     .split(/[,|•\n]/)
     .map((s) => s.trim())
@@ -117,89 +266,138 @@ function parseSkills(block: string): string[] {
 }
 
 function guessName(text: string): string {
-  const first = text
+  const lines = text
     .split(/\n/)
     .map((l) => l.trim())
-    .find(
-      (l) =>
-        l.length > 2 &&
-        l.length < 60 &&
-        !/@/.test(l) &&
-        !/curriculum|resume|cv/i.test(l)
-    );
+    .filter(Boolean);
+
+  // ALL CAPS name at top (HASSEL GODSPOWER)
+  for (const l of lines.slice(0, 8)) {
+    if (
+      /^[A-Z][A-Z\s.'-]{2,50}$/.test(l) &&
+      !/SUMMARY|EXPERIENCE|EDUCATION|SKILLS|PROFILE|CURRICULUM|RESUME|CONTACT|PHONE|EMAIL|ADDRESS/i.test(
+        l
+      ) &&
+      l.split(/\s+/).length >= 2 &&
+      l.split(/\s+/).length <= 5
+    ) {
+      return l
+        .split(/\s+/)
+        .map((w) => w.charAt(0) + w.slice(1).toLowerCase())
+        .join(" ");
+    }
+  }
+
+  // Title Case name
+  for (const l of lines.slice(0, 8)) {
+    if (
+      /^[A-Z][a-z]+(?:\s+[A-Z][a-z]+)+$/.test(l) &&
+      l.length < 50 &&
+      !/@/.test(l)
+    ) {
+      return l;
+    }
+  }
+
+  const first = lines.find(
+    (l) =>
+      l.length > 2 &&
+      l.length < 60 &&
+      !/@/.test(l) &&
+      !/curriculum|resume|cv|phone|email|address|summary|skills/i.test(l)
+  );
   return first || "Professional";
 }
 
+function guessHeadline(text: string): string | undefined {
+  const lines = text
+    .split(/\n/)
+    .map((l) => l.trim())
+    .filter(Boolean);
+  for (const l of lines.slice(0, 12)) {
+    if (
+      /developer|engineer|manager|designer|marketer|consultant|director|professional|specialist/i.test(
+        l
+      ) &&
+      l.length < 80 &&
+      !/summary|experience|skilled in/i.test(l)
+    ) {
+      return l.replace(/\s*\|\s*/g, " · ");
+    }
+  }
+  return undefined;
+}
+
 /**
- * Parse a PDF buffer into ProfessionalProfile.
- * Call only from Node runtime routes (not Edge).
+ * Parse plain text (paste path or already-extracted PDF text) into a profile.
  */
-export async function parseCvPdf(buffer: Buffer): Promise<ParseCvResult> {
-  const warnings: string[] = [];
-  let rawText = "";
-
-  const pdfParse = loadPdfParse();
-  if (!pdfParse) {
-    warnings.push(
-      "pdf-parse is not installed. Run: npm install pdf-parse — then redeploy."
-    );
-    return {
-      profile: emptyProfessionalProfile({ source: "cv", fullName: "Professional" }),
-      rawText: "",
-      warnings,
-    };
-  }
-
-  try {
-    const parsed = await pdfParse(buffer);
-    rawText = (parsed.text || "").replace(/\r/g, "\n");
-  } catch (e) {
-    warnings.push(
-      "PDF parse failed: " + (e instanceof Error ? e.message : String(e))
-    );
-    return {
-      profile: emptyProfessionalProfile({ source: "cv", fullName: "Professional" }),
-      rawText: "",
-      warnings,
-    };
-  }
-
-  if (rawText.length < 40) {
-    warnings.push(
-      "Very little text extracted from PDF (scanned image?). Prefer a text-based CV."
-    );
-  }
+export function profileFromCvText(rawText: string): ProfessionalProfile {
+  const text = normalizeExtractedText(rawText);
 
   const expBlock = sectionAfter(
-    rawText,
+    text,
     /\b(EXPERIENCE|WORK EXPERIENCE|WORK HISTORY|EMPLOYMENT)\b/i
   );
-  const eduBlock = sectionAfter(rawText, /\b(EDUCATION|ACADEMIC)\b/i);
+  const eduBlock = sectionAfter(text, /\b(EDUCATION|ACADEMIC)\b/i);
   const skillsBlock = sectionAfter(
-    rawText,
-    /\b(SKILLS|TECHNICAL SKILLS|CORE COMPETENCIES)\b/i
+    text,
+    /\b(CORE\s+SKILLS|SKILLS|TECHNICAL SKILLS|CORE COMPETENCIES)\b/i
   );
   const aboutBlock =
-    sectionAfter(rawText, /\b(SUMMARY|PROFILE|ABOUT|OBJECTIVE)\b/i) ||
-    rawText.slice(0, 600);
+    sectionAfter(
+      text,
+      /\b(PROFESSIONAL\s+SUMMARY|SUMMARY|PROFILE|ABOUT|OBJECTIVE)\b/i
+    ) || text.slice(0, 800);
 
-  let profile = emptyProfessionalProfile({
+  const profile = emptyProfessionalProfile({
     source: "cv",
-    fullName: guessName(rawText),
-    about: aboutBlock.slice(0, 1200),
-    email: extractEmail(rawText),
-    phone: extractPhone(rawText),
-    linkedinUrl: extractLinkedIn(rawText),
+    fullName: guessName(text),
+    headline: guessHeadline(text),
+    about: aboutBlock.replace(/\s+/g, " ").trim().slice(0, 1200),
+    email: extractEmail(text),
+    phone: extractPhone(text),
+    linkedinUrl: extractLinkedIn(text),
     experience: parseExperience(expBlock),
     education: parseEducation(eduBlock),
     skills: parseSkills(skillsBlock),
   });
   profile.persona = detectPersona(profile);
+  return profile;
+}
+
+/**
+ * Parse a PDF buffer into ProfessionalProfile.
+ */
+export async function parseCvPdf(buffer: Buffer): Promise<ParseCvResult> {
+  const { text: extracted, warnings } = await extractTextFromPdf(buffer);
+  const rawText = normalizeExtractedText(extracted);
+
+  if (!rawText || rawText.length < 40) {
+    warnings.push(
+      "Very little text extracted from this PDF. It may be scanned/image-based or use non-standard fonts. Paste your CV text in the box, or export a text-based PDF."
+    );
+    return {
+      profile: emptyProfessionalProfile({
+        source: "cv",
+        fullName: "Professional",
+      }),
+      rawText: rawText || "",
+      warnings,
+    };
+  }
+
+  const profile = profileFromCvText(rawText);
 
   if (!profile.experience.length) {
     warnings.push(
-      "Could not structure experience — generation will lean on raw text / editor."
+      "Could not fully structure experience from the PDF. Edit roles in the editor, or paste a clearer experience section."
     );
+  }
+  if (profile.fullName === "Professional") {
+    warnings.push("Could not detect your name from the PDF — set it in the editor.");
+  }
+  if (!profile.skills.length) {
+    warnings.push("Few or no skills detected — add them in the editor.");
   }
 
   return { profile, rawText, warnings };
