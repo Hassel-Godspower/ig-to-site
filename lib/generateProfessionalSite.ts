@@ -1,7 +1,13 @@
 /**
- * Premium professional site generator.
- * Compatible with main: themeForProfile, googleFontsLink, ensureSkillGroups, JSON Resume.
- * Layout modes: split_sticky | long_single | work_grid | multipage_editorial
+ * Premium professional site generator (LinkedIn / CV path).
+ *
+ * Home uses a speaker-card hero:
+ *   left  — name, title, location, bio, skills, CTAs
+ *   right — portrait (photoUrl or persona fallback)
+ * Below  — highlight card · at-a-glance · selected work
+ *
+ * Always emits 6 HTML pages + styles.css + script.js + JSON sidecars.
+ * Compatible with: themeForProfile, googleFontsLink, ensureSkillGroups, JSON Resume.
  */
 
 import type { ProfessionalProfile } from "./professionalProfile";
@@ -37,12 +43,11 @@ function waLink(phone?: string): string | null {
 }
 
 function contactHref(p: ProfessionalProfile): string {
-  return waLink(p.phone) || (p.email ? `mailto:${p.email}` : "#contact");
+  return waLink(p.phone) || (p.email ? `mailto:${p.email}` : "contact.html");
 }
 
 function portraitUrl(p: ProfessionalProfile): string {
   if (p.photoUrl && /^https?:\/\//i.test(p.photoUrl)) return p.photoUrl;
-  // Persona-aware editorial portrait fallbacks (Unsplash)
   const byPersona: Record<string, string> = {
     consultant:
       "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=800&q=80",
@@ -64,29 +69,39 @@ function portraitUrl(p: ProfessionalProfile): string {
   return byPersona[p.persona || "general"] || byPersona.general;
 }
 
-/** Profile-card hero: name + role left, portrait right (speaker-card style) */
+function roleBadgeFor(p: ProfessionalProfile): string {
+  switch (p.persona) {
+    case "engineer":
+      return "Technologist";
+    case "designer":
+      return "Designer";
+    case "consultant":
+      return "Advisor";
+    case "founder":
+      return "Founder";
+    case "lawyer":
+      return "Counsel";
+    case "marketer":
+      return "Strategist";
+    case "creator":
+      return "Creator";
+    default:
+      return "Professional";
+  }
+}
+
+/** Profile-card hero: name + credentials left, portrait right */
 function profileHeroHtml(p: ProfessionalProfile, t: ProfessionalTheme): string {
   const photo = portraitUrl(p);
   const skills = arr(p.skills).slice(0, 6);
-  const skillLine = skills.length
-    ? skills.map((s) => E(s)).join(" · ")
-    : "";
-  const roleBadge =
-    p.persona === "lawyer"
-      ? "Professional"
-      : p.persona === "engineer"
-        ? "Technologist"
-        : p.persona === "consultant"
-          ? "Advisor"
-          : "Professional";
+  const skillLine = skills.length ? skills.map((s) => E(s)).join(" · ") : "";
+  const roleBadge = roleBadgeFor(p);
   const focusTitle =
     arr(p.experience)[0]?.title ||
     p.headline?.split(/[|,–—-]/)[0]?.trim() ||
     "Focus areas";
   const focusSub =
-    arr(p.experience)[0]?.company ||
-    p.location ||
-    "Open to conversations";
+    arr(p.experience)[0]?.company || p.location || "Open to conversations";
 
   return `
   <section class="profile-hero wrap reveal" data-goke="section" data-section-name="Hero">
@@ -94,9 +109,7 @@ function profileHeroHtml(p: ProfessionalProfile, t: ProfessionalTheme): string {
       <div class="profile-hero-copy">
         <p class="profile-kicker" data-goke="text">${E(roleBadge)}</p>
         <h1 data-goke="heading">${E(p.fullName)}</h1>
-        <p class="profile-title" data-goke="text">${E(
-          p.headline || "Professional"
-        )}</p>
+        <p class="profile-title" data-goke="text">${E(p.headline || "Professional")}</p>
         ${
           p.location
             ? `<p class="profile-org muted" data-goke="text">${E(p.location)}</p>`
@@ -113,9 +126,7 @@ function profileHeroHtml(p: ProfessionalProfile, t: ProfessionalTheme): string {
             : ""
         }
         <p class="profile-cta-row">
-          <a class="btn btn-fill" href="contact.html" data-goke="button">${E(
-            t.ctaPrimary
-          )}</a>
+          <a class="btn btn-fill" href="contact.html" data-goke="button">${E(t.ctaPrimary)}</a>
           <a class="btn" href="about.html" data-goke="button">About</a>
           <a class="btn" href="experience.html" data-goke="button">Experience</a>
         </p>
@@ -149,8 +160,7 @@ function profileHeroHtml(p: ProfessionalProfile, t: ProfessionalTheme): string {
   <section class="wrap section reveal home-preview" data-goke="section" data-section-name="Overview">
     <h2><span class="num">01.</span> At a glance</h2>
     <p class="muted" data-goke="text">${E(
-      (p.about || "").slice(0, 400) ||
-        "Add a fuller introduction on the About page."
+      (p.about || "").slice(0, 400) || "Add a fuller introduction on the About page."
     )}</p>
     <div class="home-links">
       <a href="experience.html">Experience →</a>
@@ -166,185 +176,217 @@ function profileHeroHtml(p: ProfessionalProfile, t: ProfessionalTheme): string {
   </section>`;
 }
 
-
-function socialHtml(p: ProfessionalProfile): string {
-  const out: string[] = [];
-  if (p.linkedinUrl)
-    out.push(
-      `<a href="${E(p.linkedinUrl)}" target="_blank" rel="noopener noreferrer" data-goke="button">LinkedIn</a>`
-    );
-  if (p.email)
-    out.push(
-      `<a href="mailto:${E(p.email)}" data-goke="button">Email</a>`
-    );
-  const wa = waLink(p.phone);
-  if (wa)
-    out.push(
-      `<a href="${wa}" target="_blank" rel="noopener noreferrer" data-goke="button">WhatsApp</a>`
-    );
-  return out.join(" · ");
-}
-
 function projectTable(p: ProfessionalProfile): string {
   const projects = arr(p.projects);
   if (!projects.length) {
-    return `<table class="proj-table" data-goke="section" data-section-name="Projects">
-      <thead><tr><th>Year</th><th>Project</th><th>Built with</th><th></th></tr></thead>
-      <tbody>
-        <tr>
-          <td data-goke="text">—</td>
-          <td data-goke="heading">Selected project</td>
-          <td data-goke="text">Add stack in editor</td>
-          <td></td>
-        </tr>
-      </tbody>
-    </table>
-    <p class="muted" data-goke="text">Replace with real work from your CV or portfolio.</p>`;
+    return `<p class="muted" data-goke="text">Add projects in the editor — titles, links, and outcomes.</p>`;
   }
   const rows = projects
+    .slice(0, 8)
     .map((pr) => {
       const stack = arr(pr.keywords).join(", ") || "—";
       const link = pr.url
-        ? `<a href="${E(pr.url)}" target="_blank" rel="noopener">View</a>`
-        : "";
+        ? `<a href="${E(pr.url)}" target="_blank" rel="noopener" data-goke="link">${E(pr.name)}</a>`
+        : `<span data-goke="text">${E(pr.name)}</span>`;
       return `<tr>
-        <td data-goke="text">—</td>
-        <td data-goke="heading">${E(pr.name)}</td>
-        <td data-goke="text">${E(stack)}</td>
         <td>${link}</td>
+        <td data-goke="text">${E((pr.description || "").slice(0, 120) || "—")}</td>
+        <td data-goke="text">${E(stack)}</td>
       </tr>`;
     })
     .join("");
-  return `<table class="proj-table" data-goke="section" data-section-name="Projects">
-    <thead><tr><th>Year</th><th>Project</th><th>Built with</th><th></th></tr></thead>
+  return `<div class="table-wrap"><table class="work-table" data-goke="container">
+    <thead><tr><th>Project</th><th>Summary</th><th>Stack</th></tr></thead>
     <tbody>${rows}</tbody>
-  </table>`;
+  </table></div>`;
 }
 
 function experienceTimeline(p: ProfessionalProfile): string {
   const exp = arr(p.experience);
   if (!exp.length) {
-    return `<article class="timeline-item"><p data-goke="text">Add roles from your CV in the editor.</p></article>`;
+    return `<p class="muted" data-goke="text">Add roles and impact bullets in the editor.</p>`;
   }
   return exp
-    .map(
-      (ex) => `<article class="timeline-item">
-      <h3 data-goke="heading">${E(ex.title)}</h3>
-      <p class="muted" data-goke="text">${E(ex.company)}${
-        ex.start || ex.end
-          ? ` · ${E([ex.start, ex.end].filter(Boolean).join(" – "))}`
-          : ""
-      }</p>
-      ${
-        arr(ex.bullets).length
+    .map((ex) => {
+      const dates = [ex.start, ex.end || "Present"].filter(Boolean).join(" – ");
+      const bullets =
+        arr(ex.bullets).length > 0
           ? `<ul>${arr(ex.bullets)
+              .slice(0, 6)
               .map((b) => `<li data-goke="text">${E(b)}</li>`)
               .join("")}</ul>`
-          : ""
-      }
-    </article>`
-    )
+          : "";
+      return `<article class="timeline-item" data-goke="container">
+        <h3 data-goke="heading">${E(ex.title)}</h3>
+        <p class="meta muted" data-goke="text">${E(ex.company)}${
+          ex.location ? ` · ${E(ex.location)}` : ""
+        }${dates ? ` · ${E(dates)}` : ""}</p>
+        ${bullets}
+      </article>`;
+    })
     .join("");
 }
 
 function skillsChips(p: ProfessionalProfile): string {
   const groups = ensureSkillGroups(p);
   if (!groups.length && !arr(p.skills).length) return "";
-  const keywords =
-    groups.length > 0
-      ? groups.flatMap((g) => g.keywords).slice(0, 28)
-      : arr(p.skills).slice(0, 28);
-  return `<div class="skill-cloud">${keywords
-    .map((s) => `<span data-goke="text">${E(s)}</span>`)
+  if (groups.length) {
+    return groups
+      .map(
+        (g) => `<div class="skill-group" data-goke="container">
+      <h3 data-goke="heading">${E(g.name)}</h3>
+      <p class="chips">${arr(g.keywords)
+        .map((k) => `<span class="chip" data-goke="text">${E(k)}</span>`)
+        .join("")}</p>
+    </div>`
+      )
+      .join("");
+  }
+  return `<p class="chips">${arr(p.skills)
+    .slice(0, 28)
+    .map((k) => `<span class="chip" data-goke="text">${E(k)}</span>`)
+    .join("")}</p>`;
+}
+
+function educationBlock(p: ProfessionalProfile): string {
+  const ed = arr(p.education);
+  if (!ed.length) return "";
+  return `<div class="edu-list">${ed
+    .map(
+      (e) => `<article data-goke="container">
+      <h3 data-goke="heading">${E(e.school)}</h3>
+      <p class="muted" data-goke="text">${E(
+        [e.degree, e.field, e.year].filter(Boolean).join(" · ")
+      )}</p>
+    </article>`
+    )
     .join("")}</div>`;
+}
+
+function socialHtml(p: ProfessionalProfile): string {
+  const links: string[] = [];
+  if (p.linkedinUrl) {
+    links.push(
+      `<a href="${E(p.linkedinUrl)}" target="_blank" rel="noopener" data-goke="link">LinkedIn</a>`
+    );
+  }
+  if (p.website) {
+    links.push(
+      `<a href="${E(p.website)}" target="_blank" rel="noopener" data-goke="link">Website</a>`
+    );
+  }
+  if (p.email) {
+    links.push(`<a href="mailto:${E(p.email)}" data-goke="link">Email</a>`);
+  }
+  return links.join(" · ") || "";
 }
 
 function contactBlock(p: ProfessionalProfile, t: ProfessionalTheme): string {
   const wa = waLink(p.phone);
-  return `<section class="section reveal" id="contact" data-goke="section" data-section-name="Contact">
-    <h2><span class="num">04.</span> Contact</h2>
-    <p class="muted" data-goke="text">Open to conversations.</p>
-    <form class="contact-form" data-goke-contact data-wa="${E(
-      (p.phone || "").replace(/\D/g, "")
-    )}" data-email="${E(p.email || "")}">
-      <input name="name" placeholder="Your name" required data-goke="text" />
-      <input name="contact" placeholder="Email or phone" required data-goke="text" />
-      <textarea name="message" rows="4" placeholder="Message" data-goke="text"></textarea>
-      <button type="submit" class="btn btn-fill" data-goke="button">${E(
-        t.ctaPrimary
-      )}</button>
+  const href = contactHref(p);
+  return `
+  <section class="section contact-block" data-goke="section" data-section-name="Contact">
+    <h1 data-goke="heading">Contact</h1>
+    <p class="muted" data-goke="text">Prefer a direct channel — reply within one business day.</p>
+    <p class="contact-actions">
+      <a class="btn btn-fill" href="${E(href)}" data-goke="button"${
+        wa ? ' target="_blank" rel="noopener"' : ""
+      }>${E(t.ctaPrimary)}</a>
+      ${
+        p.email
+          ? `<a class="btn" href="mailto:${E(p.email)}" data-goke="button">Email</a>`
+          : ""
+      }
+    </p>
+    <form class="contact-form" data-goke="form" data-email="${E(p.email || "")}" data-wa="${E(
+      p.phone || ""
+    )}">
+      <label>Name<input name="name" required data-goke="input" /></label>
+      <label>Email<input name="email" type="email" data-goke="input" /></label>
+      <label>Message<textarea name="message" rows="4" required data-goke="input"></textarea></label>
+      <button type="submit" class="btn btn-fill" data-goke="button">Send message</button>
     </form>
-    <p class="muted social-line">${socialHtml(p)}</p>
+    <p class="socials muted">${socialHtml(p)}</p>
   </section>`;
 }
 
 function shellCss(t: ProfessionalTheme): string {
   return `:root{
-  --ink:${t.ink};--surface:${t.surface};--surface-2:${t.surface2};--line:${t.line};
-  --text:${t.text};--muted:${t.muted};--accent:${t.accent};--on-accent:${t.onAccent};
-  --font-display:${t.displayFont};--font-body:${t.bodyFont};--radius:${t.radius};
-  --wrap:min(1100px,calc(100% - 2.5rem));
+  --bg:${t.ink};
+  --surface:${t.surface};
+  --surface-2:${t.surface2};
+  --text:${t.text};
+  --muted:${t.muted};
+  --accent:${t.accent};
+  --on-accent:${t.onAccent};
+  --line:${t.line};
+  --font-display:${t.displayFont};
+  --font-body:${t.bodyFont};
 }
-*{box-sizing:border-box}html{scroll-behavior:smooth}
-body{margin:0;font-family:var(--font-body);background:var(--ink);color:var(--text);line-height:1.65;-webkit-font-smoothing:antialiased}
-a{color:var(--accent);text-decoration:none}a:hover{opacity:.9}
-.wrap{width:var(--wrap);margin-inline:auto}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  font-family:var(--font-body);
+  background:var(--bg);
+  color:var(--text);
+  line-height:1.55;
+  -webkit-font-smoothing:antialiased;
+}
+a{color:var(--accent);text-decoration:none}
+a:hover{opacity:.9}
+img{max-width:100%;height:auto;display:block}
+.wrap{width:min(1100px,92vw);margin:0 auto}
 .muted{color:var(--muted)}
-h1,h2,h3{font-family:var(--font-display);line-height:1.15;margin:0 0 .65rem}
-h1{font-size:clamp(2rem,4.5vw,3.1rem);font-weight:700}
-h2{font-size:clamp(1.35rem,2.4vw,1.75rem)}
-h2 .num{color:var(--accent);font-family:var(--font-body);font-size:.85em;margin-right:.45rem}
-.btn{display:inline-flex;align-items:center;justify-content:center;padding:.7rem 1.2rem;border-radius:999px;font-weight:600;font-size:.9rem;border:1px solid var(--accent);background:transparent;color:var(--accent);cursor:pointer;text-decoration:none}
-.btn:hover{background:color-mix(in srgb,var(--accent) 15%,transparent);text-decoration:none}
-.btn-fill{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
-.site-header{position:sticky;top:0;z-index:40;backdrop-filter:blur(12px);background:color-mix(in srgb,var(--ink) 90%,transparent);border-bottom:1px solid var(--line)}
-.nav{display:flex;align-items:center;justify-content:space-between;padding:14px 0;gap:12px}
-.brand{font-family:var(--font-display);font-weight:700;font-size:1.1rem;color:var(--accent);text-decoration:none}
-.nav-links{display:none;flex-wrap:wrap;gap:1.15rem;font-size:.85rem;margin-left:auto}
-.nav-links a{color:var(--muted);text-decoration:none}
-.nav-links a:hover,.nav-links a.is-active{color:var(--accent)}
-.header-cta{display:none;margin-left:.5rem}
-.nav-toggle{margin-left:auto;background:transparent;border:1px solid var(--line);color:var(--text);padding:8px 12px;border-radius:8px;cursor:pointer}
-.mobile-panel{display:none;flex-direction:column;gap:12px;padding:12px 0 16px;border-top:1px solid var(--line)}
-.mobile-panel.open{display:flex}
-@media(min-width:880px){.nav-links{display:flex}.header-cta{display:inline-flex}.nav-toggle,.mobile-panel{display:none!important}}
-.split-layout{display:block;padding:1.25rem 0 3rem}
-@media(min-width:960px){
-  .split-layout{display:grid;grid-template-columns:minmax(260px,380px) 1fr;gap:2.5rem;min-height:100vh;width:var(--wrap);margin-inline:auto;padding:0 0 4rem}
-  .split-rail{position:sticky;top:0;height:100vh;display:flex;flex-direction:column;justify-content:center;padding:3rem 0}
-  .split-main{padding:3.5rem 0 5rem}
-  .site-header.split-hide-desktop{display:none}
-}
-.split-rail .role{font-size:1.1rem;margin:0 0 1rem;color:var(--text)}
-.split-rail .blurb{color:var(--muted);max-width:28rem;margin:0 0 1.25rem}
-.split-rail .rail-nav{display:flex;flex-direction:column;gap:.5rem;margin:1.2rem 0}
-.split-rail .rail-nav a{color:var(--muted);font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;text-decoration:none}
-.split-rail .rail-nav a:hover{color:var(--accent)}
-.split-rail .socials{margin-top:2rem;font-size:.9rem}
-.section{padding:2.5rem 0;scroll-margin-top:5rem}
-.timeline{display:grid;gap:1rem}
-.timeline-item{padding:1rem 1.15rem;border-left:2px solid var(--accent);background:var(--surface);border-radius:0 8px 8px 0}
-.timeline-item ul{margin:.5rem 0 0;padding-left:1.1rem;color:var(--muted)}
-.proj-table{width:100%;border-collapse:collapse;font-size:.9rem}
-.proj-table th{text-align:left;color:var(--muted);font-weight:500;font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;padding:.5rem .55rem;border-bottom:1px solid var(--line)}
-.proj-table td{padding:.8rem .55rem;border-bottom:1px solid var(--line);vertical-align:top}
-.proj-table tr:hover td{background:color-mix(in srgb,var(--accent) 8%,transparent)}
-.skill-cloud{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.85rem}
-.skill-cloud span{padding:.3rem .55rem;border-radius:4px;border:1px solid color-mix(in srgb,var(--accent) 40%,transparent);color:var(--accent);font-size:.75rem;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
-.work-grid{display:grid;gap:1rem;grid-template-columns:1fr}
-@media(min-width:640px){.work-grid{grid-template-columns:1fr 1fr}}
-.work-card{padding:1.2rem;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius)}
-.contact-form{display:grid;gap:.7rem;max-width:420px;margin-top:1rem}
-.contact-form input,.contact-form textarea{padding:.7rem .85rem;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--text);font:inherit}
-.site-footer{border-top:1px solid var(--line);padding:2rem 0;margin-top:2rem;font-size:.8rem;color:var(--muted)}
-.footer-inner{display:flex;justify-content:space-between;flex-wrap:wrap;gap:.75rem;width:var(--wrap);margin-inline:auto}
+.num{color:var(--accent);font-weight:700;margin-right:.35rem}
 
-/* Profile-card hero (name left, portrait right) */
+/* Header */
+.site-header{
+  position:sticky;top:0;z-index:40;
+  background:color-mix(in srgb,var(--bg) 88%,transparent);
+  backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--line);
+}
+.site-header .inner{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:1rem;padding:.85rem 0;width:min(1100px,92vw);margin:0 auto;
+}
+.brand{font-family:var(--font-display);font-weight:700;color:var(--text);letter-spacing:-.02em}
+.site-nav{display:flex;flex-wrap:wrap;gap:.15rem 1rem;align-items:center}
+.site-nav a{color:var(--muted);font-size:.9rem;font-weight:500}
+.site-nav a.is-active,.site-nav a:hover{color:var(--text)}
+.nav-toggle{display:none;background:transparent;border:1px solid var(--line);color:var(--text);border-radius:8px;padding:.4rem .65rem;cursor:pointer}
+.mobile-panel{display:none;flex-direction:column;gap:.5rem;padding:0 0 1rem;width:min(1100px,92vw);margin:0 auto}
+.mobile-panel.open{display:flex}
+@media(max-width:760px){
+  .site-nav.desktop{display:none}
+  .nav-toggle{display:inline-flex}
+}
+
+/* Buttons */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;
+  padding:.65rem 1.1rem;border-radius:999px;font-weight:600;font-size:.9rem;
+  border:1px solid var(--line);color:var(--text);background:transparent;cursor:pointer;
+}
+.btn-fill{background:var(--accent);color:var(--on-accent);border-color:transparent}
+.btn + .btn{margin-left:.35rem}
+
+/* Profile-card hero */
 .profile-hero{padding:2.5rem 0 1rem}
 .profile-hero-grid{display:grid;gap:2rem;align-items:center}
-@media(min-width:880px){.profile-hero-grid{grid-template-columns:1.05fr 0.95fr;gap:2.5rem}}
-.profile-kicker{font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);font-weight:700;margin:0 0 .75rem}
-.profile-hero-copy h1{font-size:clamp(2.1rem,5vw,3.4rem);letter-spacing:-0.03em;margin:0 0 .5rem;color:var(--text)}
+@media(min-width:880px){
+  .profile-hero-grid{grid-template-columns:1.05fr .95fr;gap:2.5rem}
+}
+.profile-kicker{
+  font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--accent);font-weight:700;margin:0 0 .75rem;
+}
+.profile-hero-copy h1{
+  font-family:var(--font-display);
+  font-size:clamp(2.1rem,5vw,3.4rem);letter-spacing:-.03em;
+  margin:0 0 .5rem;color:var(--text);line-height:1.1;
+}
 .profile-title{font-size:1.05rem;font-weight:600;color:var(--accent);margin:0 0 .35rem;line-height:1.4}
 .profile-org{margin:0 0 1rem;font-size:.95rem}
 .profile-rule{width:3px;height:3.25rem;background:var(--accent);border-radius:2px;margin:0 0 1rem}
@@ -352,59 +394,136 @@ h2 .num{color:var(--accent);font-family:var(--font-body);font-size:.85em;margin-
 .profile-skills{font-size:.85rem;margin:0 0 1.25rem}
 .profile-cta-row{display:flex;flex-wrap:wrap;gap:.6rem;margin:0}
 .profile-hero-photo{position:relative;justify-self:center;width:min(100%,420px)}
-.profile-hero-photo img{width:100%;aspect-ratio:4/5;object-fit:cover;border-radius:18px;box-shadow:0 24px 60px rgba(0,0,0,.28);background:var(--surface)}
-.profile-badge{position:absolute;top:14px;right:14px;z-index:2;background:var(--accent);color:var(--on-accent);font-size:.7rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:.4rem .75rem;border-radius:999px}
-.profile-session-card{margin-top:2rem;padding:1.35rem 1.5rem 1.5rem;border-radius:16px;background:linear-gradient(135deg,var(--surface-2),var(--surface));border:1px solid var(--line);box-shadow:0 16px 40px rgba(0,0,0,.18)}
-.session-kicker{font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin:0 0 .35rem;font-weight:700}
-.profile-session-card h2{font-size:clamp(1.35rem,3vw,1.85rem);margin:0 0 .35rem}
+.profile-hero-photo img{
+  width:100%;aspect-ratio:4/5;object-fit:cover;border-radius:18px;
+  box-shadow:0 24px 60px rgba(0,0,0,.28);background:var(--surface);
+}
+.profile-badge{
+  position:absolute;top:14px;right:14px;z-index:2;
+  background:var(--accent);color:var(--on-accent);
+  font-size:.7rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+  padding:.4rem .75rem;border-radius:999px;
+}
+.profile-session-card{
+  margin-top:2rem;padding:1.35rem 1.5rem 1.5rem;border-radius:16px;
+  background:linear-gradient(135deg,var(--surface-2),var(--surface));
+  border:1px solid var(--line);box-shadow:0 16px 40px rgba(0,0,0,.18);
+}
+.session-kicker{
+  font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--accent);margin:0 0 .35rem;font-weight:700;
+}
+.profile-session-card h2{
+  font-family:var(--font-display);
+  font-size:clamp(1.35rem,3vw,1.85rem);margin:0 0 .35rem;
+}
 .profile-session-card > p{color:var(--muted);margin:0 0 1rem}
 .session-pills{display:flex;flex-wrap:wrap;gap:.5rem}
-.session-pills .pill{display:inline-flex;align-items:center;padding:.45rem .9rem;border-radius:999px;background:color-mix(in srgb,var(--text) 8%,transparent);border:1px solid var(--line);color:var(--text);font-size:.8rem;font-weight:600;text-decoration:none}
+.session-pills .pill{
+  display:inline-flex;align-items:center;padding:.45rem .9rem;border-radius:999px;
+  background:color-mix(in srgb,var(--text) 8%,transparent);
+  border:1px solid var(--line);color:var(--text);font-size:.8rem;font-weight:600;
+}
 .session-pills .pill:hover{border-color:var(--accent);color:var(--accent)}
 .home-links{display:flex;flex-wrap:wrap;gap:1rem;margin-top:1rem}
 .home-links a{font-weight:600}
 
-.hero-simple{padding:3.25rem 0 1.5rem}
-.hero-simple .lead{color:var(--muted);max-width:36rem}
-.reveal{opacity:0;transform:translateY(12px);transition:opacity .5s ease,transform .5s ease}
+/* Sections */
+.section{padding:2.75rem 0}
+.section h1,.section h2{
+  font-family:var(--font-display);letter-spacing:-.02em;margin:0 0 1rem;
+}
+.section h1{font-size:clamp(1.75rem,3.5vw,2.35rem)}
+.section h2{font-size:clamp(1.35rem,2.8vw,1.75rem)}
+
+/* Timeline */
+.timeline{display:flex;flex-direction:column;gap:1.5rem}
+.timeline-item{
+  padding:1.15rem 1.25rem;border-radius:14px;
+  background:var(--surface);border:1px solid var(--line);
+}
+.timeline-item h3{margin:0 0 .25rem;font-size:1.05rem}
+.timeline-item .meta{margin:0 0 .65rem;font-size:.88rem}
+.timeline-item ul{margin:.35rem 0 0;padding-left:1.1rem;color:var(--muted)}
+
+/* Work table */
+.table-wrap{overflow-x:auto;border-radius:12px;border:1px solid var(--line)}
+.work-table{width:100%;border-collapse:collapse;font-size:.92rem}
+.work-table th,.work-table td{padding:.75rem 1rem;text-align:left;border-bottom:1px solid var(--line)}
+.work-table th{background:var(--surface);color:var(--muted);font-weight:600;font-size:.78rem;text-transform:uppercase;letter-spacing:.04em}
+.work-table tr:last-child td{border-bottom:none}
+
+/* Skills */
+.skill-group{margin-bottom:1.25rem}
+.skill-group h3{font-size:.95rem;margin:0 0 .5rem}
+.chips{display:flex;flex-wrap:wrap;gap:.45rem}
+.chip{
+  display:inline-flex;padding:.35rem .7rem;border-radius:999px;
+  background:var(--surface);border:1px solid var(--line);font-size:.82rem;
+}
+
+/* Contact */
+.contact-actions{display:flex;flex-wrap:wrap;gap:.6rem;margin:1rem 0 1.5rem}
+.contact-form{display:grid;gap:.85rem;max-width:28rem}
+.contact-form label{display:grid;gap:.35rem;font-size:.85rem;color:var(--muted)}
+.contact-form input,.contact-form textarea{
+  font:inherit;padding:.7rem .85rem;border-radius:10px;
+  border:1px solid var(--line);background:var(--surface);color:var(--text);
+}
+.socials{margin-top:1.25rem;font-size:.9rem}
+
+/* Footer */
+.site-footer{
+  margin-top:3rem;padding:2rem 0;border-top:1px solid var(--line);
+  color:var(--muted);font-size:.85rem;
+}
+.site-footer .inner{width:min(1100px,92vw);margin:0 auto;display:flex;flex-wrap:wrap;justify-content:space-between;gap:1rem}
+
+/* Reveal */
+.reveal{opacity:0;transform:translateY(14px);transition:opacity .55s ease,transform .55s ease}
 .reveal.visible{opacity:1;transform:none}
-@media(prefers-reduced-motion:reduce){.reveal{opacity:1;transform:none;transition:none}html{scroll-behavior:auto}}
-.social-line{margin-top:1rem;font-size:.9rem}
+@media(prefers-reduced-motion:reduce){.reveal{opacity:1;transform:none}}
 `;
 }
 
 function scriptJs(): string {
-  return `document.querySelectorAll("form[data-goke-contact]").forEach(function(f){
-  f.addEventListener("submit",function(e){
-    e.preventDefault();
-    var fd=new FormData(f);
-    var wa=(f.getAttribute("data-wa")||"").replace(/\\D/g,"");
-    var msg="Hello, I'm "+(fd.get("name")||"")+".\\nContact: "+(fd.get("contact")||"")+"\\n\\n"+(fd.get("message")||"");
-    if(wa) window.open("https://wa.me/"+wa+"?text="+encodeURIComponent(msg),"_blank");
-    else {
-      var email=f.getAttribute("data-email");
-      if(email) window.location.href="mailto:"+email+"?subject=Website%20enquiry&body="+encodeURIComponent(msg);
+  return `document.addEventListener("DOMContentLoaded",function(){
+  document.querySelectorAll(".contact-form").forEach(function(f){
+    f.addEventListener("submit",function(e){
+      e.preventDefault();
+      var fd=new FormData(f);
+      var name=String(fd.get("name")||"").trim();
+      var email=String(fd.get("email")||"").trim();
+      var message=String(fd.get("message")||"").trim();
+      var msg="Hello, I am "+name+(email?" ("+email+")":"")+".\\n\\n"+message;
+      var wa=f.getAttribute("data-wa");
+      if(wa){
+        var n=wa.replace(/\\D/g,"");
+        if(n.length>=10){window.open("https://wa.me/"+n+"?text="+encodeURIComponent(msg),"_blank");return;}
+      }
+      var em=f.getAttribute("data-email");
+      if(em) window.location.href="mailto:"+em+"?subject=Website%20enquiry&body="+encodeURIComponent(msg);
       else alert("Add a phone or email in the editor so messages can reach you.");
-    }
+    });
   });
+  var toggle=document.querySelector("[data-nav-toggle]");
+  var panel=document.querySelector("[data-mobile-panel]");
+  if(toggle&&panel){
+    toggle.addEventListener("click",function(){panel.classList.toggle("open");});
+  }
+  if("IntersectionObserver" in window && !window.matchMedia("(prefers-reduced-motion: reduce)").matches){
+    var io=new IntersectionObserver(function(entries){
+      entries.forEach(function(en){if(en.isIntersecting) en.target.classList.add("visible");});
+    },{threshold:0.12});
+    document.querySelectorAll(".reveal").forEach(function(el){io.observe(el);});
+  }else{
+    document.querySelectorAll(".reveal").forEach(function(el){el.classList.add("visible");});
+  }
 });
-var toggle=document.querySelector("[data-nav-toggle]");
-var panel=document.querySelector("[data-mobile-panel]");
-if(toggle&&panel){toggle.addEventListener("click",function(){panel.classList.toggle("open");});}
-if("IntersectionObserver" in window && !window.matchMedia("(prefers-reduced-motion: reduce)").matches){
-  var io=new IntersectionObserver(function(entries){
-    entries.forEach(function(en){if(en.isIntersecting) en.target.classList.add("visible");});
-  },{threshold:0.12});
-  document.querySelectorAll(".reveal").forEach(function(el){io.observe(el);});
-}else{document.querySelectorAll(".reveal").forEach(function(el){el.classList.add("visible");});}
 `;
 }
 
-/** Always multipage site map — never anchor-only single page */
-function navLinks(
-  layout: ProLayoutMode,
-  active: string
-): string {
+function navLinks(layout: ProLayoutMode, active: string): string {
   const items =
     layout === "work_grid"
       ? [
@@ -437,225 +556,46 @@ function pageShell(
   body: string,
   t: ProfessionalTheme,
   layout: ProLayoutMode,
-  opts: { description?: string; active: string; hideHeaderDesktop?: boolean }
+  opts: { description?: string; active: string }
 ): string {
   const fonts = googleFontsLink(t);
-  const home = "index.html";
-  const cta = "contact.html";
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>${E(title)} | ${E(name)}</title>
-  <meta name="description" content="${E(opts.description || title)}" />
+  <meta name="description" content="${E(opts.description || title + " — " + name)}" />
   <meta property="og:title" content="${E(title)} | ${E(name)}" />
-  <link rel="stylesheet" href="${fonts}" />
+  <meta property="og:description" content="${E(opts.description || name)}" />
+  ${fonts ? `<link rel="stylesheet" href="${E(fonts)}" />` : ""}
   <link rel="stylesheet" href="styles.css" />
 </head>
-<body id="top" data-theme="${E(t.id)}" data-layout="${layout}">
-  <header class="site-header${
-    opts.hideHeaderDesktop ? " split-hide-desktop" : ""
-  }" data-goke="section" data-section-name="Header">
-    <div class="wrap nav">
-      <a class="brand" href="${home}" data-goke="heading">${E(
-    name.split(/\s+/)[0] || "Home"
-  )}</a>
-      <nav class="nav-links" aria-label="Primary">
-          ${navLinks(layout, opts.active)}
+<body data-goke-layout="${E(layout)}" data-wa="${E("")}">
+  <header class="site-header" data-goke="container" data-section-name="Header">
+    <div class="inner">
+      <a class="brand" href="index.html" data-goke="heading">${E(name)}</a>
+      <nav class="site-nav desktop" aria-label="Primary">
+        ${navLinks(layout, opts.active)}
       </nav>
-      <a class="btn header-cta" href="${cta}" data-goke="button">${E(
-    t.ctaPrimary
-  )}</a>
-      <button type="button" class="nav-toggle" data-nav-toggle aria-label="Menu">Menu</button>
+      <button type="button" class="nav-toggle" data-nav-toggle data-goke="button" aria-label="Menu">Menu</button>
     </div>
-    <div class="wrap mobile-panel" data-mobile-panel>
-          ${navLinks(layout, opts.active)}
-      <a class="btn" href="${cta}">${E(t.ctaPrimary)}</a>
+    <div class="mobile-panel" data-mobile-panel>
+      ${navLinks(layout, opts.active)}
     </div>
   </header>
   <main>
-${body}
+    ${body}
   </main>
-  <footer class="site-footer" data-goke="section" data-section-name="Footer">
-    <div class="footer-inner">
-      <span>&copy; ${new Date().getFullYear()} ${E(name)}</span>
-      <span>Built with goke</span>
+  <footer class="site-footer" data-goke="container" data-section-name="Footer">
+    <div class="inner">
+      <p data-goke="text">© ${new Date().getFullYear()} ${E(name)}</p>
+      <p data-goke="text">Built for the open web</p>
     </div>
   </footer>
-  <script src="script.js"></script>
+  <script src="script.js" defer></script>
 </body>
 </html>`;
-}
-
-function buildSplitSticky(
-  p: ProfessionalProfile,
-  t: ProfessionalTheme
-): ProfessionalSiteFiles {
-  const layout: ProLayoutMode = "split_sticky";
-  const name = p.fullName;
-  const body = `
-  <div class="split-layout">
-    <aside class="split-rail" data-goke="section" data-section-name="Identity">
-      <p class="muted" style="font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;margin:0 0 .4rem">Portfolio</p>
-      <h1 data-goke="heading">${E(name)}</h1>
-      <p class="role" data-goke="text">${E(p.headline || "Builder")}</p>
-      <p class="blurb" data-goke="text">${E(
-        (p.about || "").slice(0, 280) ||
-          "I build thoughtful digital products. Edit this site to tell your story."
-      )}</p>
-      <nav class="rail-nav" aria-label="Site">
-        <a href="about.html">About</a>
-        <a href="experience.html">Experience</a>
-        <a href="projects.html">Work</a>
-        <a href="skills.html">Skills</a>
-        <a href="contact.html">Contact</a>
-      </nav>
-      <div class="socials">${socialHtml(p)}</div>
-    </aside>
-    <div class="split-main">
-      <section class="section reveal" id="about" data-goke="section" data-section-name="About">
-        <h2><span class="num">01.</span> About</h2>
-        <p data-goke="text">${E(
-          p.about || "Add a short narrative about how you work."
-        )}</p>
-        ${skillsChips(p)}
-      </section>
-      <section class="section reveal" id="experience" data-goke="section" data-section-name="Experience">
-        <h2><span class="num">02.</span> Experience</h2>
-        <div class="timeline">${experienceTimeline(p)}</div>
-      </section>
-      <section class="section reveal" id="work" data-goke="section" data-section-name="Work">
-        <h2><span class="num">03.</span> Work</h2>
-        ${projectTable(p)}
-      </section>
-      ${contactBlock(p, t)}
-    </div>
-  </div>`;
-  return {
-    "index.html": pageShell("Home", name, body, t, layout, {
-      description: p.headline || name,
-      active: "#about",
-      hideHeaderDesktop: true,
-    }),
-  };
-}
-
-function buildLongSingle(
-  p: ProfessionalProfile,
-  t: ProfessionalTheme
-): ProfessionalSiteFiles {
-  const layout: ProLayoutMode = "long_single";
-  const name = p.fullName;
-  const body = `
-  <section class="hero-simple wrap reveal" data-goke="section" data-section-name="Hero">
-    <p class="muted" style="font-size:.75rem;letter-spacing:.08em;text-transform:uppercase">Personal site</p>
-    <h1 data-goke="heading">${E(name)}</h1>
-    <p style="font-size:1.15rem;font-weight:600" data-goke="text">${E(
-      p.headline || "Professional"
-    )}</p>
-    <p class="lead" data-goke="text">${E(
-      (p.about || "").slice(0, 320) ||
-        "A clear presence on the open web — edit every line in goke."
-    )}</p>
-    <p style="margin-top:1.25rem">
-      <a class="btn btn-fill" href="contact.html" data-goke="button">${E(
-        t.ctaPrimary
-      )}</a>
-    </p>
-  </section>
-  <div class="wrap">
-    <section class="section reveal" id="about" data-goke="section" data-section-name="About">
-      <h2><span class="num">01.</span> About</h2>
-      <p data-goke="text">${E(p.about || "Your story goes here.")}</p>
-      ${skillsChips(p)}
-    </section>
-    <section class="section reveal" id="experience" data-goke="section" data-section-name="Experience">
-      <h2><span class="num">02.</span> Experience</h2>
-      <div class="timeline">${experienceTimeline(p)}</div>
-    </section>
-    <section class="section reveal" id="work" data-goke="section" data-section-name="Work">
-      <h2><span class="num">03.</span> Selected work</h2>
-      ${projectTable(p)}
-    </section>
-    ${contactBlock(p, t)}
-  </div>`;
-  return {
-    "index.html": pageShell("Home", name, body, t, layout, {
-      description: p.headline || name,
-      active: "#about",
-    }),
-  };
-}
-
-function buildWorkGrid(
-  p: ProfessionalProfile,
-  t: ProfessionalTheme
-): ProfessionalSiteFiles {
-  const layout: ProLayoutMode = "work_grid";
-  const name = p.fullName;
-  const projects = arr(p.projects);
-  const cards = projects.length
-    ? projects
-        .map(
-          (pr) => `<article class="work-card reveal">
-        <h3 data-goke="heading">${E(pr.name)}</h3>
-        <p class="muted" data-goke="text">${E(pr.description || "")}</p>
-        ${
-          pr.url
-            ? `<a href="${E(pr.url)}" target="_blank" rel="noopener">View</a>`
-            : ""
-        }
-      </article>`
-        )
-        .join("")
-    : `<article class="work-card reveal"><h3 data-goke="heading">Selected work</h3><p class="muted" data-goke="text">Add projects in the editor.</p></article>`;
-
-  return {
-    "index.html": pageShell(
-      "Work",
-      name,
-      `<section class="wrap section" data-goke="section" data-section-name="Work">
-      <h1 data-goke="heading">Work</h1>
-      <p class="muted" data-goke="text">${E(p.headline || "")}</p>
-      <div class="work-grid" style="margin-top:1.5rem">${cards}</div>
-    </section>`,
-      t,
-      layout,
-      { active: "index.html", description: p.headline || name }
-    ),
-    "about.html": pageShell(
-      "About",
-      name,
-      `<section class="wrap section" data-goke="section" data-section-name="About">
-      <h1 data-goke="heading">About</h1>
-      <p data-goke="text">${E(p.about || "")}</p>
-      ${skillsChips(p)}
-    </section>`,
-      t,
-      layout,
-      { active: "about.html" }
-    ),
-    "experience.html": pageShell(
-      "Experience",
-      name,
-      `<section class="wrap section" data-goke="section" data-section-name="Experience">
-      <h1 data-goke="heading">Experience</h1>
-      <div class="timeline">${experienceTimeline(p)}</div>
-    </section>`,
-      t,
-      layout,
-      { active: "experience.html" }
-    ),
-    "contact.html": pageShell(
-      "Contact",
-      name,
-      `<div class="wrap">${contactBlock(p, t)}</div>`,
-      t,
-      layout,
-      { active: "contact.html" }
-    ),
-  };
 }
 
 function buildMultipage(
@@ -663,86 +603,21 @@ function buildMultipage(
   t: ProfessionalTheme
 ): ProfessionalSiteFiles {
   const layout: ProLayoutMode = "multipage_editorial";
-  const name = p.fullName;
-  return {
-    "index.html": pageShell(
-      "Home",
-      name,
-      profileHeroHtml(p, t),
-      t,
-      layout,
-      { active: "index.html", description: p.headline || name }
-    ),
-    "about.html": pageShell(
-      "About",
-      name,
-      `<section class="wrap section" data-goke="section" data-section-name="About">
-      <h1 data-goke="heading">About</h1>
-      <p data-goke="text">${E(p.about || "")}</p>
-      ${skillsChips(p)}
-    </section>`,
-      t,
-      layout,
-      { active: "about.html" }
-    ),
-    "experience.html": pageShell(
-      "Experience",
-      name,
-      `<section class="wrap section" data-goke="section" data-section-name="Experience">
-      <h1 data-goke="heading">Experience</h1>
-      <div class="timeline">${experienceTimeline(p)}</div>
-    </section>`,
-      t,
-      layout,
-      { active: "experience.html" }
-    ),
-    "projects.html": pageShell(
-      "Work",
-      name,
-      `<section class="wrap section" data-goke="section" data-section-name="Projects">
-      <h1 data-goke="heading">Work</h1>
-      ${projectTable(p)}
-    </section>`,
-      t,
-      layout,
-      { active: "projects.html" }
-    ),
-    "skills.html": pageShell(
-      "Skills",
-      name,
-      `<section class="wrap section" data-goke="section" data-section-name="Skills">
-      <h1 data-goke="heading">Skills</h1>
-      ${skillsChips(p) || `<p class="muted" data-goke="text">Add skills in the editor.</p>`}
-    </section>`,
-      t,
-      layout,
-      { active: "skills.html" }
-    ),
-    "contact.html": pageShell(
-      "Contact",
-      name,
-      `<div class="wrap">${contactBlock(p, t)}</div>`,
-      t,
-      layout,
-      { active: "contact.html" }
-    ),
-  };
-}
+  const name = p.fullName || "Professional";
 
-function sharedSecondaryPages(
-  p: ProfessionalProfile,
-  t: ProfessionalTheme,
-  layout: ProLayoutMode
-): ProfessionalSiteFiles {
-  const name = p.fullName;
   return {
+    "index.html": pageShell("Home", name, profileHeroHtml(p, t), t, layout, {
+      active: "index.html",
+      description: p.headline || name,
+    }),
     "about.html": pageShell(
       "About",
       name,
-      `<section class="wrap section" data-goke="section" data-section-name="About">
+      `<section class="wrap section reveal" data-goke="section" data-section-name="About">
       <h1 data-goke="heading">About</h1>
       <p data-goke="text">${E(p.about || "Add your story in the editor.")}</p>
       ${skillsChips(p)}
+      ${educationBlock(p)}
     </section>`,
       t,
       layout,
@@ -751,7 +626,7 @@ function sharedSecondaryPages(
     "experience.html": pageShell(
       "Experience",
       name,
-      `<section class="wrap section" data-goke="section" data-section-name="Experience">
+      `<section class="wrap section reveal" data-goke="section" data-section-name="Experience">
       <h1 data-goke="heading">Experience</h1>
       <div class="timeline">${experienceTimeline(p)}</div>
     </section>`,
@@ -762,7 +637,7 @@ function sharedSecondaryPages(
     "projects.html": pageShell(
       "Work",
       name,
-      `<section class="wrap section" data-goke="section" data-section-name="Projects">
+      `<section class="wrap section reveal" data-goke="section" data-section-name="Projects">
       <h1 data-goke="heading">Work</h1>
       ${projectTable(p)}
     </section>`,
@@ -773,7 +648,7 @@ function sharedSecondaryPages(
     "skills.html": pageShell(
       "Skills",
       name,
-      `<section class="wrap section" data-goke="section" data-section-name="Skills">
+      `<section class="wrap section reveal" data-goke="section" data-section-name="Skills">
       <h1 data-goke="heading">Skills</h1>
       ${
         skillsChips(p) ||
@@ -800,16 +675,11 @@ export function generateProfessionalSiteFiles(
 ): ProfessionalSiteFiles {
   const theme = themeForProfile(profile);
   const score = contentScore(profile);
-  // Visual layout preference — site is ALWAYS multi-page HTML files
   const layout = resolveLayout(theme, score);
 
-  let pages: ProfessionalSiteFiles;
+  // Always multipage; home uses profile-card hero
+  const pages: ProfessionalSiteFiles = buildMultipage(profile, theme);
 
-  // Always multipage; home uses profile-card hero (name/credentials left, portrait right)
-  pages = buildMultipage(profile, theme);
-  }
-
-  // Guarantee required multi-page set
   const required = [
     "index.html",
     "about.html",
@@ -823,15 +693,10 @@ export function generateProfessionalSiteFiles(
     if (!pages[f]) pages[f] = fallback[f];
   }
 
-  const htmlKeys = required.filter((k) => pages[k]);
   pages["styles.css"] = shellCss(theme);
   pages["script.js"] = scriptJs();
   pages["profile.json"] = JSON.stringify(profile, null, 2);
-  pages["resume.json"] = JSON.stringify(
-    professionalToJsonResume(profile),
-    null,
-    2
-  );
+  pages["resume.json"] = JSON.stringify(professionalToJsonResume(profile), null, 2);
   pages["pages.json"] = JSON.stringify(
     {
       layout,
@@ -861,21 +726,6 @@ export function generateProfessionalSiteFiles(
     null,
     2
   );
-  return pages;
-}
 
-/** Long-form aesthetic HOME only — secondary pages are separate HTML files */
-function buildLongSingleAsHome(
-  p: ProfessionalProfile,
-  t: ProfessionalTheme
-): ProfessionalSiteFiles {
-  const layout: ProLayoutMode = "long_single";
-  const name = p.fullName;
-  const body = profileHeroHtml(p, t);
-  return {
-    "index.html": pageShell("Home", name, body, t, layout, {
-      description: p.headline || name,
-      active: "index.html",
-    }),
-  };
+  return pages;
 }
