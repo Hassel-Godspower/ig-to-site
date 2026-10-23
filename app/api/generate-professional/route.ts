@@ -11,7 +11,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { nanoid } from "nanoid";
 import { createJob } from "@/lib/jobStore";
 import { saveSiteFiles, saveSiteFile } from "@/lib/siteStore";
-import { parseCvPdf } from "@/lib/parseCvPdf";
+import { parseCvUpload } from "@/lib/parseCvUpload";
+import { profileFromCvText } from "@/lib/parseCvPdf";
 import { enrichFromLinkedInUrl } from "@/lib/linkedinEnrich";
 import { mergeProfessionalProfiles } from "@/lib/mergeProfessionalProfile";
 import { generateProfessionalSiteFiles } from "@/lib/generateProfessionalSite";
@@ -23,7 +24,7 @@ import { normalizeLinkedInUrl } from "@/lib/normalizeLinkedInUrl";
 import type { ProfessionalProfile } from "@/lib/professionalProfile";
 
 export const runtime = "nodejs";
-export const maxDuration = 60;
+export const maxDuration = 90;
 
 function stampEditableHooks(html: string): string {
   let out = html;
@@ -46,13 +47,19 @@ export async function POST(req: NextRequest) {
     let pasteText = "";
     let cvBuffer: Buffer | null = null;
 
+    let cvFilename = "cv.pdf";
+    let cvMime = "application/pdf";
+
     if (contentType.includes("multipart/form-data")) {
       const form = await req.formData();
       linkedinUrl = String(form.get("linkedinUrl") || form.get("linkedin") || "");
       pasteText = String(form.get("pasteText") || form.get("profileText") || "");
       const file = form.get("cv") || form.get("pdf") || form.get("file");
       if (file && typeof file === "object" && "arrayBuffer" in file) {
-        const ab = await (file as File).arrayBuffer();
+        const f = file as File;
+        cvFilename = f.name || cvFilename;
+        cvMime = f.type || cvMime;
+        const ab = await f.arrayBuffer();
         cvBuffer = Buffer.from(ab);
       }
     } else {
@@ -61,6 +68,8 @@ export async function POST(req: NextRequest) {
       pasteText = String(body.pasteText || body.profileText || "");
       if (body.cvBase64) {
         cvBuffer = Buffer.from(String(body.cvBase64), "base64");
+        cvFilename = String(body.cvFilename || body.filename || "cv.pdf");
+        cvMime = String(body.cvMime || body.mime || "application/pdf");
       }
     }
 
@@ -105,12 +114,20 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // 3) CV PDF
+    // 3) CV file — PDF, Word (.docx), or image (OCR)
     if (cvBuffer) {
       try {
-        const parsed = await parseCvPdf(cvBuffer);
+        const parsed = await parseCvUpload(cvBuffer, {
+          filename: cvFilename,
+          mime: cvMime,
+        });
         cvProfile = parsed.profile;
         warnings.push(...parsed.warnings);
+        if (parsed.rawText && parsed.rawText.length > 40) {
+          warnings.push(
+            `CV text extracted (${parsed.rawText.length} chars) from ${cvFilename}.`
+          );
+        }
       } catch (e) {
         warnings.push(
           "CV parse failed: " + (e instanceof Error ? e.message : String(e))
