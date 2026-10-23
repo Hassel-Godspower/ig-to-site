@@ -52,7 +52,7 @@ export function ProfessionalUpload() {
     }
     if (!normalized && !file && pasteText.trim().length < 40) {
       setError(
-        "Add a LinkedIn URL, a PDF CV, or paste your About / experience text."
+        "Add a LinkedIn URL, a CV file, or paste your About / experience text."
       );
       return;
     }
@@ -105,7 +105,7 @@ export function ProfessionalUpload() {
         }}
       >
         Free path: LinkedIn URL opens a starter site you edit, or upload a{" "}
-        <strong>text-based PDF CV</strong> for richer content.
+        <strong>text-based CV file</strong> for richer content.
       </p>
       <p
         className="gk-desktop-note"
@@ -158,7 +158,7 @@ export function ProfessionalUpload() {
           <input
             id="goke-cv-file"
             type="file"
-            accept="application/pdf,.pdf"
+            accept=".pdf,.docx,.doc,image/jpeg,image/png,image/webp,image/jpg,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
             disabled={loading}
             onChange={(e) => setFile(e.target.files?.[0] || null)}
             style={{ display: "block", width: "100%", fontSize: 13 }}
