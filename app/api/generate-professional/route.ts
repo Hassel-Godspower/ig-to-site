@@ -1,10 +1,10 @@
 /**
  * POST /api/generate-professional
- * Free path priority:
- * 1) CV PDF (pdf-parse) — richest
- * 2) Pasted profile text
- * 3) LinkedIn URL → name/slug stub (editable in gòke) — no paid API
- * 4) Optional Proxycurl if PROXYCURL_API_KEY is set
+ * Source priority (first wins; later only fill gaps):
+ * 1) CV file — PDF, Word (.docx), or image (OCR) — source of truth
+ * 2) LinkedIn URL — enrichment or free stub — fills gaps
+ * 3) Pasted About / experience — fills remaining gaps
+ * Optional Proxycurl if PROXYCURL_API_KEY is set
  */
 
 import { NextRequest, NextResponse } from "next/server";
@@ -14,7 +14,7 @@ import { saveSiteFiles, saveSiteFile } from "@/lib/siteStore";
 import { parseCvUpload } from "@/lib/parseCvUpload";
 import { profileFromCvText } from "@/lib/parseCvPdf";
 import { enrichFromLinkedInUrl } from "@/lib/linkedinEnrich";
-import { mergeProfessionalProfiles } from "@/lib/mergeProfessionalProfile";
+import { mergeProfessionalSources, fillProfileGaps } from "@/lib/mergeProfessionalProfile";
 import { generateProfessionalSiteFiles } from "@/lib/generateProfessionalSite";
 import {
   profileFromLinkedInUrl,
@@ -135,19 +135,29 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // 4) Pasted text
+    // 4) Pasted About / experience — fills gaps only after CV + LinkedIn
     if (pasteText.trim().length >= 40) {
-      pasteProfile = profileFromPastedText(
-        pasteText,
+      const clipped = pasteText.slice(0, 8000);
+      pasteProfile = profileFromCvText(clipped);
+      pasteProfile.source = "manual";
+      if (normalizedUrl && !pasteProfile.linkedinUrl) {
+        pasteProfile.linkedinUrl = normalizedUrl;
+      }
+      const fallback = profileFromPastedText(
+        clipped,
         normalizedUrl || undefined
       );
+      if (fallback) {
+        pasteProfile = fillProfileGaps(pasteProfile, fallback);
+      }
     }
 
-    // Merge: CV wins over paste over LinkedIn stub
-    let profile = mergeProfessionalProfiles(linkedinProfile, cvProfile);
-    if (pasteProfile) {
-      profile = mergeProfessionalProfiles(profile, pasteProfile);
-    }
+    // Priority: CV (source of truth) → LinkedIn fills gaps → paste fills remaining
+    let profile = mergeProfessionalSources({
+      cv: cvProfile,
+      linkedin: linkedinProfile,
+      paste: pasteProfile,
+    });
 
     // Last resort: URL stub alone is enough to open the editor
     if (
