@@ -27,6 +27,12 @@ function normalizeLinkedInUrl(input: string): string | null {
 const DESKTOP_NOTE =
   "Design and edit best on a desktop or tablet — phone is fine for small text changes.";
 
+/** Paste / about limits (client + server align). */
+const PASTE_MIN = 40;
+const PASTE_MAX = 8000;
+const ABOUT_HINT_MAX = 1200;
+const NAME_MAX = 80;
+
 export function ProfessionalUpload() {
   const [linkedinUrl, setLinkedinUrl] = useState("");
   const [pasteText, setPasteText] = useState("");
