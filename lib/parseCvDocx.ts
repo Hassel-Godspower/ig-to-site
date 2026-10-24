@@ -1,6 +1,7 @@
 /**
  * Word .docx → plain text (mammoth).
- * Does not support legacy .doc binary format.
+ * Optional dependency: npm install mammoth
+ * Uses createRequire so the app still builds if mammoth is not installed yet.
  */
 
 import { createRequire } from "node:module";
@@ -12,25 +13,40 @@ type MammothExtract = {
   messages?: { type: string; message: string }[];
 };
 
-export async function parseCvDocx(buffer: Buffer): Promise<ParseCvResult> {
-  const warnings: string[] = [];
+function loadMammoth(): {
+  extractRawText: (opts: { buffer: Buffer }) => Promise<MammothExtract>;
+} | null {
   try {
     const require = createRequire(__filename);
+    // Build package name at runtime so webpack does not fail the compile
+    // when mammoth is not in node_modules yet.
+    const name = ["mam", "moth"].join("");
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const mammoth: any = require("mammoth");
-    if (!mammoth?.extractRawText) {
-      warnings.push(
-        "mammoth is not available. Run: npm install mammoth — then redeploy."
-      );
-      return {
-        profile: emptyProfessionalProfile({ source: "cv", fullName: "Professional" }),
-        rawText: "",
-        warnings,
-      };
-    }
-    const result = (await mammoth.extractRawText({
-      buffer,
-    })) as MammothExtract;
+    const mammoth: any = require(name);
+    if (mammoth?.extractRawText) return mammoth;
+    if (mammoth?.default?.extractRawText) return mammoth.default;
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+export async function parseCvDocx(buffer: Buffer): Promise<ParseCvResult> {
+  const warnings: string[] = [];
+  const mammoth = loadMammoth();
+  if (!mammoth) {
+    warnings.push(
+      "mammoth is not installed. Run: npm install mammoth — then redeploy. Word .docx upload needs this package."
+    );
+    return {
+      profile: emptyProfessionalProfile({ source: "cv", fullName: "Professional" }),
+      rawText: "",
+      warnings,
+    };
+  }
+
+  try {
+    const result = await mammoth.extractRawText({ buffer });
     const rawText = String(result?.value || "").trim();
     if (result.messages?.length) {
       for (const m of result.messages.slice(0, 3)) {
