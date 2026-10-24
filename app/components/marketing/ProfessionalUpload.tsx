@@ -50,7 +50,7 @@ export function ProfessionalUpload() {
       );
       return;
     }
-    if (!normalized && !file && pasteText.trim().length < 40) {
+    if (!normalized && !file && pasteText.trim().length < PASTE_MIN) {
       setError(
         "Add a LinkedIn URL, a CV file, or paste your About / experience text."
       );
@@ -62,7 +62,7 @@ export function ProfessionalUpload() {
       const fd = new FormData();
       if (normalized) fd.set("linkedinUrl", normalized);
       if (file) fd.set("cv", file);
-      if (pasteText.trim().length >= 40) fd.set("pasteText", pasteText.trim());
+      if (pasteText.trim().length >= PASTE_MIN) fd.set("pasteText", pasteText.trim());
 
       const res = await fetch("/api/generate-professional", {
         method: "POST",
@@ -104,8 +104,7 @@ export function ProfessionalUpload() {
           lineHeight: 1.55,
         }}
       >
-        Free path: LinkedIn URL opens a starter site you edit, or upload a{" "}
-        <strong>text-based CV file</strong> for richer content.
+        Upload your <strong>CV first</strong> (PDF, Word, or photo). LinkedIn and paste only fill missing fields.
       </p>
       <p
         className="gk-desktop-note"
@@ -124,13 +123,72 @@ export function ProfessionalUpload() {
       </p>
 
       <form onSubmit={onSubmit} className="gk-handle-form" noValidate>
+        <p
+          style={{
+            fontSize: 12,
+            color: "var(--gk-muted)",
+            margin: "0 0 14px",
+            lineHeight: 1.45,
+            padding: "10px 12px",
+            borderRadius: 8,
+            border: "1px solid var(--gk-border, rgba(255,255,255,0.08))",
+            background: "var(--gk-surface-2, rgba(255,255,255,0.03))",
+          }}
+        >
+          <strong style={{ color: "var(--gk-text)" }}>Source order:</strong>{" "}
+          <strong>1) CV file</strong> (PDF, Word, or photo) is the source of
+          truth → <strong>2) LinkedIn URL</strong> fills missing fields →{" "}
+          <strong>3) Paste</strong> fills any remaining gaps. Nothing later
+          overwrites a non-empty CV field.
+        </p>
+
+        <div className="gk-field" style={{ marginBottom: 14 }}>
+          <label
+            htmlFor="goke-cv-file"
+            className="gk-label"
+            style={{ display: "block", marginBottom: 6, fontSize: 13 }}
+          >
+            1. CV file (primary) — PDF, Word, or photo
+          </label>
+          <input
+            id="goke-cv-file"
+            type="file"
+            accept=".pdf,.docx,.doc,.png,.jpg,.jpeg,.webp,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/*"
+            disabled={loading}
+            onChange={(e) => setFile(e.target.files?.[0] || null)}
+            style={{ display: "block", width: "100%", fontSize: 13 }}
+          />
+          <span
+            style={{
+              display: "block",
+              marginTop: 6,
+              fontSize: 12,
+              color: "var(--gk-muted)",
+            }}
+          >
+            Source of truth for name, roles, skills, and bio
+          </span>
+          {file ? (
+            <span
+              style={{
+                display: "block",
+                marginTop: 4,
+                fontSize: 12,
+                color: "var(--gk-muted)",
+              }}
+            >
+              Selected: {file.name}
+            </span>
+          ) : null}
+        </div>
+
         <div className="gk-field" style={{ marginBottom: 14 }}>
           <label
             htmlFor="goke-linkedin-url"
             className="gk-label"
             style={{ display: "block", marginBottom: 6, fontSize: 13 }}
           >
-            LinkedIn profile URL
+            2. LinkedIn profile URL (optional — fills gaps)
           </label>
           <input
             id="goke-linkedin-url"
@@ -147,43 +205,13 @@ export function ProfessionalUpload() {
           />
         </div>
 
-        <div className="gk-field" style={{ marginBottom: 14 }}>
-          <label
-            htmlFor="goke-cv-file"
-            className="gk-label"
-            style={{ display: "block", marginBottom: 6, fontSize: 13 }}
-          >
-            CV (PDF) — best free results
-          </label>
-          <input
-            id="goke-cv-file"
-            type="file"
-            accept=".pdf,.docx,.doc,image/jpeg,image/png,image/webp,image/jpg,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-            disabled={loading}
-            onChange={(e) => setFile(e.target.files?.[0] || null)}
-            style={{ display: "block", width: "100%", fontSize: 13 }}
-          />
-          {file ? (
-            <span
-              style={{
-                display: "block",
-                marginTop: 6,
-                fontSize: 12,
-                color: "var(--gk-muted)",
-              }}
-            >
-              Selected: {file.name}
-            </span>
-          ) : null}
-        </div>
-
         <button
           type="button"
           className="gk-btn gk-btn-ghost"
           style={{ marginBottom: 12, fontSize: 13 }}
           onClick={() => setShowPaste((v) => !v)}
         >
-          {showPaste ? "Hide" : "Or paste"} About / experience text
+          {showPaste ? "Hide" : "Optional:"} paste About / experience
         </button>
 
         {showPaste ? (
@@ -193,18 +221,83 @@ export function ProfessionalUpload() {
               className="gk-label"
               style={{ display: "block", marginBottom: 6, fontSize: 13 }}
             >
-              Paste profile text
+              About / experience text
+              <span style={{ fontWeight: 400, color: "var(--gk-muted)" }}>
+                {" "}
+                (fills gaps only — CV stays primary)
+              </span>
             </label>
+            <p
+              style={{
+                fontSize: 12,
+                color: "var(--gk-muted)",
+                margin: "0 0 8px",
+                lineHeight: 1.45,
+              }}
+            >
+              Use this if the CV is thin or to add detail. Include:
+            </p>
+            <ul
+              style={{
+                fontSize: 12,
+                color: "var(--gk-muted)",
+                margin: "0 0 8px",
+                paddingLeft: 18,
+                lineHeight: 1.5,
+              }}
+            >
+              <li>
+                <strong>Name</strong> — up to {NAME_MAX} characters (first line)
+              </li>
+              <li>
+                <strong>Headline / title</strong> — e.g. IT Professional · Digital
+                Marketer
+              </li>
+              <li>
+                <strong>About / summary</strong> — {PASTE_MIN}–{ABOUT_HINT_MAX}{" "}
+                characters recommended (server keeps up to {ABOUT_HINT_MAX} in
+                the bio)
+              </li>
+              <li>
+                <strong>Experience</strong> — role, company, dates, then bullets
+                (• or -)
+              </li>
+              <li>
+                <strong>Skills</strong> — one per line or comma-separated
+              </li>
+              <li>
+                Optional: email, phone, city, LinkedIn URL
+              </li>
+            </ul>
             <textarea
               id="goke-paste"
               className="gk-input"
-              rows={5}
-              placeholder={"Name\nHeadline\nAbout…\nExperience bullets…"}
+              rows={7}
+              maxLength={PASTE_MAX}
+              placeholder={
+                "Hassel Godspower\nIT Professional | Digital Marketer\n\nAbout (40–1200 characters)…\n\nEXPERIENCE\n08/2022 - 10/2025\nIT Professional/Brand Manager\nZikel Cosmetics\n• Designed & managed brand websites\n• Led digital marketing\n\nSKILLS\nWordPress, SEO, Social media…"
+              }
               value={pasteText}
-              onChange={(e) => setPasteText(e.target.value)}
+              onChange={(e) => setPasteText(e.target.value.slice(0, PASTE_MAX))}
               disabled={loading}
               style={{ width: "100%", display: "block", resize: "vertical" }}
             />
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                marginTop: 6,
+                fontSize: 11,
+                color: "var(--gk-muted)",
+              }}
+            >
+              <span>
+                Min {PASTE_MIN} characters if used without a CV
+              </span>
+              <span>
+                {pasteText.length} / {PASTE_MAX}
+              </span>
+            </div>
           </div>
         ) : null}
 
