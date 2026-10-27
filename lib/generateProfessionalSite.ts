@@ -590,7 +590,7 @@ function pageShell(
   <footer class="site-footer" data-goke="container" data-section-name="Footer">
     <div class="inner">
       <p data-goke="text">© ${new Date().getFullYear()} ${E(name)}</p>
-      <p data-goke="text">Built for the open web</p>
+      <p data-goke="text">Built by me</p>
     </div>
   </footer>
   <script src="script.js" defer></script>
