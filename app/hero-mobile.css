@@ -109,3 +109,80 @@ html[data-theme="light"] .gk-path-tabs button.active {
     padding: 1rem 0.85rem;
   }
 }
+
+/* ── Dual path mode switch (Moniepoint-style) ── */
+.gk-dual-path { position: relative; padding-top: 1.25rem; }
+.gk-dual-path-anchor {
+  position: absolute; top: 0; left: 0; width: 1px; height: 1px;
+  pointer-events: none; opacity: 0;
+}
+.gk-mode-switch {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  max-width: 420px;
+  width: 100%;
+  margin: 0 auto 1.75rem;
+  padding: 4px;
+  border-radius: 14px;
+  background: var(--gk-surface, #12151c);
+  border: 1px solid var(--gk-border, rgba(255, 255, 255, 0.1));
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.18);
+  box-sizing: border-box;
+}
+.gk-mode-switch-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-height: 52px;
+  padding: 0.55rem 0.75rem;
+  border: none;
+  border-radius: 11px;
+  background: transparent;
+  color: var(--gk-muted, #9ca3af);
+  cursor: pointer;
+  font-family: inherit;
+  line-height: 1.2;
+}
+.gk-mode-switch-btn.is-active {
+  background: var(--gk-bg, #0b0d12);
+  color: var(--gk-text, #f3f4f6);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
+}
+.gk-mode-switch-label {
+  display: block;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+.gk-mode-switch-sub {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 500;
+  margin-top: 2px;
+  opacity: 0.8;
+}
+.gk-mode-switch-btn.is-active .gk-mode-switch-sub {
+  color: var(--gk-accent, #a78bfa);
+  opacity: 1;
+}
+html[data-theme="light"] .gk-mode-switch,
+html.light .gk-mode-switch {
+  background: #eef0f4;
+  border-color: rgba(0, 0, 0, 0.08);
+}
+html[data-theme="light"] .gk-mode-switch-btn.is-active,
+html.light .gk-mode-switch-btn.is-active {
+  background: #fff;
+  color: #0f172a;
+}
+html[data-theme="light"] .gk-mode-switch-btn.is-active .gk-mode-switch-sub,
+html.light .gk-mode-switch-btn.is-active .gk-mode-switch-sub {
+  color: #6d28d9;
+}
+@media (max-width: 640px) {
+  .gk-mode-switch { max-width: 100%; }
+  .gk-mode-switch-label { font-size: 0.88rem; }
+  .gk-mode-switch-sub { font-size: 0.65rem; }
+}
