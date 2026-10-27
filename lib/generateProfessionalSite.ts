@@ -220,9 +220,7 @@ function experienceTimeline(p: ProfessionalProfile): string {
         const bullets = arr(e.bullets);
         const body = bullets.length
           ? `<ul class="job-bullets">${bullets.map((b) => `<li data-goke="text">${E(b)}</li>`).join("")}</ul>`
-          : e.description
-            ? `<p data-goke="text">${E(e.description)}</p>`
-            : "";
+          : "";
         return `<div class="job-panel${i === 0 ? " is-active" : ""}" role="tabpanel" data-job-panel="${i}" id="job-panel-${i}" ${i === 0 ? "" : "hidden"}>
         <h3 data-goke="heading">${E(e.title)}${e.company ? ` <span class="job-at">@ ${E(e.company)}</span>` : ""}</h3>
         <p class="job-range muted" data-goke="text">${E(range)}${e.location ? ` · ${E(e.location)}` : ""}</p>
@@ -250,9 +248,7 @@ function experienceTimeline(p: ProfessionalProfile): string {
           ? `<ul>${arr(e.bullets)
               .map((b) => `<li data-goke="text">${E(b)}</li>`)
               .join("")}</ul>`
-          : e.description
-            ? `<p data-goke="text">${E(e.description)}</p>`
-            : ""
+          : ""
       }
     </article>`
     )
