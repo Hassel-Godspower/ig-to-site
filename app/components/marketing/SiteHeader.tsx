@@ -25,8 +25,11 @@ export function SiteHeader() {
         </Link>
 
         <nav className={`gk-nav${open ? " open" : ""}`} aria-label="Primary">
+          <a href="/#start" onClick={close}>
+            Instagram
+          </a>
           <a href="/#professional" onClick={close}>
-            Career
+            LinkedIn / CV
           </a>
           <a href="/#how" onClick={close}>
             How it works
@@ -49,7 +52,6 @@ export function SiteHeader() {
           </a>
         </nav>
 
-        {/* Always visible: theme + menu (mobile) + desktop CTA */}
         <div className="gk-header-tools">
           <ThemeToggle />
           <button
