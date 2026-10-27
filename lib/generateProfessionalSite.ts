@@ -262,7 +262,7 @@ function skillsChips(p: ProfessionalProfile): string {
       .map(
         (g) => `<div class="skill-group" data-goke="container">
       <h3 class="skill-group-title" data-goke="heading">${E(g.name)}</h3>
-      <p class="chips">${arr(g.skills)
+      <p class="chips">${arr(g.keywords)
         .slice(0, 16)
         .map((k) => `<span class="chip" data-goke="text">${E(k)}</span>`)
         .join("")}</p>
