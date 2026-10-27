@@ -328,6 +328,47 @@ function guessHeadline(text: string): string | undefined {
   return undefined;
 }
 
+
+function extractLocation(text: string): string | undefined {
+  const m =
+    text.match(
+      /(?:location|based in|lives? in|address)\s*[:\-]?\s*([A-Za-z .,'-]{3,60})/i
+    ) ||
+    text.match(
+      /\b(Lagos|Abuja|Port Harcourt|Ibadan|Accra|Nairobi|London|Remote)(?:\s*[,/]\s*[A-Za-z ]+)?\b/i
+    );
+  if (m) return m[1] ? m[1].trim() : m[0].trim();
+  return undefined;
+}
+
+function parseCertifications(text: string): string[] {
+  const block = sectionAfter(
+    text,
+    /\b(CERTIFICATIONS?|LICEN[CS]ES?|COURSES?|TRAINING)\b/i
+  );
+  if (!block) return [];
+  return block
+    .split(/\n+/)
+    .map((l) => l.replace(/^[•\-\*]\s*/, "").trim())
+    .filter((l) => l.length > 3 && l.length < 120)
+    .slice(0, 12);
+}
+
+function parseLanguages(text: string): { language: string; fluency?: string }[] {
+  const block = sectionAfter(text, /\b(LANGUAGES?)\b/i);
+  if (!block) return [];
+  return block
+    .split(/[,|\n]/)
+    .map((l) => l.replace(/^[•\-\*]\s*/, "").trim())
+    .filter((l) => l.length > 1 && l.length < 40)
+    .slice(0, 8)
+    .map((line) => {
+      const parts = line.split(/[:\-–—]/).map((x) => x.trim());
+      return { language: parts[0], fluency: parts[1] };
+    });
+}
+
+
 /**
  * Parse plain text (paste path or already-extracted PDF text) into a profile.
  */
@@ -336,30 +377,67 @@ export function profileFromCvText(rawText: string): ProfessionalProfile {
 
   const expBlock = sectionAfter(
     text,
-    /\b(EXPERIENCE|WORK EXPERIENCE|WORK HISTORY|EMPLOYMENT)\b/i
+    /\b(EXPERIENCE|WORK EXPERIENCE|WORK HISTORY|EMPLOYMENT|PROFESSIONAL EXPERIENCE)\b/i
   );
-  const eduBlock = sectionAfter(text, /\b(EDUCATION|ACADEMIC)\b/i);
+  const eduBlock = sectionAfter(text, /\b(EDUCATION|ACADEMIC|QUALIFICATIONS)\b/i);
   const skillsBlock = sectionAfter(
     text,
-    /\b(CORE\s+SKILLS|SKILLS|TECHNICAL SKILLS|CORE COMPETENCIES)\b/i
+    /\b(CORE\s+SKILLS|SKILLS|TECHNICAL SKILLS|CORE COMPETENCIES|COMPETENCIES|EXPERTISE)\b/i
   );
   const aboutBlock =
     sectionAfter(
       text,
-      /\b(PROFESSIONAL\s+SUMMARY|SUMMARY|PROFILE|ABOUT|OBJECTIVE)\b/i
-    ) || text.slice(0, 800);
+      /\b(PROFESSIONAL\s+SUMMARY|SUMMARY|PROFILE|ABOUT|OBJECTIVE|CAREER OBJECTIVE)\b/i
+    ) || "";
+
+  // About: prefer summary section; else first substantial paragraph under name
+  let about = aboutBlock.replace(/\s+/g, " ").trim().slice(0, 1200);
+  if (about.length < 40) {
+    const paras = text
+      .split(/\n{2,}/)
+      .map((p) => p.replace(/\s+/g, " ").trim())
+      .filter((p) => p.length > 60 && !/EXPERIENCE|EDUCATION|SKILLS/i.test(p));
+    if (paras[0]) about = paras[0].slice(0, 1200);
+  }
+
+  const experience = parseExperience(expBlock);
+  // Fallback: if no EXPERIENCE header, try whole text after summary
+  const experienceFinal =
+    experience.length > 0
+      ? experience
+      : parseExperience(
+          sectionAfter(text, /\b(PROFESSIONAL SUMMARY|SUMMARY)\b/i) || text
+        );
+
+  const skills = parseSkills(skillsBlock);
+  // Harvest skill-like tokens from bullets if skills section empty
+  let skillsFinal = skills;
+  if (skillsFinal.length < 3) {
+    const fromBullets = experienceFinal
+      .flatMap((e) => e.bullets || [])
+      .join(" ")
+      .match(
+        /\b(WordPress|SEO|JavaScript|TypeScript|React|Python|Excel|Photoshop|Figma|SQL|HTML|CSS|Marketing|Analytics|Salesforce|HubSpot|Shopify)\b/gi
+      );
+    if (fromBullets) {
+      skillsFinal = [...new Set([...(skills || []), ...fromBullets])].slice(0, 40);
+    }
+  }
 
   const profile = emptyProfessionalProfile({
     source: "cv",
     fullName: guessName(text),
     headline: guessHeadline(text),
-    about: aboutBlock.replace(/\s+/g, " ").trim().slice(0, 1200),
+    location: extractLocation(text),
+    about,
     email: extractEmail(text),
     phone: extractPhone(text),
     linkedinUrl: extractLinkedIn(text),
-    experience: parseExperience(expBlock),
+    experience: experienceFinal,
     education: parseEducation(eduBlock),
-    skills: parseSkills(skillsBlock),
+    skills: skillsFinal,
+    certifications: parseCertifications(text),
+    languages: parseLanguages(text),
   });
   profile.persona = detectPersona(profile);
   return profile;

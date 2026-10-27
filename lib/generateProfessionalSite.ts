@@ -204,47 +204,105 @@ function projectTable(p: ProfessionalProfile): string {
 function experienceTimeline(p: ProfessionalProfile): string {
   const exp = arr(p.experience);
   if (!exp.length) {
-    return `<p class="muted" data-goke="text">Add roles and impact bullets in the editor.</p>`;
+    return `<p class="muted" data-goke="text">Add roles from your CV in the editor — your CV is the primary source for this section.</p>`;
+  }
+  /* Brittany Chiang–style company tabs (vanilla JS in script.js) */
+  if (exp.length >= 2) {
+    const tabs = exp
+      .map(
+        (e, i) =>
+          `<button type="button" class="job-tab${i === 0 ? " is-active" : ""}" role="tab" data-job-tab="${i}" aria-selected="${i === 0 ? "true" : "false"}" id="job-tab-${i}">${E(e.company || e.title || `Role ${i + 1}`)}</button>`
+      )
+      .join("");
+    const panels = exp
+      .map((e, i) => {
+        const range = [e.start, e.end || "Present"].filter(Boolean).join(" — ");
+        const bullets = arr(e.bullets);
+        const body = bullets.length
+          ? `<ul class="job-bullets">${bullets.map((b) => `<li data-goke="text">${E(b)}</li>`).join("")}</ul>`
+          : e.description
+            ? `<p data-goke="text">${E(e.description)}</p>`
+            : "";
+        return `<div class="job-panel${i === 0 ? " is-active" : ""}" role="tabpanel" data-job-panel="${i}" id="job-panel-${i}" ${i === 0 ? "" : "hidden"}>
+        <h3 data-goke="heading">${E(e.title)}${e.company ? ` <span class="job-at">@ ${E(e.company)}</span>` : ""}</h3>
+        <p class="job-range muted" data-goke="text">${E(range)}${e.location ? ` · ${E(e.location)}` : ""}</p>
+        ${body}
+      </div>`;
+      })
+      .join("");
+    return `<div class="jobs" data-goke="container" data-section-name="Experience">
+      <div class="job-tabs" role="tablist">${tabs}</div>
+      <div class="job-panels">${panels}</div>
+    </div>`;
   }
   return exp
-    .map((ex) => {
-      const dates = [ex.start, ex.end || "Present"].filter(Boolean).join(" – ");
-      const bullets =
-        arr(ex.bullets).length > 0
-          ? `<ul>${arr(ex.bullets)
-              .slice(0, 6)
+    .map(
+      (e) => `<article class="tl-item" data-goke="container">
+      <p class="tl-meta muted" data-goke="text">${E(
+        [e.start, e.end || "Present"].filter(Boolean).join(" — ")
+      )}</p>
+      <h3 data-goke="heading">${E(e.title)}</h3>
+      <p class="tl-co" data-goke="text">${E(e.company)}${
+        e.location ? ` · ${E(e.location)}` : ""
+      }</p>
+      ${
+        arr(e.bullets).length
+          ? `<ul>${arr(e.bullets)
               .map((b) => `<li data-goke="text">${E(b)}</li>`)
               .join("")}</ul>`
-          : "";
-      return `<article class="timeline-item" data-goke="container">
-        <h3 data-goke="heading">${E(ex.title)}</h3>
-        <p class="meta muted" data-goke="text">${E(ex.company)}${
-          ex.location ? ` · ${E(ex.location)}` : ""
-        }${dates ? ` · ${E(dates)}` : ""}</p>
-        ${bullets}
-      </article>`;
-    })
+          : e.description
+            ? `<p data-goke="text">${E(e.description)}</p>`
+            : ""
+      }
+    </article>`
+    )
     .join("");
 }
 
 function skillsChips(p: ProfessionalProfile): string {
-  const groups = ensureSkillGroups(p);
-  if (!groups.length && !arr(p.skills).length) return "";
+  const groups = arr(p.skillGroups);
   if (groups.length) {
     return groups
       .map(
         (g) => `<div class="skill-group" data-goke="container">
-      <h3 data-goke="heading">${E(g.name)}</h3>
-      <p class="chips">${arr(g.keywords)
+      <h3 class="skill-group-title" data-goke="heading">${E(g.name)}</h3>
+      <p class="chips">${arr(g.skills)
+        .slice(0, 16)
         .map((k) => `<span class="chip" data-goke="text">${E(k)}</span>`)
         .join("")}</p>
     </div>`
       )
       .join("");
   }
-  return `<p class="chips">${arr(p.skills)
+  const skills = arr(p.skills);
+  if (!skills.length) {
+    return `<p class="muted" data-goke="text">Skills from your CV will appear here.</p>`;
+  }
+  return `<p class="chips">${skills
     .slice(0, 28)
     .map((k) => `<span class="chip" data-goke="text">${E(k)}</span>`)
+    .join("")}</p>`;
+}
+
+
+function certsBlock(p: ProfessionalProfile): string {
+  const c = arr(p.certifications);
+  if (!c.length) return "";
+  return `<ul class="cert-list">${c
+    .map((x) => `<li data-goke="text">${E(x)}</li>`)
+    .join("")}</ul>`;
+}
+
+function languagesBlock(p: ProfessionalProfile): string {
+  const langs = arr(p.languages);
+  if (!langs.length) return "";
+  return `<p class="chips">${langs
+    .map(
+      (l) =>
+        `<span class="chip" data-goke="text">${E(l.language)}${
+          l.fluency ? ` · ${E(l.fluency)}` : ""
+        }</span>`
+    )
     .join("")}</p>`;
 }
 
@@ -473,6 +531,24 @@ img{max-width:100%;height:auto;display:block}
 .socials{margin-top:1.25rem;font-size:.9rem}
 
 /* Footer */
+
+.section-label{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:0.75rem;color:var(--accent);letter-spacing:0.06em;margin:0 0 0.5rem}
+.jobs{display:grid;grid-template-columns:minmax(120px,200px) 1fr;gap:1.5rem;align-items:start}
+@media(max-width:720px){.jobs{grid-template-columns:1fr}}
+.job-tabs{display:flex;flex-direction:column;gap:0;border-left:2px solid var(--line,rgba(255,255,255,0.1))}
+@media(max-width:720px){.job-tabs{flex-direction:row;overflow-x:auto;border-left:none;border-bottom:2px solid var(--line,rgba(255,255,255,0.1))}}
+.job-tab{appearance:none;background:transparent;border:none;border-left:2px solid transparent;margin-left:-2px;text-align:left;padding:0.65rem 1rem;color:var(--muted);cursor:pointer;font:inherit;font-size:0.85rem;white-space:nowrap}
+.job-tab.is-active{color:var(--accent);border-left-color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent)}
+@media(max-width:720px){.job-tab{border-left:none;border-bottom:2px solid transparent;margin-left:0;margin-bottom:-2px}.job-tab.is-active{border-bottom-color:var(--accent)}}
+.job-panel{display:none}.job-panel.is-active{display:block}
+.job-at{color:var(--accent);font-weight:600}
+.job-range{font-size:0.85rem;margin:0.25rem 0 0.75rem}
+.job-bullets{margin:0;padding-left:1.1rem}.job-bullets li{margin:0.35rem 0;color:var(--muted)}
+.skill-group{margin-bottom:1.25rem}.skill-group-title{font-size:0.95rem;margin:0 0 0.5rem}
+.cert-list{margin:0;padding-left:1.1rem}.cert-list li{margin:0.35rem 0;color:var(--muted)}
+.reveal{opacity:0;transform:translateY(12px);transition:opacity .5s ease,transform .5s ease}
+.reveal.is-visible{opacity:1;transform:none}
+
 .site-footer{
   margin-top:3rem;padding:2rem 0;border-top:1px solid var(--line);
   color:var(--muted);font-size:.85rem;
@@ -520,6 +596,34 @@ function scriptJs(): string {
     document.querySelectorAll(".reveal").forEach(function(el){el.classList.add("visible");});
   }
 });
+
+  // Experience company tabs (Chiang-style)
+  document.querySelectorAll("[data-job-tab]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var i = btn.getAttribute("data-job-tab");
+      document.querySelectorAll("[data-job-tab]").forEach(function (b) {
+        b.classList.toggle("is-active", b === btn);
+        b.setAttribute("aria-selected", b === btn ? "true" : "false");
+      });
+      document.querySelectorAll("[data-job-panel]").forEach(function (p) {
+        var on = p.getAttribute("data-job-panel") === i;
+        p.classList.toggle("is-active", on);
+        if (on) p.removeAttribute("hidden"); else p.setAttribute("hidden", "");
+      });
+    });
+  });
+  // Scroll reveal
+  if ("IntersectionObserver" in window) {
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting) e.target.classList.add("is-visible");
+      });
+    }, { threshold: 0.12 });
+    document.querySelectorAll(".section, .tl-item, .jobs, .profile-hero").forEach(function (el) {
+      el.classList.add("reveal");
+      io.observe(el);
+    });
+  }
 `;
 }
 
@@ -613,12 +717,16 @@ function buildMultipage(
     "about.html": pageShell(
       "About",
       name,
-      `<section class="wrap section reveal" data-goke="section" data-section-name="About">
-      <h1 data-goke="heading">About</h1>
-      <p data-goke="text">${E(p.about || "Add your story in the editor.")}</p>
-      ${skillsChips(p)}
-      ${educationBlock(p)}
-    </section>`,
+      `
+  <section class="section" data-goke="section" data-section-name="About">
+    <p class="section-label">01. About</p>
+    <h1 data-goke="heading">About</h1>
+    <p data-goke="text">${E(p.about || "Your professional story from the CV appears here.")}</p>
+    ${skillsChips(p)}
+    ${educationBlock(p)}
+    ${certsBlock(p) ? `<h2 data-goke="heading">Certifications</h2>${certsBlock(p)}` : ""}
+    ${languagesBlock(p) ? `<h2 data-goke="heading">Languages</h2>${languagesBlock(p)}` : ""}
+  </section>`,
       t,
       layout,
       { active: "about.html", description: (p.about || "").slice(0, 150) }
@@ -627,6 +735,7 @@ function buildMultipage(
       "Experience",
       name,
       `<section class="wrap section reveal" data-goke="section" data-section-name="Experience">
+      <p class="section-label">02. Experience</p>
       <h1 data-goke="heading">Experience</h1>
       <div class="timeline">${experienceTimeline(p)}</div>
     </section>`,
