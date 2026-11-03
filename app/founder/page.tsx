@@ -105,7 +105,7 @@ export default function FounderPage() {
               {/* Replace src with founder photo in /public/marketing/founder.jpg when available */}
               <div className="gk-story-portrait-frame">
                 <img
-                  src="https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=800&q=80"
+                  src="/marketing/founder.png"
                   alt="Hassel Godspower — Founder of gòke"
                   width={480}
                   height={600}
