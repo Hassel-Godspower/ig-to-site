@@ -1,0 +1,30 @@
+/* Force Founder/Support heroes to track data-theme (after theme.css + globals) */
+html[data-theme="dark"] .gk-story-hero,
+html:not([data-theme]) .gk-story-hero {
+  background: linear-gradient(165deg, #0b0d12 0%, #12151c 55%, #0b0d12 100%) !important;
+  color: #f3f4f6;
+}
+html[data-theme="light"] .gk-story-hero {
+  background: linear-gradient(165deg, #f8fafc 0%, #ffffff 50%, #eef2f7 100%) !important;
+  color: #0f172a;
+}
+html[data-theme="light"] .gk-story-hero h1,
+html[data-theme="light"] .gk-story-hero .gk-story-name {
+  color: #0f172a !important;
+}
+html[data-theme="light"] .gk-story-hero .gk-story-lead,
+html[data-theme="light"] .gk-story-hero .gk-story-role {
+  color: #475569 !important;
+}
+html[data-theme="dark"] .gk-story-hero h1,
+html:not([data-theme]) .gk-story-hero h1,
+html[data-theme="dark"] .gk-story-hero .gk-story-name,
+html:not([data-theme]) .gk-story-hero .gk-story-name {
+  color: #f8fafc !important;
+}
+html[data-theme="dark"] .gk-story-hero .gk-story-lead,
+html:not([data-theme]) .gk-story-hero .gk-story-lead,
+html[data-theme="dark"] .gk-story-hero .gk-story-role,
+html:not([data-theme]) .gk-story-hero .gk-story-role {
+  color: #c4c9d4 !important;
+}
