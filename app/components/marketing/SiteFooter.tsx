@@ -64,7 +64,7 @@ export function SiteFooter() {
         </div>
         <div className="gk-footer-bottom">
           <span>
-            © {new Date().getFullYear()} HighValue Solutions · gòke
+            © {new Date().getFullYear()} HighValue Solutions
           </span>
           <nav className="gk-footer-bottom-nav" aria-label="Company">
             <span>gòke by HighValue</span>
