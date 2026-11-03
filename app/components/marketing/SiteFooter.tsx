@@ -31,8 +31,6 @@ export function SiteFooter() {
               <a href={WA} target="_blank" rel="noopener noreferrer">
                 WhatsApp {TEL}
               </a>
-              <span aria-hidden="true"> · </span>
-              <a href={`tel:${TEL.replace(/\s/g, "")}`}>{TEL}</a>
             </p>
           </div>
           <div>
@@ -69,10 +67,6 @@ export function SiteFooter() {
             © {new Date().getFullYear()} HighValue Solutions · gòke
           </span>
           <nav className="gk-footer-bottom-nav" aria-label="Company">
-            <Link href="/founder">Founder</Link>
-            <span aria-hidden="true"> · </span>
-            <Link href="/support">Support</Link>
-            <span aria-hidden="true"> · </span>
             <span>gòke by HighValue</span>
           </nav>
         </div>
