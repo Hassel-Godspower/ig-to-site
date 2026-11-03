@@ -25,8 +25,7 @@ export function SiteFooter() {
               you&apos;re ready.
             </p>
             <p className="gk-footer-by">
-              A product of{" "}
-              <strong>HighValue Solutions</strong>
+              A product of <strong>HighValue Solutions</strong>
             </p>
             <p className="gk-footer-contact">
               <a href={WA} target="_blank" rel="noopener noreferrer">
@@ -58,7 +57,9 @@ export function SiteFooter() {
             </a>
           </div>
           <div>
-            <h4>Legal</h4>
+            <h4>Company</h4>
+            <Link href="/founder">Founder</Link>
+            <Link href="/support">Support gòke</Link>
             <Link href="/privacy">Privacy</Link>
             <Link href="/terms">Terms</Link>
           </div>
@@ -67,7 +68,13 @@ export function SiteFooter() {
           <span>
             © {new Date().getFullYear()} HighValue Solutions · gòke
           </span>
-          <span>gòke by HighValue</span>
+          <nav className="gk-footer-bottom-nav" aria-label="Company">
+            <Link href="/founder">Founder</Link>
+            <span aria-hidden="true"> · </span>
+            <Link href="/support">Support</Link>
+            <span aria-hidden="true"> · </span>
+            <span>gòke by HighValue</span>
+          </nav>
         </div>
       </div>
     </footer>
