@@ -6,7 +6,7 @@ export const runtime = "nodejs";
 
 /**
  * GET /api/dashboard/sites?access=TOKEN
- * Requires a valid signed access token — email-only lookup is disabled.
+ * Token-only. Email query alone is rejected.
  */
 export async function GET(req: NextRequest) {
   try {
@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json(
         {
           error:
-            "Access token required. Request a dashboard link via email — do not pass email alone.",
+            "Access token required. Request a dashboard link from your email.",
         },
         { status: 401 }
       );
@@ -31,6 +31,10 @@ export async function GET(req: NextRequest) {
     }
 
     const email = verified.email;
+    if (!email.includes("@")) {
+      return NextResponse.json({ error: "Invalid token email" }, { status: 400 });
+    }
+
     const jobs = await listJobsByEmail(email);
     const displayName =
       jobs.find((j) => j.customerName)?.customerName || null;
@@ -73,6 +77,7 @@ export async function GET(req: NextRequest) {
       displayName,
       sites,
       authenticated: true,
+      access,
     });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);
