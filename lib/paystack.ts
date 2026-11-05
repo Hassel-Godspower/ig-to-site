@@ -7,12 +7,6 @@ export interface InitializedTransaction {
   reference: string;
 }
 
-// Starts a Paystack transaction and returns the hosted payment page to
-// redirect the customer to. `amount` must already be in the currency's
-// smallest unit (kobo for NGN, cents for USD, etc.) — see PAYSTACK_AMOUNT
-// in .env.example. Unlike Stripe Checkout, Paystack requires an email
-// address up front to initialize a transaction, so the caller must collect
-// one from the customer first.
 export async function initializeTransaction(params: {
   email: string;
   amount: number;
@@ -39,46 +33,127 @@ export async function initializeTransaction(params: {
     throw new Error(`Paystack initialize failed: ${data.message ?? res.status}`);
   }
 
-  return { authorizationUrl: data.data.authorization_url, reference: data.data.reference };
+  return {
+    authorizationUrl: data.data.authorization_url,
+    reference: data.data.reference,
+  };
 }
 
-// Confirms a webhook payload genuinely came from Paystack: an HMAC-SHA512
-// of the *raw* request body, keyed with your secret key, must match the
-// `x-paystack-signature` header exactly. Always verify this before trusting
-// anything in the payload — anyone can POST a fake "charge.success" event
-// to a guessed webhook URL otherwise.
-export function verifyWebhookSignature(rawBody: string, signature: string | null): boolean {
-  if (!signature) return false;
+export function verifyWebhookSignature(
+  rawBody: string,
+  signature: string | null
+): boolean {
+  if (!signature || !process.env.PAYSTACK_SECRET_KEY) return false;
   const hash = crypto
-    .createHmac("sha512", process.env.PAYSTACK_SECRET_KEY!)
+    .createHmac("sha512", process.env.PAYSTACK_SECRET_KEY)
     .update(rawBody)
     .digest("hex");
-  return hash === signature;
+  try {
+    return crypto.timingSafeEqual(
+      Buffer.from(hash, "utf8"),
+      Buffer.from(signature, "utf8")
+    );
+  } catch {
+    return hash === signature;
+  }
 }
 
 export interface VerifiedTransaction {
-  status: string; // "success" | "failed" | "abandoned" | ...
+  status: string;
   gatewayResponse?: string;
   metadata?: Record<string, any>;
+  /** Amount in smallest currency unit (kobo for NGN) */
+  amount?: number;
+  currency?: string;
+  reference?: string;
+  paidAt?: string | null;
 }
 
-// Directly asks Paystack whether a transaction succeeded. Paystack's
-// callback_url fires the browser back to your site regardless of outcome
-// (success, failed, or abandoned) — there's no separate cancel URL like
-// Stripe's — so this is what lets the preview page tell those apart once
-// the customer lands back on it, instead of just waiting on a webhook that
-// will never arrive for a failed/abandoned payment.
-export async function verifyTransaction(reference: string): Promise<VerifiedTransaction> {
-  const res = await fetch(`${PAYSTACK_API}/transaction/verify/${encodeURIComponent(reference)}`, {
-    headers: { Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}` },
-  });
+export async function verifyTransaction(
+  reference: string
+): Promise<VerifiedTransaction> {
+  const res = await fetch(
+    `${PAYSTACK_API}/transaction/verify/${encodeURIComponent(reference)}`,
+    {
+      headers: {
+        Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+      },
+    }
+  );
   const data = await res.json();
   if (!res.ok || !data.status) {
     throw new Error(`Paystack verify failed: ${data.message ?? res.status}`);
   }
+  const d = data.data || {};
   return {
-    status: data.data.status,
-    gatewayResponse: data.data.gateway_response,
-    metadata: data.data.metadata,
+    status: d.status,
+    gatewayResponse: d.gateway_response,
+    metadata: d.metadata || {},
+    amount: typeof d.amount === "number" ? d.amount : Number(d.amount),
+    currency: d.currency ? String(d.currency).toUpperCase() : undefined,
+    reference: d.reference ? String(d.reference) : reference,
+    paidAt: d.paid_at ?? null,
   };
+}
+
+/** Expected publish fee from env (kobo). Default ₦20,000. */
+export function expectedPaystackAmount(): number {
+  const n = Number(process.env.PAYSTACK_AMOUNT || 2000000);
+  return Number.isFinite(n) && n > 0 ? n : 2000000;
+}
+
+export function expectedPaystackCurrency(): string {
+  return (process.env.PAYSTACK_CURRENCY || "NGN").toUpperCase();
+}
+
+/**
+ * Ensure a successful Paystack transaction belongs to this job and amount.
+ */
+export function assertPaymentForJob(
+  verified: VerifiedTransaction,
+  jobId: string
+): { ok: true } | { ok: false; error: string } {
+  if (verified.status !== "success") {
+    return {
+      ok: false,
+      error: verified.gatewayResponse || verified.status || "Payment not successful",
+    };
+  }
+
+  const meta = verified.metadata || {};
+  const metaJob = String(meta.jobId || meta.job_id || "").trim();
+  if (!metaJob) {
+    return {
+      ok: false,
+      error: "Payment metadata missing jobId — cannot bind payment to this site",
+    };
+  }
+  if (metaJob !== jobId) {
+    return {
+      ok: false,
+      error: "Payment reference does not belong to this job",
+    };
+  }
+
+  const expected = expectedPaystackAmount();
+  if (
+    typeof verified.amount === "number" &&
+    Number.isFinite(verified.amount) &&
+    verified.amount !== expected
+  ) {
+    return {
+      ok: false,
+      error: `Payment amount mismatch (got ${verified.amount}, expected ${expected})`,
+    };
+  }
+
+  const cur = (verified.currency || expectedPaystackCurrency()).toUpperCase();
+  if (cur !== expectedPaystackCurrency()) {
+    return {
+      ok: false,
+      error: `Payment currency mismatch (got ${cur}, expected ${expectedPaystackCurrency()})`,
+    };
+  }
+
+  return { ok: true };
 }
