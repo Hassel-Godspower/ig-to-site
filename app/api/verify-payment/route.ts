@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getJob } from "@/lib/jobStore";
-import { verifyTransaction } from "@/lib/paystack";
+import {
+  verifyTransaction,
+  assertPaymentForJob,
+} from "@/lib/paystack";
 import { completePaidJob } from "@/lib/completePaidJob";
 
 export const runtime = "nodejs";
@@ -8,7 +11,7 @@ export const maxDuration = 60;
 
 /**
  * POST { jobId, reference }
- * Verifies Paystack payment then creates the GitHub repo immediately.
+ * Verifies Paystack (status + amount + currency + job metadata) then publishes.
  */
 export async function POST(req: NextRequest) {
   try {
@@ -44,10 +47,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: message }, { status: 500 });
     }
 
-    if (verified.status !== "success") {
+    const bound = assertPaymentForJob(verified, jobId);
+    if (!bound.ok) {
       return NextResponse.json({
         status: "payment_failed",
-        reason: verified.gatewayResponse || verified.status,
+        reason: bound.error,
       });
     }
 
