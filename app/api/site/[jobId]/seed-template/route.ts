@@ -8,19 +8,18 @@ import {
   contentTypeFor,
 } from "@/lib/siteStore";
 import { findGokeMain } from "@/src/goke-editor/data/goke-main-templates";
+import { assertSiteWriteAccess } from "@/lib/editAuth";
 
-/**
- * POST /api/site/[jobId]/seed-template
- * Body: { templateId: string }
- *
- * Copies every file from public/goke-templates/{folder}/ into the job's
- * storage prefix so multi-page HTML + CSS + JS + images publish intact.
- */
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ jobId: string }> }
 ) {
   const { jobId } = await params;
+  const auth = await assertSiteWriteAccess(req, jobId);
+  if (!auth.ok) {
+    return NextResponse.json({ error: auth.error }, { status: auth.status });
+  }
+
   if (!jobId || /[^a-zA-Z0-9_-]/.test(jobId)) {
     return NextResponse.json({ error: "Invalid jobId" }, { status: 400 });
   }
@@ -50,7 +49,6 @@ export async function POST(
   const uploaded: string[] = [];
   for (const abs of entries) {
     const rel = path.relative(root, abs).split(path.sep).join("/");
-    // skip metadata
     if (rel === "goke.json" || rel === "README.md") continue;
 
     const buf = await fs.readFile(abs);
@@ -62,7 +60,6 @@ export async function POST(
     uploaded.push(rel);
   }
 
-  // remember which pack was seeded (for publish / re-open)
   await saveSiteFile(
     jobId,
     "goke-template.json",
