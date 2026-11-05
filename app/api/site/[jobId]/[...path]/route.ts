@@ -6,6 +6,7 @@ import {
   isBinaryPath,
   contentTypeFor,
 } from "@/lib/siteStore";
+import { assertSiteWriteAccess } from "@/lib/editAuth";
 
 const TEXT_TYPES: Record<string, string> = {
   ".html": "text/html; charset=utf-8",
@@ -21,6 +22,7 @@ function extOf(name: string): string {
 
 // GET /api/site/[jobId]/index.html
 // GET /api/site/[jobId]/media/xxx.jpg
+// Public — preview iframe
 export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ jobId: string; path: string[] }> }
@@ -56,11 +58,18 @@ export async function GET(
 }
 
 // PUT /api/site/[jobId]/index.html  (text only)
+// Requires x-goke-edit-token or x-goke-access (see lib/editAuth.ts)
 export async function PUT(
   req: NextRequest,
   { params }: { params: Promise<{ jobId: string; path: string[] }> }
 ) {
   const { jobId, path: filePath } = await params;
+
+  const auth = await assertSiteWriteAccess(req, jobId);
+  if (!auth.ok) {
+    return NextResponse.json({ error: auth.error }, { status: auth.status });
+  }
+
   const fileName = filePath.join("/");
   const content = await req.text();
   await saveSiteFile(jobId, fileName, content);
