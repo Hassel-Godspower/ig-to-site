@@ -6,33 +6,31 @@ export const runtime = "nodejs";
 
 /**
  * GET /api/dashboard/sites?access=TOKEN
- * Returns sites + commerce/booking tiers + manage URL for pro admin.
+ * Requires a valid signed access token — email-only lookup is disabled.
  */
 export async function GET(req: NextRequest) {
   try {
     const access = String(req.nextUrl.searchParams.get("access") || "").trim();
-    let email = String(req.nextUrl.searchParams.get("email") || "")
-      .trim()
-      .toLowerCase();
 
-    if (access) {
-      const verified = verifyDashboardToken(access);
-      if (!verified) {
-        return NextResponse.json(
-          { error: "Access link invalid or expired. Request a new one." },
-          { status: 401 }
-        );
-      }
-      email = verified.email;
-    }
-
-    if (!email.includes("@")) {
+    if (!access) {
       return NextResponse.json(
-        { error: "Valid email or access token required" },
-        { status: 400 }
+        {
+          error:
+            "Access token required. Request a dashboard link via email — do not pass email alone.",
+        },
+        { status: 401 }
       );
     }
 
+    const verified = verifyDashboardToken(access);
+    if (!verified) {
+      return NextResponse.json(
+        { error: "Access link invalid or expired. Request a new one." },
+        { status: 401 }
+      );
+    }
+
+    const email = verified.email;
     const jobs = await listJobsByEmail(email);
     const displayName =
       jobs.find((j) => j.customerName)?.customerName || null;
@@ -55,16 +53,15 @@ export async function GET(req: NextRequest) {
         siteUrl: j.siteUrl || null,
         repoUrl: j.repoUrl || null,
         editorMode: j.editorMode || "full",
-        editorUrl: editorPath,
+        editorUrl: `${editorPath}?access=${encodeURIComponent(access)}`,
         canEdit: true,
         canPushLive: j.status === "done" || j.status === "failed",
         isLive: live,
         commerceTier,
         bookingTier,
         isPro,
-        /** Merchant backend (orders, products, bookings) */
         manageUrl: isPro
-          ? `/manage/${j.id}?access=${encodeURIComponent(access || "")}`
+          ? `/manage/${j.id}?access=${encodeURIComponent(access)}`
           : null,
         canUnlockCommerce: live && commerceTier !== "pro",
         canUnlockBooking: live && bookingTier !== "pro",
@@ -75,8 +72,7 @@ export async function GET(req: NextRequest) {
       email,
       displayName,
       sites,
-      authenticated: Boolean(access),
-      access: access || null,
+      authenticated: true,
     });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);
