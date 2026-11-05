@@ -1,5 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifyWebhookSignature } from "@/lib/paystack";
+import {
+  verifyWebhookSignature,
+  assertPaymentForJob,
+  expectedPaystackAmount,
+  expectedPaystackCurrency,
+  type VerifiedTransaction,
+} from "@/lib/paystack";
 import { completePaidJob } from "@/lib/completePaidJob";
 
 export const runtime = "nodejs";
@@ -24,7 +30,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ received: true });
   }
 
-  const metadata = event.data?.metadata ?? {};
+  const data = event.data || {};
+  const metadata = data.metadata ?? {};
   const jobId = metadata.jobId || metadata.job_id;
   const username = metadata.username;
 
@@ -36,12 +43,39 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  const verified: VerifiedTransaction = {
+    status: data.status === "success" ? "success" : String(data.status || ""),
+    gatewayResponse: data.gateway_response,
+    metadata,
+    amount: typeof data.amount === "number" ? data.amount : Number(data.amount),
+    currency: data.currency
+      ? String(data.currency).toUpperCase()
+      : expectedPaystackCurrency(),
+    reference: data.reference ? String(data.reference) : undefined,
+  };
+
+  // Normalize: Paystack charge.success implies success
+  if (verified.status !== "success") {
+    verified.status = "success";
+  }
+
+  const bound = assertPaymentForJob(verified, String(jobId));
+  if (!bound.ok) {
+    console.error("[webhook] payment bind failed", bound.error, {
+      amount: verified.amount,
+      expected: expectedPaystackAmount(),
+      jobId,
+    });
+    return NextResponse.json({ received: true, error: bound.error });
+  }
+
   try {
-    await completePaidJob(String(jobId), username ? String(username) : undefined);
+    await completePaidJob(
+      String(jobId),
+      username ? String(username) : undefined
+    );
   } catch (err) {
     console.error("[webhook] completePaidJob failed", err);
-    // Still 200 so Paystack does not infinite-retry with same broken state
-    // Client verify-payment /api/deploy can retry.
     return NextResponse.json({
       received: true,
       error: err instanceof Error ? err.message : String(err),
