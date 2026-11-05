@@ -11,7 +11,8 @@ export const maxDuration = 60;
 
 /**
  * POST { jobId, reference }
- * Verifies Paystack (status + amount + currency + job metadata) then publishes.
+ * Verifies Paystack (status + amount + currency + metadata.jobId)
+ * then creates the GitHub repo / Cloudflare deploy.
  */
 export async function POST(req: NextRequest) {
   try {
@@ -49,10 +50,13 @@ export async function POST(req: NextRequest) {
 
     const bound = assertPaymentForJob(verified, jobId);
     if (!bound.ok) {
-      return NextResponse.json({
-        status: "payment_failed",
-        reason: bound.error,
-      });
+      return NextResponse.json(
+        {
+          status: "payment_failed",
+          reason: bound.error,
+        },
+        { status: 400 }
+      );
     }
 
     const username =
