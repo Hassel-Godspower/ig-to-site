@@ -4,9 +4,17 @@ import { listJobsByEmail } from "@/lib/jobStore";
 
 export const runtime = "nodejs";
 
+function isProduction(): boolean {
+  return (
+    process.env.VERCEL_ENV === "production" ||
+    process.env.NODE_ENV === "production"
+  );
+}
+
 /**
  * POST { email }
  * Emails a signed dashboard link (7 days). Uses Resend when configured.
+ * Never returns accessLink in production.
  */
 export async function POST(req: NextRequest) {
   try {
@@ -18,7 +26,6 @@ export async function POST(req: NextRequest) {
 
     const jobs = await listJobsByEmail(email);
     if (jobs.length === 0) {
-      // Do not reveal whether email exists in a harsh way — still generic message
       return NextResponse.json({
         ok: true,
         message:
@@ -29,7 +36,10 @@ export async function POST(req: NextRequest) {
     const token = createDashboardToken(email);
     const base = (process.env.BASE_URL || "").replace(/\/$/, "");
     if (!base) {
-      return NextResponse.json({ error: "BASE_URL not configured" }, { status: 500 });
+      return NextResponse.json(
+        { error: "BASE_URL not configured" },
+        { status: 500 }
+      );
     }
     const link = `${base}/dashboard?access=${encodeURIComponent(token)}`;
 
@@ -76,18 +86,28 @@ export async function POST(req: NextRequest) {
           { status: 502 }
         );
       }
-    } else {
-      // Dev fallback: return link in response when Resend not configured
       return NextResponse.json({
         ok: true,
-        message: "RESEND_API_KEY not set — use this link (dev only).",
-        accessLink: link,
+        message: "Check your email for the dashboard access link.",
       });
     }
 
+    // No Resend — fail closed in production
+    if (isProduction()) {
+      return NextResponse.json(
+        {
+          error:
+            "Email delivery is not configured (RESEND_API_KEY). Cannot send dashboard links in production.",
+        },
+        { status: 503 }
+      );
+    }
+
+    // Local / preview deploys only
     return NextResponse.json({
       ok: true,
-      message: "Check your email for the dashboard access link.",
+      message: "RESEND_API_KEY not set — dev-only link (not returned in production).",
+      accessLink: link,
     });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);
