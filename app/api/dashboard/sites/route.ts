@@ -53,7 +53,7 @@ export async function GET(req: NextRequest) {
         siteUrl: j.siteUrl || null,
         repoUrl: j.repoUrl || null,
         editorMode: j.editorMode || "full",
-        editorUrl: `${editorPath}?access=${encodeURIComponent(access)}`,
+        editorUrl: `\( {editorPath}?access= \){encodeURIComponent(access)}`,
         canEdit: true,
         canPushLive: j.status === "done" || j.status === "failed",
         isLive: live,
@@ -61,7 +61,7 @@ export async function GET(req: NextRequest) {
         bookingTier,
         isPro,
         manageUrl: isPro
-          ? `/manage/${j.id}?access=${encodeURIComponent(access)}`
+          ? `/manage/\( {j.id}?access= \){encodeURIComponent(access)}`
           : null,
         canUnlockCommerce: live && commerceTier !== "pro",
         canUnlockBooking: live && bookingTier !== "pro",
