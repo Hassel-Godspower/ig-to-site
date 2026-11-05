@@ -20,7 +20,8 @@ function extOf(name: string): string {
   return i === -1 ? "" : name.slice(i).toLowerCase();
 }
 
-// GET remains public (preview iframe)
+// GET /api/site/[jobId]/index.html
+// GET /api/site/[jobId]/media/xxx.jpg
 export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ jobId: string; path: string[] }> }
@@ -55,18 +56,23 @@ export async function GET(
   });
 }
 
-// PUT requires edit token or dashboard access
+// PUT /api/site/[jobId]/index.html  (text only — requires edit auth)
 export async function PUT(
   req: NextRequest,
   { params }: { params: Promise<{ jobId: string; path: string[] }> }
 ) {
   const { jobId, path: filePath } = await params;
+
   const auth = await assertSiteWriteAccess(req, jobId);
   if (!auth.ok) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
   }
 
   const fileName = filePath.join("/");
+  if (!fileName || fileName.includes("..")) {
+    return NextResponse.json({ error: "Invalid path" }, { status: 400 });
+  }
+
   const content = await req.text();
   await saveSiteFile(jobId, fileName, content);
   return NextResponse.json({ saved: true });
