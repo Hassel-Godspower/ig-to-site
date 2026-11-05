@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { listMediaFiles, deleteSiteFile } from "@/lib/siteStore";
+import { assertSiteWriteAccess } from "@/lib/editAuth";
 
-/**
- * GET  /api/site/[jobId]/media  → list library
- * DELETE /api/site/[jobId]/media?file=media/xxx.jpg
- */
+/** GET list remains public (editor media panel). DELETE requires auth. */
 export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ jobId: string }> }
@@ -27,6 +25,11 @@ export async function DELETE(
   { params }: { params: Promise<{ jobId: string }> }
 ) {
   const { jobId } = await params;
+  const auth = await assertSiteWriteAccess(req, jobId);
+  if (!auth.ok) {
+    return NextResponse.json({ error: auth.error }, { status: auth.status });
+  }
+
   if (!jobId || /[^a-zA-Z0-9_-]/.test(jobId)) {
     return NextResponse.json({ error: "Invalid jobId" }, { status: 400 });
   }
