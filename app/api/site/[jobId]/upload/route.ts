@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { nanoid } from "nanoid";
 import { saveSiteBinary, contentTypeFor } from "@/lib/siteStore";
+import { assertSiteWriteAccess } from "@/lib/editAuth";
 
-const MAX = 4 * 1024 * 1024; // 4 MB (Vercel body limit ~4.5MB)
+const MAX = 4 * 1024 * 1024;
 const ALLOWED = new Set([
   "image/png",
   "image/jpeg",
@@ -22,15 +23,16 @@ const EXT: Record<string, string> = {
   "video/webm": ".webm",
 };
 
-/**
- * POST /api/site/[jobId]/upload
- * multipart field "file" → media/{id}.{ext}
- */
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ jobId: string }> }
 ) {
   const { jobId } = await params;
+  const auth = await assertSiteWriteAccess(req, jobId);
+  if (!auth.ok) {
+    return NextResponse.json({ error: auth.error }, { status: auth.status });
+  }
+
   if (!jobId || /[^a-zA-Z0-9_-]/.test(jobId)) {
     return NextResponse.json({ error: "Invalid jobId" }, { status: 400 });
   }
