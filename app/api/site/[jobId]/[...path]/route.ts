@@ -20,9 +20,7 @@ function extOf(name: string): string {
   return i === -1 ? "" : name.slice(i).toLowerCase();
 }
 
-// GET /api/site/[jobId]/index.html
-// GET /api/site/[jobId]/media/xxx.jpg
-// Public — preview iframe
+// GET remains public (preview iframe)
 export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ jobId: string; path: string[] }> }
@@ -57,14 +55,12 @@ export async function GET(
   });
 }
 
-// PUT /api/site/[jobId]/index.html  (text only)
-// Requires x-goke-edit-token or x-goke-access (see lib/editAuth.ts)
+// PUT requires edit token or dashboard access
 export async function PUT(
   req: NextRequest,
   { params }: { params: Promise<{ jobId: string; path: string[] }> }
 ) {
   const { jobId, path: filePath } = await params;
-
   const auth = await assertSiteWriteAccess(req, jobId);
   if (!auth.ok) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
