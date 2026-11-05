@@ -73,7 +73,7 @@ export async function verifyTransaction(
   reference: string
 ): Promise<VerifiedTransaction> {
   const res = await fetch(
-    `${PAYSTACK_API}/transaction/verify/${encodeURIComponent(reference)}`,
+    `\( {PAYSTACK_API}/transaction/verify/ \){encodeURIComponent(reference)}`,
     {
       headers: {
         Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
