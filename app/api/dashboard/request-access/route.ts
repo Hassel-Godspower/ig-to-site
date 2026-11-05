@@ -14,7 +14,7 @@ function isProduction(): boolean {
 /**
  * POST { email }
  * Emails a signed dashboard link (7 days). Uses Resend when configured.
- * Never returns accessLink in production.
+ * Never returns accessLink in production without Resend.
  */
 export async function POST(req: NextRequest) {
   try {
@@ -36,12 +36,9 @@ export async function POST(req: NextRequest) {
     const token = createDashboardToken(email);
     const base = (process.env.BASE_URL || "").replace(/\/$/, "");
     if (!base) {
-      return NextResponse.json(
-        { error: "BASE_URL not configured" },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: "BASE_URL not configured" }, { status: 500 });
     }
-    const link = `${base}/dashboard?access=${encodeURIComponent(token)}`;
+    const link = `\( {base}/dashboard?access= \){encodeURIComponent(token)}`;
 
     const name =
       jobs.find((j) => j.customerName)?.customerName ||
@@ -76,7 +73,7 @@ export async function POST(req: NextRequest) {
               </p>
               <p style="font-size:12px;color:#999;word-break:break-all">${escapeHtml(link)}</p>
             </div>`,
-          text: `Hi ${name},\n\nOpen your gòke dashboard:\n${link}\n\nLink expires in 7 days.`,
+          text: `Hi \( {name},\n\nOpen your gòke dashboard:\n \){link}\n\nLink expires in 7 days.`,
         }),
       });
       if (!res.ok) {
@@ -92,7 +89,6 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // No Resend — fail closed in production
     if (isProduction()) {
       return NextResponse.json(
         {
@@ -103,10 +99,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Local / preview deploys only
     return NextResponse.json({
       ok: true,
-      message: "RESEND_API_KEY not set — dev-only link (not returned in production).",
+      message:
+        "RESEND_API_KEY not set — dev-only link (not returned in production).",
       accessLink: link,
     });
   } catch (err: unknown) {
