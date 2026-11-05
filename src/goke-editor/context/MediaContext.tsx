@@ -1,10 +1,12 @@
 /**
  * Provides job-scoped media upload to PropertyField / IconPicker etc.
+ * Stage 1: sends x-goke-edit-token on upload.
  */
 
 "use client";
 
 import React, { createContext, useCallback, useContext } from "react";
+import { editAuthHeaders } from "@/lib/editTokenClient";
 
 type MediaContextValue = {
   jobId: string | null;
@@ -31,6 +33,7 @@ export function MediaProvider({
       body.append("file", file);
       const res = await fetch(`/api/site/${jobId}/upload`, {
         method: "POST",
+        headers: editAuthHeaders(jobId),
         body,
       });
       const data = await res.json().catch(() => ({}));
