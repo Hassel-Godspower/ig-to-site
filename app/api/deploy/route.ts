@@ -1,14 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getJob } from "@/lib/jobStore";
 import { completePaidJob } from "@/lib/completePaidJob";
-import { verifyTransaction } from "@/lib/paystack";
+import {
+  verifyTransaction,
+  assertPaymentForJob,
+} from "@/lib/paystack";
+import { assertAdminForce } from "@/lib/editAuth";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
 
 /**
  * POST { jobId, reference?, username?, force? }
- * force=true re-uploads to Cloudflare even if status is done.
+ *
+ * Stage 1 rules:
+ * - force=true only with header x-goke-admin: ADMIN_PASSWORD
+ * - reference present → must verify Paystack + amount + currency + metadata.jobId
+ * - no reference → only redeploy stuck/failed/done jobs (not pending_payment)
  */
 export async function POST(req: NextRequest) {
   try {
@@ -29,33 +37,44 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Job not found" }, { status: 404 });
     }
 
-    if (reference) {
-      const verified = await verifyTransaction(reference);
-      if (verified.status !== "success") {
+    if (force) {
+      if (!assertAdminForce(req)) {
         return NextResponse.json(
           {
-            error: "Payment not successful",
-            reason: verified.gatewayResponse || verified.status,
+            error:
+              "force=true requires x-goke-admin header matching ADMIN_PASSWORD",
           },
+          { status: 403 }
+        );
+      }
+    } else if (reference) {
+      let verified;
+      try {
+        verified = await verifyTransaction(reference);
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : String(err);
+        return NextResponse.json({ error: message }, { status: 500 });
+      }
+      const bound = assertPaymentForJob(verified, jobId);
+      if (!bound.ok) {
+        return NextResponse.json(
+          { error: bound.error, status: "payment_failed" },
           { status: 400 }
         );
       }
-    } else if (
-      !force &&
-      job.status !== "failed" &&
-      job.status !== "pending_payment" &&
-      job.status !== "deploying"
-    ) {
-      if (job.status === "done") {
-        return NextResponse.json({
-          status: job.status,
-          siteUrl: job.siteUrl,
-          repoUrl: job.repoUrl,
-        });
-      }
+    } else if (job.status === "done") {
+      return NextResponse.json({
+        status: job.status,
+        siteUrl: job.siteUrl,
+        repoUrl: job.repoUrl,
+      });
+    } else if (job.status === "deploying" || job.status === "failed") {
+      // Redeploy after a prior paid attempt (no free publish from pending_payment)
+    } else {
       return NextResponse.json(
         {
-          error: `Job status is '${job.status}'. Pass payment reference or force:true.`,
+          error:
+            "Payment reference required. Complete Paystack checkout first, or pass a verified reference.",
         },
         { status: 400 }
       );
