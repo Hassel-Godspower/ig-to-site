@@ -10,11 +10,17 @@ import {
 import { findGokeMain } from "@/src/goke-editor/data/goke-main-templates";
 import { assertSiteWriteAccess } from "@/lib/editAuth";
 
+/**
+ * POST /api/site/[jobId]/seed-template
+ * Body: { templateId: string }
+ * Requires edit auth.
+ */
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ jobId: string }> }
 ) {
   const { jobId } = await params;
+
   const auth = await assertSiteWriteAccess(req, jobId);
   if (!auth.ok) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
