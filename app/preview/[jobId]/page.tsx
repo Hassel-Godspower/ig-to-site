@@ -578,7 +578,7 @@ export default function PreviewPage() {
       builder?.getHtml() ||
       "<!DOCTYPE html>\n" + doc.documentElement.outerHTML;
 
-    const putHtml = await fetch(`/api/site/\( {jobId}/ \){currentPage}`, {
+    const putHtml = await fetch(`/api/site/${jobId}/${currentPage}`, {
       method: "PUT",
       headers: editAuthHeaders(jobId, {
         "Content-Type": "text/html; charset=utf-8",
