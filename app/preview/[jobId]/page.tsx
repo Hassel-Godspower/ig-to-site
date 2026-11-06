@@ -61,6 +61,7 @@ import { generateElements } from "@/src/goke-editor/utils/dom";
 import type { DesignTokens } from "@/src/goke-editor/types/document";
 import { DEFAULT_TOKENS } from "@/src/goke-editor/types/document";
 import { saveTemplate } from "@/lib/templateStore";
+import { ensureEditToken, editAuthHeaders } from "@/lib/editTokenClient";
 
 import "@/src/goke-editor/components/goke-components";
 import "@/src/goke-editor/components/site-markers";
@@ -157,6 +158,12 @@ export default function PreviewPage() {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [jobId]);
+  
+  // Stage 2.0: claim job-scoped edit token so PUT / upload / delete succeed
+  useEffect(() => {
+    if (!jobId) return;
+    void ensureEditToken(jobId);
   }, [jobId]);
 
   // Phone-first on small viewports
@@ -562,20 +569,31 @@ export default function PreviewPage() {
   async function saveEdits() {
     const builder = builderRef.current;
     const doc = iframeRef.current?.contentDocument;
-    if (!doc) return;
+    if (!doc || !jobId) return;
 
-    // Ensure responsive + hover CSS is baked into the HTML
+    await ensureEditToken(jobId);
+
     applyResponsiveStylesToDocument(doc);
     const html =
       builder?.getHtml() ||
       "<!DOCTYPE html>\n" + doc.documentElement.outerHTML;
 
-    await fetch(`/api/site/${jobId}/${currentPage}`, {
+    const putHtml = await fetch(`/api/site/\( {jobId}/ \){currentPage}`, {
       method: "PUT",
+      headers: editAuthHeaders(jobId, {
+        "Content-Type": "text/html; charset=utf-8",
+      }),
       body: html,
     });
+    if (!putHtml.ok) {
+      const err = await putHtml.json().catch(() => ({}));
+      setError(
+        (err as { error?: string }).error ||
+          `Save failed (${putHtml.status}). Refresh and try again.`
+      );
+      return;
+    }
 
-    // Also append editor CSS into styles.css if it exists (non-fatal)
     try {
       const styleTag = doc.getElementById("goke-editor-responsive");
       if (styleTag?.textContent) {
@@ -595,12 +613,33 @@ export default function PreviewPage() {
           "\n";
         await fetch(`/api/site/${jobId}/styles.css`, {
           method: "PUT",
+          headers: editAuthHeaders(jobId, {
+            "Content-Type": "text/css; charset=utf-8",
+          }),
           body: next,
         });
       }
     } catch {
       /* styles.css optional */
     }
+
+    try {
+      const gdoc = documentFromDom(doc, jobId);
+      gdoc.tokens = tokens;
+      await fetch(`/api/site/${jobId}/editor.json`, {
+        method: "PUT",
+        headers: editAuthHeaders(jobId, {
+          "Content-Type": "application/json",
+        }),
+        body: serializeDocument(gdoc),
+      });
+    } catch {
+      /* non-fatal */
+    }
+
+    setError(null);
+    setSaved(true);
+  }
 
 
     // Tier 3: persist editor.json (tokens + tree snapshot)
