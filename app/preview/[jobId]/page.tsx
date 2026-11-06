@@ -641,23 +641,6 @@ export default function PreviewPage() {
     setSaved(true);
   }
 
-
-    // Tier 3: persist editor.json (tokens + tree snapshot)
-    try {
-      const gdoc = documentFromDom(doc, jobId);
-      gdoc.tokens = tokens;
-      await fetch(`/api/site/${jobId}/editor.json`, {
-        method: "PUT",
-        body: serializeDocument(gdoc),
-        headers: { "Content-Type": "application/json" },
-      });
-    } catch {
-      /* non-fatal */
-    }
-
-    setSaved(true);
-  }
-
   function startDrag(type: string, e: React.DragEvent) {
     builderRef.current?.startDrag(type, e.nativeEvent);
   }
