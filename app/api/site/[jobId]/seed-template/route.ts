@@ -1,3 +1,4 @@
+
 import { NextRequest, NextResponse } from "next/server";
 import fs from "fs/promises";
 import path from "path";
@@ -9,7 +10,13 @@ import {
 } from "@/lib/siteStore";
 import { findGokeMain } from "@/src/goke-editor/data/goke-main-templates";
 import { assertSiteWriteAccess } from "@/lib/editAuth";
+import { assertSiteWriteAccess } from "@/lib/editAuth";
 
+// inside POST, right after resolving jobId from params:
+const auth = await assertSiteWriteAccess(req, jobId);
+if (!auth.ok) {
+  return NextResponse.json({ error: auth.error }, { status: auth.status });
+}
 /**
  * POST /api/site/[jobId]/seed-template
  * Body: { templateId: string }
