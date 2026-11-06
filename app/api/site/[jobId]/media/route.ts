@@ -3,7 +3,7 @@ import { listMediaFiles, deleteSiteFile } from "@/lib/siteStore";
 import { assertSiteWriteAccess } from "@/lib/editAuth";
 
 /**
- * GET  /api/site/[jobId]/media  → list library (public read for editor canvas)
+ * GET  /api/site/[jobId]/media  → list library
  * DELETE /api/site/[jobId]/media?file=media/xxx.jpg  → requires edit auth
  */
 export async function GET(
