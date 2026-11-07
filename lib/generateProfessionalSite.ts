@@ -775,15 +775,56 @@ function buildMultipage(
   };
 }
 
+function enrichProfile(profile: ProfessionalProfile): ProfessionalProfile {
+  const p: ProfessionalProfile = {
+    ...profile,
+    experience: arr(profile.experience),
+    education: arr(profile.education),
+    skills: arr(profile.skills),
+    projects: arr(profile.projects),
+    certifications: arr(profile.certifications),
+    languages: arr(profile.languages),
+  };
+
+  // Always materialise skill groups for the skills page
+  const groups = ensureSkillGroups(p);
+  p.skillGroups = groups.length ? groups : p.skillGroups;
+
+  // If no projects, derive light “work” cards from experience (still editable)
+  if (!arr(p.projects).length && arr(p.experience).length) {
+    p.projects = arr(p.experience)
+      .slice(0, 6)
+      .map((e) => ({
+        name: e.title || e.company || "Role",
+        description:
+          arr(e.bullets)[0] ||
+          [e.company, e.start, e.end || "Present"].filter(Boolean).join(" · "),
+        keywords: arr(e.bullets)
+          .join(" ")
+          .match(
+            /\b(WordPress|SEO|React|TypeScript|Python|Figma|Shopify|Marketing|Brand|Analytics|AWS|Node)\b/gi
+          ) || undefined,
+        highlights: arr(e.bullets).slice(0, 3),
+      }));
+  }
+
+  // Trim about for hero readability without deleting full about on About page
+  if (p.about && p.about.length > 1200) {
+    p.about = p.about.slice(0, 1200).trim();
+  }
+
+  return p;
+}
+
 export function generateProfessionalSiteFiles(
   profile: ProfessionalProfile
 ): ProfessionalSiteFiles {
-  const theme = themeForProfile(profile);
-  const score = contentScore(profile);
+  const enriched = enrichProfile(profile);
+  const theme = themeForProfile(enriched);
+  const score = contentScore(enriched);
   const layout = resolveLayout(theme, score);
 
-  // Always multipage; home uses profile-card hero
-  const pages: ProfessionalSiteFiles = buildMultipage(profile, theme);
+  const pages: ProfessionalSiteFiles = buildMultipage(enriched, theme);
 
   const required = [
     "index.html",
@@ -793,21 +834,27 @@ export function generateProfessionalSiteFiles(
     "skills.html",
     "contact.html",
   ];
-  const fallback = buildMultipage(profile, theme);
   for (const f of required) {
-    if (!pages[f]) pages[f] = fallback[f];
+    if (!pages[f] || pages[f].length < 80) {
+      pages[f] = buildMultipage(enriched, theme)[f];
+    }
   }
 
   pages["styles.css"] = shellCss(theme);
   pages["script.js"] = scriptJs();
-  pages["profile.json"] = JSON.stringify(profile, null, 2);
-  pages["resume.json"] = JSON.stringify(professionalToJsonResume(profile), null, 2);
+  pages["profile.json"] = JSON.stringify(enriched, null, 2);
+  pages["resume.json"] = JSON.stringify(
+    professionalToJsonResume(enriched),
+    null,
+    2
+  );
   pages["pages.json"] = JSON.stringify(
     {
       layout,
       theme: theme.id,
-      persona: profile.persona,
+      persona: enriched.persona,
       multipage: true,
+      contentScore: score,
       pages: [
         { file: "index.html", title: "Home" },
         { file: "about.html", title: "About" },
@@ -823,7 +870,7 @@ export function generateProfessionalSiteFiles(
   pages["niche.json"] = JSON.stringify(
     {
       type: "professional",
-      persona: profile.persona,
+      persona: enriched.persona,
       layout,
       theme: theme.id,
       multipage: true,
