@@ -368,6 +368,69 @@ function parseLanguages(text: string): { language: string; fluency?: string }[] 
     });
 }
 
+function extractWebsite(text: string): string | undefined {
+  const m = text.match(
+    /https?:\/\/(?:www\.)?(?!linkedin\.com|facebook\.com|twitter\.com|instagram\.com|wa\.me)[a-z0-9.-]+\.[a-z]{2,}(?:\/\S*)?/i
+  );
+  return m?.[0]?.replace(/[.,;)]+$/, "");
+}
+
+function parseProjects(text: string): { name: string; description?: string; url?: string; highlights?: string[] }[] {
+  const block = sectionAfter(
+    text,
+    /\b(PROJECTS?|SELECTED\s+WORK|PORTFOLIO|KEY\s+PROJECTS)\b/i
+  );
+  if (!block) return [];
+  const chunks = block.split(/\n(?=[A-Z0-9])/).filter((c) => c.trim().length > 8);
+  const out: { name: string; description?: string; url?: string; highlights?: string[] }[] = [];
+  for (const chunk of chunks.slice(0, 8)) {
+    const lines = chunk.split(/\n/).map((l) => l.trim()).filter(Boolean);
+    if (!lines.length) continue;
+    const name = lines[0].replace(/^[•\-\d.)\s]+/, "").slice(0, 80);
+    const url = lines.map((l) => l.match(/https?:\/\/\S+/i)?.[0]).find(Boolean);
+    const bullets = lines
+      .slice(1)
+      .filter((l) => /^[•\-\u2022*]/.test(l) || l.length > 20)
+      .map((l) => l.replace(/^[•\-\u2022*]+\s*/, ""))
+      .slice(0, 5);
+    out.push({
+      name,
+      description: bullets[0] || lines[1]?.slice(0, 200),
+      url,
+      highlights: bullets.length ? bullets : undefined,
+    });
+  }
+  return out;
+}
+
+function buildSkillGroups(skills: string[]): { name: string; keywords: string[] }[] {
+  const tech =
+    /javascript|typescript|python|java|react|node|sql|html|css|aws|docker|git|linux|api|next\.?js|php|laravel/i;
+  const design = /figma|photoshop|illustrator|ui|ux|brand|canva|adobe|sketch/i;
+  const marketing =
+    /seo|sem|google ads|meta ads|content|social media|analytics|hubspot|mailchimp|copywriting|crm/i;
+  const soft =
+    /leadership|communication|team|management|negotiation|strategy|planning|research/i;
+
+  const groups: Record<string, string[]> = {
+    Technical: [],
+    Design: [],
+    Marketing: [],
+    Professional: [],
+    Other: [],
+  };
+  for (const s of skills) {
+    if (tech.test(s)) groups.Technical.push(s);
+    else if (design.test(s)) groups.Design.push(s);
+    else if (marketing.test(s)) groups.Marketing.push(s);
+    else if (soft.test(s)) groups.Professional.push(s);
+    else groups.Other.push(s);
+  }
+  return Object.entries(groups)
+    .filter(([, kw]) => kw.length > 0)
+    .map(([name, keywords]) => ({ name, keywords: keywords.slice(0, 16) }));
+}
+
 
 /**
  * Parse plain text (paste path or already-extracted PDF text) into a profile.
