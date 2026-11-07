@@ -133,6 +133,8 @@ function sectionAfter(text: string, headers: RegExp): string {
  *   IT Professional at Zikel Cosmetics
  *   Aug 2022 – Oct 2025
  */
+
+    // Title with (Full time) suffix
 function parseExperience(block: string): ExperienceItem[] {
   if (!block) return [];
   const lines = block
@@ -144,20 +146,34 @@ function parseExperience(block: string): ExperienceItem[] {
   let current: ExperienceItem | null = null;
 
   const dateOnly =
-    /^(?:(?:0?[1-9]|1[0-2])[\/\-.](?:19|20)\d{2}|(?:19|20)\d{2}|(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s*(?:19|20)\d{2})\s*[-–—to]+\s*(?:(?:0?[1-9]|1[0-2])[\/\-.](?:19|20)\d{2}|(?:19|20)\d{2}|(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s*(?:19|20)\d{2}|Present|Current)$/i;
+    /^(?:(?:0?[1-9]|1[0-2])[\/\-.](?:19|20)\d{2}|(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s+(?:19|20)\d{2}|(?:19|20)\d{2})\s*[-–—to]+\s*(?:(?:0?[1-9]|1[0-2])[\/\-.](?:19|20)\d{2}|(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s+(?:19|20)\d{2}|(?:19|20)\d{2}|Present|Current|Now)$/i;
+
   const dateInline =
-    /((?:0?[1-9]|1[0-2])[\/\-.](?:19|20)\d{2}|(?:19|20)\d{2})\s*[-–—]\s*((?:0?[1-9]|1[0-2])[\/\-.](?:19|20)\d{2}|(?:19|20)\d{2}|Present|Current)/i;
+    /((?:0?[1-9]|1[0-2])[\/\-.](?:19|20)\d{2}|(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s+(?:19|20)\d{2}|(?:19|20)\d{2})\s*[-–—]\s*((?:0?[1-9]|1[0-2])[\/\-.](?:19|20)\d{2}|(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s+(?:19|20)\d{2}|(?:19|20)\d{2}|Present|Current|Now)/i;
+
+  function pushCurrent() {
+    if (!current) return;
+    if (!current.title) current.title = "Role";
+    if (!current.company) current.company = "Organisation";
+    if (current.title || current.company || current.bullets.length) {
+      items.push(current);
+    }
+    current = null;
+  }
 
   for (const line of lines) {
-    // Bullet under current role
-    if (current && /^[•\-\u2022*●]/.test(line)) {
-      current.bullets.push(line.replace(/^[•\-\u2022*●]+\s*/, "").trim());
+    if (/^[•\-\u2022*●▪▸]/.test(line) || /^\d+[\.\)]\s+/.test(line)) {
+      if (!current) {
+        current = { title: "Role", company: "Organisation", bullets: [] };
+      }
+      current.bullets.push(
+        line.replace(/^[•\-\u2022*●▪▸]+\s*/, "").replace(/^\d+[\.\)]\s+/, "").trim()
+      );
       continue;
     }
 
-    // Pure date line → start new role (title/company on following lines)
-    if (dateOnly.test(line) || (/^\d{2}\/\d{4}/.test(line) && line.length < 40)) {
-      if (current && (current.title || current.company)) items.push(current);
+    if (dateOnly.test(line) || (/^\d{2}\/\d{4}/.test(line) && line.length < 45)) {
+      pushCurrent();
       const dm = line.match(dateInline) || line.match(/(\S+)\s*[-–—]\s*(\S+)/);
       current = {
         title: "",
@@ -169,49 +185,96 @@ function parseExperience(block: string): ExperienceItem[] {
       continue;
     }
 
-    // "Title at Company" / "Title — Company"
+    // "Title at Company" | "Title — Company" | "Title | Company"
     const roleAt = line.match(
-      /^(.{3,80}?)\s+(?:at|@|—|–|-|,)\s+(.{2,80})$/i
+      /^(.{3,90}?)\s+(?:at|@|—|–|-|,|\|)\s+(.{2,90})$/i
     );
-    if (roleAt && !/^[•\-]/.test(line)) {
-      if (current && current.title) items.push(current);
+    if (roleAt && !/^https?:/i.test(line)) {
+      const maybeDates = roleAt[2].match(dateInline);
+      pushCurrent();
       current = {
         title: roleAt[1].trim(),
-        company: roleAt[2].trim(),
+        company: maybeDates
+          ? roleAt[2].replace(dateInline, "").replace(/[|,-]\s*$/, "").trim() ||
+            "Organisation"
+          : roleAt[2].trim(),
+        start: maybeDates?.[1],
+        end: maybeDates?.[2],
         bullets: [],
       };
       continue;
     }
 
-    // Title with (Full time) suffix
+    // "Company (2020 - 2023)" on its own
+    const companyYear = line.match(
+      /^(.{3,80}?)\s*\(\s*((?:19|20)\d{2})\s*[-–—]\s*((?:19|20)\d{2}|Present|Current)\s*\)\s*$/i
+    );
+    if (companyYear) {
+      if (current && current.title && !current.company) {
+        current.company = companyYear[1].trim();
+        current.start = companyYear[2];
+        current.end = companyYear[3];
+      } else {
+        pushCurrent();
+        current = {
+          title: "Role",
+          company: companyYear[1].trim(),
+          start: companyYear[2],
+          end: companyYear[3],
+          bullets: [],
+        };
+      }
+      continue;
+    }
+
     if (
       current &&
       !current.title &&
       line.length < 100 &&
       !/^https?:/i.test(line)
     ) {
-      current.title = line.replace(/\s*\((?:Full\s*time|Part\s*time|Contract)\)\s*$/i, "").trim();
+      current.title = line
+        .replace(/\s*\((?:Full\s*time|Part\s*time|Contract|Remote)\)\s*$/i, "")
+        .trim();
       continue;
     }
 
-    // Company line after title
     if (
       current &&
       current.title &&
       !current.company &&
-      line.length < 80 &&
+      line.length < 90 &&
       !/^[•\-]/.test(line)
     ) {
-      current.company = line;
+      const dm = line.match(dateInline);
+      if (dm && line.length < 40) {
+        current.start = dm[1];
+        current.end = dm[2];
+      } else {
+        current.company = line.replace(dateInline, "").trim() || line;
+        if (dm) {
+          current.start = dm[1];
+          current.end = dm[2];
+        }
+      }
       continue;
     }
 
-    // Orphan title-looking line starts a role
+    // Date line while role open
+    if (current && current.title && dateInline.test(line) && line.length < 50) {
+      const dm = line.match(dateInline);
+      if (dm) {
+        current.start = dm[1];
+        current.end = dm[2];
+      }
+      continue;
+    }
+
     if (
       !current &&
       line.length > 5 &&
       line.length < 90 &&
-      /manager|developer|engineer|designer|officer|assistant|director|lead|consultant|marketer|professional/i.test(
+      /manager|developer|engineer|designer|officer|assistant|director|lead|consultant|marketer|professional|analyst|specialist|executive|founder|intern/i.test(
         line
       )
     ) {
@@ -219,13 +282,8 @@ function parseExperience(block: string): ExperienceItem[] {
     }
   }
 
-  if (current && (current.title || current.company || current.bullets.length)) {
-    if (!current.title) current.title = "Role";
-    if (!current.company) current.company = "Organisation";
-    items.push(current);
-  }
-
-  return items.slice(0, 12);
+  pushCurrent();
+  return items.slice(0, 14);
 }
 
 function parseEducation(block: string): EducationItem[] {
