@@ -377,20 +377,22 @@ export function profileFromCvText(rawText: string): ProfessionalProfile {
 
   const expBlock = sectionAfter(
     text,
-    /\b(EXPERIENCE|WORK EXPERIENCE|WORK HISTORY|EMPLOYMENT|PROFESSIONAL EXPERIENCE)\b/i
+    /\b(EXPERIENCE|WORK EXPERIENCE|WORK HISTORY|EMPLOYMENT|PROFESSIONAL EXPERIENCE|CAREER\s+HISTORY)\b/i
   );
-  const eduBlock = sectionAfter(text, /\b(EDUCATION|ACADEMIC|QUALIFICATIONS)\b/i);
+  const eduBlock = sectionAfter(
+    text,
+    /\b(EDUCATION|ACADEMIC|QUALIFICATIONS|ACADEMIC\s+BACKGROUND)\b/i
+  );
   const skillsBlock = sectionAfter(
     text,
-    /\b(CORE\s+SKILLS|SKILLS|TECHNICAL SKILLS|CORE COMPETENCIES|COMPETENCIES|EXPERTISE)\b/i
+    /\b(CORE\s+SKILLS|SKILLS|TECHNICAL SKILLS|CORE COMPETENCIES|COMPETENCIES|EXPERTISE|TOOLS)\b/i
   );
   const aboutBlock =
     sectionAfter(
       text,
-      /\b(PROFESSIONAL\s+SUMMARY|SUMMARY|PROFILE|ABOUT|OBJECTIVE|CAREER OBJECTIVE)\b/i
+      /\b(PROFESSIONAL\s+SUMMARY|SUMMARY|PROFILE|ABOUT|OBJECTIVE|CAREER OBJECTIVE|ABOUT\s+ME)\b/i
     ) || "";
 
-  // About: prefer summary section; else first substantial paragraph under name
   let about = aboutBlock.replace(/\s+/g, " ").trim().slice(0, 1200);
   if (about.length < 40) {
     const paras = text
@@ -401,28 +403,32 @@ export function profileFromCvText(rawText: string): ProfessionalProfile {
   }
 
   const experience = parseExperience(expBlock);
-  // Fallback: if no EXPERIENCE header, try whole text after summary
   const experienceFinal =
     experience.length > 0
       ? experience
       : parseExperience(
-          sectionAfter(text, /\b(PROFESSIONAL SUMMARY|SUMMARY)\b/i) || text
+          sectionAfter(text, /\b(PROFESSIONAL SUMMARY|SUMMARY|PROFILE)\b/i) ||
+            text
         );
 
-  const skills = parseSkills(skillsBlock);
-  // Harvest skill-like tokens from bullets if skills section empty
-  let skillsFinal = skills;
+  let skillsFinal = parseSkills(skillsBlock);
   if (skillsFinal.length < 3) {
     const fromBullets = experienceFinal
       .flatMap((e) => e.bullets || [])
       .join(" ")
       .match(
-        /\b(WordPress|SEO|JavaScript|TypeScript|React|Python|Excel|Photoshop|Figma|SQL|HTML|CSS|Marketing|Analytics|Salesforce|HubSpot|Shopify)\b/gi
+        /\b(WordPress|SEO|SEM|JavaScript|TypeScript|React|Next\.?js|Node\.?js|Python|Excel|Photoshop|Figma|SQL|HTML|CSS|Marketing|Analytics|Salesforce|HubSpot|Shopify|Canva|Docker|AWS|Git|Laravel|PHP|Copywriting|Brand\s+Strategy|Google\s+Ads|Meta\s+Ads)\b/gi
       );
     if (fromBullets) {
-      skillsFinal = [...new Set([...(skills || []), ...fromBullets])].slice(0, 40);
+      skillsFinal = [...new Set([...(skillsFinal || []), ...fromBullets])].slice(
+        0,
+        40
+      );
     }
   }
+
+  const skillGroups = buildSkillGroups(skillsFinal);
+  const projects = parseProjects(text);
 
   const profile = emptyProfessionalProfile({
     source: "cv",
@@ -433,9 +439,12 @@ export function profileFromCvText(rawText: string): ProfessionalProfile {
     email: extractEmail(text),
     phone: extractPhone(text),
     linkedinUrl: extractLinkedIn(text),
+    website: extractWebsite(text),
     experience: experienceFinal,
     education: parseEducation(eduBlock),
     skills: skillsFinal,
+    skillGroups: skillGroups.length ? skillGroups : undefined,
+    projects: projects.length ? projects : undefined,
     certifications: parseCertifications(text),
     languages: parseLanguages(text),
   });
