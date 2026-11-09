@@ -576,6 +576,9 @@ img{max-width:100%;height:auto;display:block}
 .cert-list{margin:0;padding-left:1.1rem}.cert-list li{margin:0.35rem 0;color:var(--muted)}
 .reveal{opacity:0;transform:translateY(12px);transition:opacity .5s ease,transform .5s ease}
 .reveal.is-visible{opacity:1;transform:none}
+.project-grid{display:grid;gap:1rem;grid-template-columns:repeat(auto-fill,minmax(260px,1fr))}
+.project-card{padding:1.15rem 1.25rem;border-radius:14px;background:var(--surface);border:1px solid var(--line)}
+.project-card h3{margin:0 0 .5rem;font-size:1.05rem}
 
 .site-footer{
   margin-top:3rem;padding:2rem 0;border-top:1px solid var(--line);
@@ -589,6 +592,7 @@ img{max-width:100%;height:auto;display:block}
 @media(prefers-reduced-motion:reduce){.reveal{opacity:1;transform:none}}
 `;
 }
+
 
 function scriptJs(): string {
   return `document.addEventListener("DOMContentLoaded",function(){
@@ -610,51 +614,50 @@ function scriptJs(): string {
       else alert("Add a phone or email in the editor so messages can reach you.");
     });
   });
+
   var toggle=document.querySelector("[data-nav-toggle]");
   var panel=document.querySelector("[data-mobile-panel]");
   if(toggle&&panel){
     toggle.addEventListener("click",function(){panel.classList.toggle("open");});
   }
-  if("IntersectionObserver" in window && !window.matchMedia("(prefers-reduced-motion: reduce)").matches){
-    var io=new IntersectionObserver(function(entries){
-      entries.forEach(function(en){if(en.isIntersecting) en.target.classList.add("visible");});
-    },{threshold:0.12});
-    document.querySelectorAll(".reveal").forEach(function(el){io.observe(el);});
-  }else{
-    document.querySelectorAll(".reveal").forEach(function(el){el.classList.add("visible");});
-  }
-});
 
-  // Experience company tabs (Chiang-style)
-  document.querySelectorAll("[data-job-tab]").forEach(function (btn) {
-    btn.addEventListener("click", function () {
-      var i = btn.getAttribute("data-job-tab");
-      document.querySelectorAll("[data-job-tab]").forEach(function (b) {
-        b.classList.toggle("is-active", b === btn);
-        b.setAttribute("aria-selected", b === btn ? "true" : "false");
+  document.querySelectorAll("[data-job-tab]").forEach(function(btn){
+    btn.addEventListener("click",function(){
+      var i=btn.getAttribute("data-job-tab");
+      document.querySelectorAll("[data-job-tab]").forEach(function(b){
+        b.classList.toggle("is-active",b===btn);
+        b.setAttribute("aria-selected",b===btn?"true":"false");
       });
-      document.querySelectorAll("[data-job-panel]").forEach(function (p) {
-        var on = p.getAttribute("data-job-panel") === i;
-        p.classList.toggle("is-active", on);
-        if (on) p.removeAttribute("hidden"); else p.setAttribute("hidden", "");
+      document.querySelectorAll("[data-job-panel]").forEach(function(p){
+        var on=p.getAttribute("data-job-panel")===i;
+        p.classList.toggle("is-active",on);
+        if(on) p.removeAttribute("hidden"); else p.setAttribute("hidden","");
       });
     });
   });
-  // Scroll reveal
-  if ("IntersectionObserver" in window) {
-    var io = new IntersectionObserver(function (entries) {
-      entries.forEach(function (e) {
-        if (e.isIntersecting) e.target.classList.add("is-visible");
+
+  if("IntersectionObserver" in window && !window.matchMedia("(prefers-reduced-motion: reduce)").matches){
+    var io=new IntersectionObserver(function(entries){
+      entries.forEach(function(en){
+        if(en.isIntersecting){
+          en.target.classList.add("visible");
+          en.target.classList.add("is-visible");
+        }
       });
-    }, { threshold: 0.12 });
-    document.querySelectorAll(".section, .tl-item, .jobs, .profile-hero").forEach(function (el) {
+    },{threshold:0.12});
+    document.querySelectorAll(".reveal, .section, .tl-item, .jobs, .profile-hero").forEach(function(el){
       el.classList.add("reveal");
       io.observe(el);
     });
+  }else{
+    document.querySelectorAll(".reveal").forEach(function(el){
+      el.classList.add("visible");
+      el.classList.add("is-visible");
+    });
   }
-`;
+});`;
 }
-
+  
 function navLinks(layout: ProLayoutMode, active: string): string {
   const items =
     layout === "work_grid"
@@ -682,9 +685,6 @@ function navLinks(layout: ProLayoutMode, active: string): string {
     .join("\n          ");
 }
 
-.project-grid{display:grid;gap:1rem;grid-template-columns:repeat(auto-fill,minmax(260px,1fr))}
-.project-card{padding:1.15rem 1.25rem;border-radius:14px;background:var(--surface);border:1px solid var(--line)}
-.project-card h3{margin:0 0 .5rem;font-size:1.05rem}
 
 function pageShell(
   title: string,
