@@ -43,11 +43,13 @@ export async function GET(req: NextRequest) {
       const live = j.status === "done" && Boolean(j.siteUrl);
       const editorPath =
         j.editorMode === "simple"
-          ? `/preview-simple/${j.id}`
-          : `/preview/${j.id}`;
+          ? "/preview-simple/" + j.id
+          : "/preview/" + j.id;
       const commerceTier = j.commerceTier || "lite";
       const bookingTier = j.bookingTier || "lite";
       const isPro = commerceTier === "pro" || bookingTier === "pro";
+      const accessQ = encodeURIComponent(access);
+
       return {
         jobId: j.id,
         status: j.status,
@@ -57,16 +59,15 @@ export async function GET(req: NextRequest) {
         siteUrl: j.siteUrl || null,
         repoUrl: j.repoUrl || null,
         editorMode: j.editorMode || "full",
-        editorUrl: `\( {editorPath}?access= \){encodeURIComponent(access)}`,
+        editorUrl: editorPath + "?access=" + accessQ,
         canEdit: true,
         canPushLive: j.status === "done" || j.status === "failed",
         isLive: live,
+        canDownloadZip: true,
         commerceTier,
         bookingTier,
         isPro,
-        manageUrl: isPro
-          ? `/manage/\( {j.id}?access= \){encodeURIComponent(access)}`
-          : null,
+        manageUrl: isPro ? "/manage/" + j.id + "?access=" + accessQ : null,
         canUnlockCommerce: live && commerceTier !== "pro",
         canUnlockBooking: live && bookingTier !== "pro",
       };
