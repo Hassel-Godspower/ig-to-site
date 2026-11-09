@@ -419,10 +419,43 @@ export default function DashboardPage() {
             <li key={s.jobId} style={card}>
               <div style={cardHead}>
                 <strong style={{ fontSize: 16 }}>
-                  {s.username ? `@${s.username}` : s.jobId.slice(0, 10)}
+                  {s.username ? "@" + s.username : s.jobId.slice(0, 10)}
                 </strong>
-                <span style={badgeStyle(s.isLive)}>{s.status}</span>
+                <span style={badgeStyle(s.isLive)}>
+                  {s.isLive ? "Live" : s.status}
+                </span>
               </div>
+
+              {s.siteUrl ? (
+                <p
+                  style={{
+                    margin: "10px 0 0",
+                    fontSize: 13,
+                    color: "#c4b5fd",
+                    wordBreak: "break-all",
+                  }}
+                >
+                  <a
+                    href={s.siteUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{ color: "#c4b5fd" }}
+                  >
+                    {s.siteUrl}
+                  </a>
+                </p>
+              ) : (
+                <p
+                  style={{
+                    margin: "10px 0 0",
+                    fontSize: 13,
+                    color: "#6b7280",
+                  }}
+                >
+                  Not published yet — complete payment to go live.
+                </p>
+              )}
+
               <div style={actions}>
                 {s.canEdit && (
                   <a href={s.editorUrl} style={btnEdit}>
@@ -438,6 +471,18 @@ export default function DashboardPage() {
                   >
                     Open live site
                   </a>
+                )}
+                {s.canDownloadZip !== false && (
+                  <button
+                    type="button"
+                    style={btnEdit}
+                    disabled={downloading === s.jobId}
+                    onClick={() => void downloadZip(s.jobId, s.username)}
+                  >
+                    {downloading === s.jobId
+                      ? "Preparing ZIP…"
+                      : "Download ZIP"}
+                  </button>
                 )}
                 {s.canPushLive && (
                   <button
@@ -462,6 +507,17 @@ export default function DashboardPage() {
                   >
                     Unlock Commerce Pro
                   </button>
+                )}
+                {s.canUnlockBooking && (
+                  <button
+                    type="button"
+                    style={btnEdit}
+                    onClick={() => void unlockPro(s.jobId, "booking")}
+                  >
+                    Unlock Booking Pro
+                  </button>
+                )}
+              </div>
                 )}
                 {s.canUnlockBooking && (
                   <button
