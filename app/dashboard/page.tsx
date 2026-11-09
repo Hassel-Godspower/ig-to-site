@@ -137,6 +137,7 @@ export default function DashboardPage() {
   const [info, setInfo] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [pushing, setPushing] = useState<string | null>(null);
+  const [downloading, setDownloading] = useState<string | null>(null);
   const [authed, setAuthed] = useState(false);
 
   const loadWithAccess = useCallback(async (token: string) => {
@@ -233,6 +234,59 @@ export default function DashboardPage() {
       setError(err instanceof Error ? err.message : "Deploy failed");
     } finally {
       setPushing(null);
+    }
+  }
+
+  function accessToken(): string | null {
+    return (
+      accessFromUrl ||
+      (typeof sessionStorage !== "undefined"
+        ? sessionStorage.getItem("goke_dash_access")
+        : null)
+    );
+  }
+
+  async function downloadZip(jobId: string, username: string | null) {
+    const token = accessToken();
+    if (!token) {
+      setError("Sign in again to download your site.");
+      return;
+    }
+    setDownloading(jobId);
+    setError(null);
+    try {
+      const res = await fetch("/api/site/" + jobId + "/export", {
+        method: "GET",
+        headers: {
+          "x-goke-access": token,
+        },
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(
+          (data as { error?: string }).error ||
+            "Download failed (" + res.status + ")"
+        );
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      const safe =
+        (username || jobId)
+          .toLowerCase()
+          .replace(/[^a-z0-9-]/g, "-")
+          .slice(0, 40) || "goke-site";
+      a.href = url;
+      a.download = safe + "-goke-export.zip";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      setInfo("Download started — your site ZIP is saving.");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Download failed");
+    } finally {
+      setDownloading(null);
     }
   }
 
