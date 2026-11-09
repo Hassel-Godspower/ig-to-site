@@ -692,7 +692,7 @@ function pageShell(
   body: string,
   t: ProfessionalTheme,
   layout: ProLayoutMode,
-  opts: { description?: string; active: string }
+  opts: { description?: string; active: string; phone?: string }
 ): string {
   const fonts = googleFontsLink(t);
   return `<!DOCTYPE html>
@@ -707,7 +707,7 @@ function pageShell(
   ${fonts ? `<link rel="stylesheet" href="${E(fonts)}" />` : ""}
   <link rel="stylesheet" href="styles.css" />
 </head>
-<body data-goke-layout="${E(layout)}" data-wa="${E("")}">
+<body data-goke-layout="${E(layout)}" data-wa=" ${E(opts.phone || "")}">
   <header class="site-header" data-goke="container" data-section-name="Header">
     <div class="inner">
       <a class="brand" href="index.html" data-goke="heading">${E(name)}</a>
