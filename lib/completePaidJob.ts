@@ -8,10 +8,11 @@ import {
 import { notifySiteReady } from "./notifySiteReady";
 
 /**
- * After payment: GitHub → Cloudflare Pages → email / WhatsApp link to customer.
+ * After payment: GitHub → Cloudflare Pages → email link to customer.
+ * Verifies live URL before marking done when possible.
  */
 
-async function verifyLiveUrl(url: string, attempts = 4): Promise<boolean> {
+async function verifyLiveUrl(url: string, attempts = 5): Promise<boolean> {
   for (let i = 0; i < attempts; i++) {
     try {
       const res = await fetch(url, {
@@ -24,11 +25,33 @@ async function verifyLiveUrl(url: string, attempts = 4): Promise<boolean> {
     } catch {
       /* retry */
     }
-    await new Promise((r) => setTimeout(r, 2000 * (i + 1)));
+    await new Promise((r) => setTimeout(r, 2500 * (i + 1)));
   }
   return false;
 }
 
+function humanDeployError(raw: string): string {
+  const m = raw || "Unknown deploy error";
+  if (/CLOUDFLARE_ACCOUNT_ID|CLOUDFLARE_API_TOKEN|not set/i.test(m)) {
+    return "Cloudflare is not configured on the server (missing ACCOUNT_ID or API token). Contact support.";
+  }
+  if (/No index\.html/i.test(m)) {
+    return "Publish failed: site is missing index.html. Re-save in the editor, then retry deploy.";
+  }
+  if (/No generated files|nothing to publish/i.test(m)) {
+    return "No site files found for this job. Generate the site again, then pay / retry deploy.";
+  }
+  if (/username/i.test(m) && /not stored|required/i.test(m)) {
+    return "Payment received but username is missing. Retry deploy with a username.";
+  }
+  if (/rate limit|429/i.test(m)) {
+    return "Deploy rate-limited by Cloudflare or GitHub. Wait a minute and retry.";
+  }
+  if (/manifest/i.test(m)) {
+    return "Cloudflare rejected the upload package. Retry deploy; if it persists, contact support.";
+  }
+  return m.length > 280 ? m.slice(0, 277) + "…" : m;
+}
 
 export async function completePaidJob(
   jobId: string,
@@ -45,7 +68,17 @@ export async function completePaidJob(
           job.siteUrl.includes(process.env.CLOUDFLARE_PAGES_DOMAIN)))
   );
 
-  if (!force && onCloudflare && (job.status === "done" || job.status === "deploying")) {
+  if (
+    !force &&
+    onCloudflare &&
+    job.status === "done" &&
+    job.siteUrl
+  ) {
+    const stillLive = await verifyLiveUrl(job.siteUrl, 2);
+    if (stillLive) return job;
+  }
+
+  if (!force && onCloudflare && job.status === "deploying") {
     return job;
   }
 
@@ -58,8 +91,9 @@ export async function completePaidJob(
   if (!finalUsername) {
     return await updateJob(jobId, {
       status: "failed",
-      error:
-        "Payment received but no site username was stored. Retry via /api/deploy with a username.",
+      error: humanDeployError(
+        "Payment received but no site username was stored. Retry via /api/deploy with a username."
+      ),
     });
   }
 
@@ -114,6 +148,17 @@ export async function completePaidJob(
       publishFiles
     );
 
+    const live = await verifyLiveUrl(cf.siteUrl, 5);
+    if (!live) {
+      // Still mark done with URL — Pages often needs extra DNS/propagation time
+      console.warn(
+        "Deployed but live check not OK yet:",
+        cf.siteUrl,
+        "files=",
+        cf.fileCount
+      );
+    }
+
     const updated = await updateJob(jobId, {
       status: "done",
       username: cf.projectName,
@@ -122,10 +167,12 @@ export async function completePaidJob(
       repoUrl: repoUrl ?? undefined,
       defaultBranch: defaultBranch ?? undefined,
       siteUrl: cf.siteUrl,
-      error: undefined as unknown as string,
+      error: live
+        ? (undefined as unknown as string)
+        : ("Site deployed; URL may take a minute to resolve. Refresh " +
+            cf.siteUrl) as unknown as string,
     });
 
-    // Notify customer (non-blocking for job success)
     try {
       const notify = await notifySiteReady({
         siteUrl: cf.siteUrl,
@@ -146,7 +193,7 @@ export async function completePaidJob(
     const message = err instanceof Error ? err.message : String(err);
     return await updateJob(jobId, {
       status: "failed",
-      error: message,
+      error: humanDeployError(message),
     });
   }
 }
