@@ -743,8 +743,9 @@ function buildMultipage(
       "Work",
       name,
       `<section class="wrap section reveal" data-goke="section" data-section-name="Projects">
-      <h1 data-goke="heading">Work</h1>
-      ${projectTable(p)}
+      <p class="section-label">03. Work</p>
+      <h1 data-goke="heading">Selected work</h1>
+      ${projectCards(p)}
     </section>`,
       t,
       layout,
