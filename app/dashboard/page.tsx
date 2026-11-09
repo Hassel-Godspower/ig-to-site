@@ -14,6 +14,7 @@ type SiteRow = {
   canEdit: boolean;
   canPushLive: boolean;
   isLive: boolean;
+  canDownloadZip?: boolean;
   editorMode: string;
   commerceTier?: string;
   bookingTier?: string;
