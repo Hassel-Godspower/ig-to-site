@@ -176,6 +176,38 @@ function profileHeroHtml(p: ProfessionalProfile, t: ProfessionalTheme): string {
   </section>`;
 }
 
+function projectCards(p: ProfessionalProfile): string {
+  const projects = arr(p.projects);
+  if (!projects.length) {
+    return `<p class="muted" data-goke="text">Add projects in the editor — titles, links, and outcomes from your CV.</p>`;
+  }
+  return `<div class="project-grid" data-goke="container">${projects
+    .slice(0, 12)
+    .map((pr) => {
+      const link = pr.url
+        ? `<a class="btn" href="${E(pr.url)}" target="_blank" rel="noopener" data-goke="link">View</a>`
+        : "";
+      const chips = arr(pr.keywords)
+        .slice(0, 6)
+        .map((k) => `<span class="chip" data-goke="text">${E(k)}</span>`)
+        .join("");
+      const bullets = arr(pr.highlights).length
+        ? `<ul class="job-bullets">${arr(pr.highlights)
+            .map((b) => `<li data-goke="text">${E(b)}</li>`)
+            .join("")}</ul>`
+        : pr.description
+          ? `<p class="muted" data-goke="text">${E(pr.description)}</p>`
+          : "";
+      return `<article class="project-card" data-goke="container">
+        <h3 data-goke="heading">${E(pr.name)}</h3>
+        ${bullets}
+        \( {chips ? `<p class="chips"> \){chips}</p>` : ""}
+        ${link}
+      </article>`;
+    })
+    .join("")}</div>`;
+}
+
 function projectTable(p: ProfessionalProfile): string {
   const projects = arr(p.projects);
   if (!projects.length) {
@@ -649,6 +681,10 @@ function navLinks(layout: ProLayoutMode, active: string): string {
     })
     .join("\n          ");
 }
+
+.project-grid{display:grid;gap:1rem;grid-template-columns:repeat(auto-fill,minmax(260px,1fr))}
+.project-card{padding:1.15rem 1.25rem;border-radius:14px;background:var(--surface);border:1px solid var(--line)}
+.project-card h3{margin:0 0 .5rem;font-size:1.05rem}
 
 function pageShell(
   title: string,
