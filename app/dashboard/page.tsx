@@ -519,6 +519,15 @@ export default function DashboardPage() {
                 )}
               </div>
                 )}
+                {s.canUnlockCommerce && (
+                  <button
+                    type="button"
+                    style={btnEdit}
+                    onClick={() => void unlockPro(s.jobId, "commerce")}
+                  >
+                    Unlock Commerce Pro
+                  </button>
+                )}
                 {s.canUnlockBooking && (
                   <button
                     type="button"
