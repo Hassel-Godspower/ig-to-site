@@ -201,7 +201,7 @@ function projectCards(p: ProfessionalProfile): string {
       return `<article class="project-card" data-goke="container">
         <h3 data-goke="heading">${E(pr.name)}</h3>
         ${bullets}
-        \( {chips ? `<p class="chips"> \){chips}</p>` : ""}
+        ${chips ? `<p class="chips">${chips}</p>` : ""}
         ${link}
       </article>`;
     })
