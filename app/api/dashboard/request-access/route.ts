@@ -36,9 +36,14 @@ export async function POST(req: NextRequest) {
     const token = createDashboardToken(email);
     const base = (process.env.BASE_URL || "").replace(/\/$/, "");
     if (!base) {
-      return NextResponse.json({ error: "BASE_URL not configured" }, { status: 500 });
+      return NextResponse.json(
+        { error: "BASE_URL not configured" },
+        { status: 500 }
+      );
     }
-    const link = `\( {base}/dashboard?access= \){encodeURIComponent(token)}`;
+    // String concat — do not use template literals here (avoids mangling)
+    const link =
+      base + "/dashboard?access=" + encodeURIComponent(token);
 
     const name =
       jobs.find((j) => j.customerName)?.customerName ||
@@ -51,35 +56,50 @@ export async function POST(req: NextRequest) {
         process.env.RESEND_FROM?.trim() ||
         process.env.NOTIFY_FROM_EMAIL?.trim() ||
         "gòke <onboarding@resend.dev>";
+
+      const html =
+        '<div style="font-family:system-ui,sans-serif;max-width:520px;margin:0 auto;padding:24px">' +
+        '<h1 style="font-size:20px">Hi ' +
+        escapeHtml(name) +
+        "</h1>" +
+        '<p style="color:#444;line-height:1.5">Use this link to view and edit your published gòke sites. It expires in 7 days.</p>' +
+        '<p style="margin:24px 0">' +
+        '<a href="' +
+        escapeHtml(link) +
+        '" style="display:inline-block;background:#7c3aed;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:600">' +
+        "Open my dashboard" +
+        "</a>" +
+        "</p>" +
+        '<p style="font-size:12px;color:#999;word-break:break-all">' +
+        escapeHtml(link) +
+        "</p>" +
+        "</div>";
+
+      const text =
+        "Hi " +
+        name +
+        ",\n\nOpen your gòke dashboard:\n" +
+        link +
+        "\n\nLink expires in 7 days.";
+
       const res = await fetch("https://api.resend.com/emails", {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${key}`,
+          Authorization: "Bearer " + key,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
           from,
           to: [email],
           subject: "Your gòke dashboard access link",
-          html: `
-            <div style="font-family:system-ui,sans-serif;max-width:520px;margin:0 auto;padding:24px">
-              <h1 style="font-size:20px">Hi ${escapeHtml(name)}</h1>
-              <p style="color:#444;line-height:1.5">Use this link to view and edit your published gòke sites. It expires in 7 days.</p>
-              <p style="margin:24px 0">
-                <a href="${escapeHtml(link)}"
-                   style="display:inline-block;background:#7c3aed;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:600">
-                  Open my dashboard
-                </a>
-              </p>
-              <p style="font-size:12px;color:#999;word-break:break-all">${escapeHtml(link)}</p>
-            </div>`,
-          text: `Hi \( {name},\n\nOpen your gòke dashboard:\n \){link}\n\nLink expires in 7 days.`,
+          html,
+          text,
         }),
       });
       if (!res.ok) {
         const t = await res.text();
         return NextResponse.json(
-          { error: `Email failed: ${t.slice(0, 200)}` },
+          { error: "Email failed: " + t.slice(0, 200) },
           { status: 502 }
         );
       }
