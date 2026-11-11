@@ -517,27 +517,6 @@ export default function DashboardPage() {
                     Unlock Booking Pro
                   </button>
                 )}
-              </div>
-                )}
-                {s.canUnlockCommerce && (
-                  <button
-                    type="button"
-                    style={btnEdit}
-                    onClick={() => void unlockPro(s.jobId, "commerce")}
-                  >
-                    Unlock Commerce Pro
-                  </button>
-                )}
-                {s.canUnlockBooking && (
-                  <button
-                    type="button"
-                    style={btnEdit}
-                    onClick={() => void unlockPro(s.jobId, "booking")}
-                  >
-                    Unlock Booking Pro
-                  </button>
-                )}
-              </div>
               <p style={{ margin: "10px 0 0", fontSize: 11, color: "#6b7280" }}>
                 Job {s.jobId} · {s.editorMode} editor
                 {s.customerName ? ` · ${s.customerName}` : ""}
