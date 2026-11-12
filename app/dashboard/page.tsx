@@ -368,8 +368,19 @@ export default function DashboardPage() {
             gòke
           </Link>
         </p>
-        <h1 style={{ fontSize: 28, margin: "0 0 8px" }}>
-          {displayName ? `Hi, ${displayName}` : "Your sites"}
+                <h1
+          style={{
+            fontSize: 28,
+            margin: "0 0 8px",
+            color: "#f3f4f6",
+            fontWeight: 700,
+          }}
+        >
+          {displayName
+            ? "Hi, " + displayName
+            : authed && email
+              ? "Hi, " + email.split("@")[0]
+              : "Your sites"}
         </h1>
         <p style={{ color: "#9ca3af", margin: "0 0 24px", lineHeight: 1.5 }}>
           Sign in with the email from your Paystack receipt. We email a private
@@ -520,8 +531,11 @@ export default function DashboardPage() {
               </div>
               <p style={{ margin: "10px 0 0", fontSize: 11, color: "#6b7280" }}>
                 Job {s.jobId} · {s.editorMode} editor
-                {s.customerName ? ` · ${s.customerName}` : ""}
-                {` · shop ${s.commerceTier || "lite"} · book ${s.bookingTier || "lite"}`}
+                {s.customerName ? " · " + s.customerName : ""}
+                {" · shop " +
+                  (s.commerceTier || "lite") +
+                  " · book " +
+                  (s.bookingTier || "lite")}
               </p>
             </li>
           ))}
