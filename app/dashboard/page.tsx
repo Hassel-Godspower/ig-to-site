@@ -1,6 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useState, type CSSProperties, type FormEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useState,
+  type CSSProperties,
+  type FormEvent,
+} from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
@@ -118,13 +124,31 @@ const btnLive: CSSProperties = {
   cursor: "pointer",
 };
 
-function badgeStyle(isLive: boolean): CSSProperties {
+function badgeStyle(status: string, isLive: boolean): CSSProperties {
+  if (isLive) {
+    return {
+      fontSize: 12,
+      padding: "2px 8px",
+      borderRadius: 999,
+      background: "rgba(52,211,153,0.15)",
+      color: "#6ee7b7",
+    };
+  }
+  if (status === "failed") {
+    return {
+      fontSize: 12,
+      padding: "2px 8px",
+      borderRadius: 999,
+      background: "rgba(248,113,113,0.15)",
+      color: "#fca5a5",
+    };
+  }
   return {
     fontSize: 12,
     padding: "2px 8px",
     borderRadius: 999,
-    background: isLive ? "rgba(52,211,153,0.15)" : "rgba(251,191,36,0.12)",
-    color: isLive ? "#6ee7b7" : "#fbbf24",
+    background: "rgba(251,191,36,0.12)",
+    color: "#fbbf24",
   };
 }
 
@@ -140,15 +164,15 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(false);
   const [pushing, setPushing] = useState<string | null>(null);
   const [downloading, setDownloading] = useState<string | null>(null);
-  const [authed, setAuthed] = useState(false);
   const [resending, setResending] = useState<string | null>(null);
+  const [authed, setAuthed] = useState(false);
 
   const loadWithAccess = useCallback(async (token: string) => {
     setLoading(true);
     setError(null);
     try {
       const res = await fetch(
-        `/api/dashboard/sites?access=${encodeURIComponent(token)}`
+        "/api/dashboard/sites?access=" + encodeURIComponent(token)
       );
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Access failed");
@@ -183,6 +207,15 @@ export default function DashboardPage() {
     }
   }, [accessFromUrl, loadWithAccess]);
 
+  function accessToken(): string | null {
+    return (
+      accessFromUrl ||
+      (typeof sessionStorage !== "undefined"
+        ? sessionStorage.getItem("goke_dash_access")
+        : null)
+    );
+  }
+
   async function requestAccess(e?: FormEvent) {
     e?.preventDefault();
     setError(null);
@@ -197,7 +230,6 @@ export default function DashboardPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Request failed");
       if (data.accessLink) {
-        // Dev mode without Resend
         setInfo("Dev link ready — opening…");
         window.location.href = data.accessLink;
         return;
@@ -213,40 +245,31 @@ export default function DashboardPage() {
   async function pushLive(jobId: string) {
     setPushing(jobId);
     setError(null);
+    setInfo(null);
     try {
+      const token = accessToken();
       const res = await fetch("/api/deploy", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ jobId, force: true }),
+        body: JSON.stringify({
+          jobId,
+          force: true,
+          access: token || undefined,
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Deploy failed");
       setInfo(
         data.siteUrl
-          ? `Live updated: ${data.siteUrl}`
+          ? "Live updated: " + data.siteUrl
           : "Deploy finished."
       );
-      // refresh list
-      const token =
-        accessFromUrl ||
-        (typeof sessionStorage !== "undefined"
-          ? sessionStorage.getItem("goke_dash_access")
-          : null);
       if (token) await loadWithAccess(token);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Deploy failed");
     } finally {
       setPushing(null);
     }
-  }
-
-  function accessToken(): string | null {
-    return (
-      accessFromUrl ||
-      (typeof sessionStorage !== "undefined"
-        ? sessionStorage.getItem("goke_dash_access")
-        : null)
-    );
   }
 
   async function downloadZip(jobId: string, username: string | null) {
@@ -332,10 +355,13 @@ export default function DashboardPage() {
     setSites([]);
     setDisplayName(null);
     setInfo(null);
+    setError(null);
   }
 
-
-  async function unlockPro(jobId: string, product: "commerce" | "booking" | "both") {
+  async function unlockPro(
+    jobId: string,
+    product: "commerce" | "booking" | "both"
+  ) {
     setError(null);
     setInfo(null);
     try {
@@ -346,11 +372,13 @@ export default function DashboardPage() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError(data.error || "Upgrade failed");
+        setError(
+          (data as { error?: string }).error || "Upgrade failed"
+        );
         return;
       }
-      if (data.checkoutUrl) {
-        window.location.href = data.checkoutUrl;
+      if ((data as { checkoutUrl?: string }).checkoutUrl) {
+        window.location.href = (data as { checkoutUrl: string }).checkoutUrl;
         return;
       }
       setError("No checkout URL returned");
@@ -364,7 +392,10 @@ export default function DashboardPage() {
     const upgrade = search.get("upgrade");
     const jobId = search.get("jobId");
     const reference =
-      search.get("reference") || search.get("trxref") || search.get("ref") || "";
+      search.get("reference") ||
+      search.get("trxref") ||
+      search.get("ref") ||
+      "";
     const product = (search.get("product") || "commerce") as string;
     if (upgrade && jobId && reference) {
       void (async () => {
@@ -383,7 +414,10 @@ export default function DashboardPage() {
               : null);
           if (token) void loadWithAccess(token);
         } else {
-          setError(data.error || "Could not verify upgrade payment");
+          setError(
+            (data as { error?: string }).error ||
+              "Could not verify upgrade payment"
+          );
         }
       })();
     }
@@ -395,12 +429,17 @@ export default function DashboardPage() {
         <p style={{ margin: "0 0 8px" }}>
           <Link
             href="/"
-            style={{ color: "#c4b5fd", textDecoration: "none", fontWeight: 700 }}
+            style={{
+              color: "#c4b5fd",
+              textDecoration: "none",
+              fontWeight: 700,
+            }}
           >
             gòke
           </Link>
         </p>
-                <h1
+
+        <h1
           style={{
             fontSize: 28,
             margin: "0 0 8px",
@@ -414,6 +453,7 @@ export default function DashboardPage() {
               ? "Hi, " + email.split("@")[0]
               : "Your sites"}
         </h1>
+
         <p style={{ color: "#9ca3af", margin: "0 0 24px", lineHeight: 1.5 }}>
           Sign in with the email from your Paystack receipt. We email a private
           link so only you can open and edit your sites.
@@ -437,7 +477,13 @@ export default function DashboardPage() {
 
         {authed && (
           <div style={{ ...formRow, marginBottom: 24 }}>
-            <span style={{ color: "#9ca3af", fontSize: 14, alignSelf: "center" }}>
+            <span
+              style={{
+                color: "#9ca3af",
+                fontSize: 14,
+                alignSelf: "center",
+              }}
+            >
               {email}
             </span>
             <button type="button" onClick={logout} style={btnGhost}>
@@ -464,7 +510,7 @@ export default function DashboardPage() {
                 <strong style={{ fontSize: 16 }}>
                   {s.username ? "@" + s.username : s.jobId.slice(0, 10)}
                 </strong>
-                <span style={badgeStyle(s.isLive)}>
+                <span style={badgeStyle(s.status, s.isLive)}>
                   {s.isLive ? "Live" : s.status}
                 </span>
               </div>
@@ -499,12 +545,26 @@ export default function DashboardPage() {
                 </p>
               )}
 
+              {s.error ? (
+                <p
+                  style={{
+                    margin: "10px 0 0",
+                    fontSize: 13,
+                    color: "#fca5a5",
+                    lineHeight: 1.45,
+                  }}
+                >
+                  {s.error}
+                </p>
+              ) : null}
+
               <div style={actions}>
                 {s.canEdit && (
                   <a href={s.editorUrl} style={btnEdit}>
                     Edit site
                   </a>
                 )}
+
                 {s.siteUrl && (
                   <a
                     href={s.siteUrl}
@@ -515,6 +575,7 @@ export default function DashboardPage() {
                     Open live site
                   </a>
                 )}
+
                 {s.canDownloadZip !== false && (
                   <button
                     type="button"
@@ -527,6 +588,7 @@ export default function DashboardPage() {
                       : "Download ZIP"}
                   </button>
                 )}
+
                 {s.canPushLive && (
                   <button
                     type="button"
@@ -534,14 +596,31 @@ export default function DashboardPage() {
                     disabled={pushing === s.jobId}
                     onClick={() => void pushLive(s.jobId)}
                   >
-                    {pushing === s.jobId ? "Publishing…" : "Push live updates"}
+                    {pushing === s.jobId
+                      ? "Publishing…"
+                      : "Push live updates"}
                   </button>
                 )}
+
+                {s.canResendLive ? (
+                  <button
+                    type="button"
+                    style={btnEdit}
+                    disabled={resending === s.jobId}
+                    onClick={() => void resendLive(s.jobId)}
+                  >
+                    {resending === s.jobId
+                      ? "Sending…"
+                      : "Resend live link"}
+                  </button>
+                ) : null}
+
                 {s.isPro && s.manageUrl && (
                   <a href={s.manageUrl} style={btnLive}>
                     Business admin
                   </a>
                 )}
+
                 {s.canUnlockCommerce && (
                   <button
                     type="button"
@@ -551,6 +630,7 @@ export default function DashboardPage() {
                     Unlock Commerce Pro
                   </button>
                 )}
+
                 {s.canUnlockBooking && (
                   <button
                     type="button"
@@ -561,7 +641,14 @@ export default function DashboardPage() {
                   </button>
                 )}
               </div>
-              <p style={{ margin: "10px 0 0", fontSize: 11, color: "#6b7280" }}>
+
+              <p
+                style={{
+                  margin: "10px 0 0",
+                  fontSize: 11,
+                  color: "#6b7280",
+                }}
+              >
                 Job {s.jobId} · {s.editorMode} editor
                 {s.customerName ? " · " + s.customerName : ""}
                 {" · shop " +
