@@ -66,7 +66,11 @@ const addons = [
 
 export function PricingWhatYouGet() {
   return (
-    <section className="gk-section" id="what-you-get" aria-labelledby="what-you-get-title">
+    <section
+      className="gk-section"
+      id="what-you-get"
+      aria-labelledby="what-you-get-title"
+    >
       <div className="gk-container" style={{ maxWidth: 920 }}>
         <div className="gk-section-head">
           <h2 id="what-you-get-title">What you get for ₦20,000</h2>
@@ -81,8 +85,8 @@ export function PricingWhatYouGet() {
             <h3>Included with Go live</h3>
             <ul>
               <li>
-                Multi-page website from Instagram (handle or export) or LinkedIn /
-                CV
+                Multi-page website from Instagram (handle or export) or LinkedIn
+                / CV
               </li>
               <li>
                 Hosting on <strong>Cloudflare Pages</strong>
@@ -93,7 +97,9 @@ export function PricingWhatYouGet() {
               </li>
               <li>HTTPS by default</li>
               <li>Live link by email when deploy succeeds</li>
-              <li>Dashboard access to edit, push updates, and download a ZIP</li>
+              <li>
+                Dashboard access to edit, push updates, and download a ZIP
+              </li>
             </ul>
           </article>
           <article className="gk-include-card gk-include-card-muted">
@@ -127,7 +133,11 @@ export function PricingWhatYouGet() {
           <strong>Publish guarantee.</strong> If Paystack shows a successful
           payment and we cannot get your site live after a reasonable attempt, we
           complete the deploy or refund the ₦20,000 Go live fee. WhatsApp{" "}
-          <a href="https://wa.me/2347065341105" target="_blank" rel="noreferrer">
+          <a
+            href="https://wa.me/2347065341105"
+            target="_blank"
+            rel="noreferrer"
+          >
             +234 706 534 1105
           </a>{" "}
           with your payment reference.
