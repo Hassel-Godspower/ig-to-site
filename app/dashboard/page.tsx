@@ -292,6 +292,35 @@ export default function DashboardPage() {
     }
   }
 
+  async function resendLive(jobId: string) {
+    const token = accessToken();
+    if (!token) {
+      setError("Sign in again to resend your live link.");
+      return;
+    }
+    setResending(jobId);
+    setError(null);
+    setInfo(null);
+    try {
+      const res = await fetch("/api/dashboard/resend-live", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ jobId, access: token }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(
+          (data as { error?: string }).error || "Could not resend email"
+        );
+      }
+      setInfo("Live link emailed again. Check your inbox (and spam).");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Resend failed");
+    } finally {
+      setResending(null);
+    }
+  }
+
   function logout() {
     try {
       sessionStorage.removeItem("goke_dash_access");
