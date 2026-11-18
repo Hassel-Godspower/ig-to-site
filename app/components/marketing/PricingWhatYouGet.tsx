@@ -1,14 +1,18 @@
 /**
- * What ₦20k includes + custom domain + add-ons + honest FAQ
+ * What ₦20k includes + custom domain + add-ons + honest FAQ + guarantee
  */
 const faqs = [
   {
     q: "What does ₦20,000 include?",
-    a: "Your generated multi-page website (business or professional), HTTPS hosting on Cloudflare Pages, and a free subdomain such as yourusername.pages.dev. Preview and editing stay free until you choose to publish.",
+    a: "Your generated multi-page website (Instagram business path or LinkedIn / CV professional path), HTTPS hosting on Cloudflare Pages, and a free subdomain such as yourusername.pages.dev. Preview and editing stay free until you choose to publish.",
   },
   {
     q: "Is a custom domain included?",
     a: "No. yourusername.pages.dev is included with Go live. A custom domain such as yourname.com, yourname.org, or yourname.com.ng is an optional add-on at ₦30,000, renewed yearly.",
+  },
+  {
+    q: "What if publish fails after I pay?",
+    a: "If payment succeeds but we cannot get your site live after a reasonable attempt, contact us on WhatsApp (+234 706 534 1105) with your Paystack reference. We will either complete the publish or refund the Go live fee — we do not keep payment for a site that never went live.",
   },
   {
     q: "Is gòke a marketplace? Will it bring me customers?",
@@ -25,6 +29,10 @@ const faqs = [
   {
     q: "Do I pay every month?",
     a: "The core Go live fee is one-time (₦20,000). Custom domains renew yearly (₦30,000). Optional feature packs are charged only if you choose them.",
+  },
+  {
+    q: "What happens to my Instagram export or CV?",
+    a: "We use uploads only to generate and host your site. We do not sell your data. See the Privacy page for storage and payment details.",
   },
 ];
 
@@ -59,11 +67,11 @@ const addons = [
 export function PricingWhatYouGet() {
   return (
     <section className="gk-section" id="what-you-get" aria-labelledby="what-you-get-title">
-      <div className="gk-container" style={{ maxWidth: 900 }}>
+      <div className="gk-container" style={{ maxWidth: 920 }}>
         <div className="gk-section-head">
-          <h2 id="what-you-get-title">What ₦20,000 gets you</h2>
+          <h2 id="what-you-get-title">What you get for ₦20,000</h2>
           <p>
-            Clear scope — so you know what is included, what is optional, and what gòke is
+            Clear limits: what is included, what is optional, and what gòke is
             not.
           </p>
         </div>
@@ -72,17 +80,20 @@ export function PricingWhatYouGet() {
           <article className="gk-include-card">
             <h3>Included with Go live</h3>
             <ul>
-              <li>Multi-page website generated from your Instagram handle or export</li>
+              <li>
+                Multi-page website from Instagram (handle or export) or LinkedIn /
+                CV
+              </li>
               <li>
                 Hosting on <strong>Cloudflare Pages</strong>
               </li>
               <li>
-                Free Cloudflare subdomain:{" "}
+                Free subdomain:{" "}
                 <code className="gk-code">yourusername.pages.dev</code>
               </li>
               <li>HTTPS by default</li>
-              <li>Live link emailed when deploy succeeds</li>
-              <li>Static files you can keep</li>
+              <li>Live link by email when deploy succeeds</li>
+              <li>Dashboard access to edit, push updates, and download a ZIP</li>
             </ul>
           </article>
           <article className="gk-include-card gk-include-card-muted">
@@ -93,12 +104,34 @@ export function PricingWhatYouGet() {
                 <code className="gk-code">.com.ng</code>) —{" "}
                 <strong>₦30,000 / year</strong>
               </li>
-              <li>Ecommerce engine, SEO/AEO, Branded pack, web-app extras (paid add-ons)</li>
+              <li>
+                Ecommerce engine, SEO/AEO, Branded pack, web-app extras (paid
+                add-ons)
+              </li>
               <li>Marketplace listing or guaranteed customers</li>
               <li>Paid ads or traffic campaigns</li>
             </ul>
           </article>
         </div>
+
+        <p
+          className="gk-honest-note"
+          style={{
+            marginTop: "1.25rem",
+            padding: "1rem 1.15rem",
+            borderRadius: 12,
+            border: "1px solid rgba(167,139,250,0.35)",
+            background: "rgba(167,139,250,0.08)",
+          }}
+        >
+          <strong>Publish guarantee.</strong> If Paystack shows a successful
+          payment and we cannot get your site live after a reasonable attempt, we
+          complete the deploy or refund the ₦20,000 Go live fee. WhatsApp{" "}
+          <a href="https://wa.me/2347065341105" target="_blank" rel="noreferrer">
+            +234 706 534 1105
+          </a>{" "}
+          with your payment reference.
+        </p>
 
         <h3 className="gk-addons-title">Optional add-ons</h3>
         <div className="gk-addon-grid">
@@ -118,17 +151,17 @@ export function PricingWhatYouGet() {
         </h3>
         <div className="gk-faq">
           {faqs.map((f) => (
-            <details key={f.q} className="gk-faq-item">
-              <summary>{f.q}</summary>
+            **Summary:**
+{f.q}
               <p>{f.a}</p>
-            </details>
           ))}
         </div>
 
         <p className="gk-honest-note">
-          <strong>gòke is not a marketplace.</strong> We do not bring you customers. We help
-          you build a website <em>you</em> own and control — for business owners, students,
-          tech enthusiasts, and anyone ready to publish a real site.
+          <strong>gòke is not a marketplace.</strong> We do not bring you
+          customers. We help you build a website <em>you</em> own and control —
+          for business owners, professionals, students, and anyone ready to
+          publish a real site.
         </p>
       </div>
     </section>
