@@ -9,39 +9,52 @@ export default function PrivacyPage() {
       <main className="gk-legal-page">
         <div className="gk-container gk-legal-wrap">
           <h1>Privacy</h1>
-          <p className="gk-legal-updated">Last updated: September 2026</p>
+          <p className="gk-legal-updated">Last updated: November 2026</p>
           <p>
-            gòke (“we”) helps you turn an Instagram data export into a website. This page
-            explains what we process when you use ig-to-site.
+            gòke is a product of HighValue Solutions. This page explains what we
+            process when you generate, edit, or publish a site.
           </p>
-          <h2>What you upload</h2>
+
+          <h2>What you provide</h2>
           <p>
-            When you upload an Instagram export (.zip or .json), we process the file to generate
-            a preview site. We ask you to export only profile and posts so the file stays small
-            and limited in scope.
+            Depending on the path you choose, you may upload an Instagram export
+            (.zip / .json), paste an Instagram handle, upload a CV (PDF, Word, or
+            image), paste career text, and/or provide a LinkedIn profile URL. You
+            may also share an email for payment receipts and dashboard access.
           </p>
+
           <h2>How we use it</h2>
           <p>
-            Export data is used to build and store your job preview, power the visual editor, and
-            — if you pay to publish — deploy your site. We do not sell your export data.
+            That information is used only to build your preview, power the editor,
+            process payment confirmation, publish your site, and let you manage it
+            from the dashboard. We do not sell your uploads or profile data.
           </p>
+
           <h2>Storage</h2>
           <p>
-            Generated site files and job metadata may be stored on our infrastructure (including
-            third-party hosting and object storage) for as long as needed to provide the service.
+            Job metadata and generated site files may be stored on our
+            infrastructure (including Supabase storage and Cloudflare hosting) for
+            as long as needed to provide the service. You can request deletion of a
+            preview job by contacting us with the job id or payment email.
           </p>
+
           <h2>Payments</h2>
           <p>
-            If you publish, payment is handled by our payment provider. We receive confirmation of
-            payment, not your full card details.
+            Payments are handled by Paystack. We receive payment confirmation and
+            reference data, not your full card details.
           </p>
+
           <h2>Contact</h2>
           <p>
-            Questions about privacy: use the contact channel published on the site when available,
-            or reach out via the product support path shown after you generate a site.
+            Privacy questions: WhatsApp{" "}
+            <a href="https://wa.me/2347065341105">+234 706 534 1105</a> or email
+            info@highvaluesolutions.net when that inbox is active.
           </p>
+
           <p>
             <Link href="/">← Home</Link>
+            {" · "}
+            <Link href="/terms">Terms</Link>
           </p>
         </div>
       </main>
