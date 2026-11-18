@@ -7,7 +7,9 @@ export function PricingTeaser() {
           <p>
             Generate from Instagram or LinkedIn / CV and edit at no charge.
             Checkout only when you want a live URL. Payments by{" "}
-            <strong>Paystack</strong>.
+            <strong>Paystack</strong>. If we cannot publish after a successful
+            payment, we fix it or refund — see{" "}
+            <a href="#what-you-get">what you get</a>.
           </p>
         </div>
         <div className="gk-pricing">
@@ -35,7 +37,7 @@ export function PricingTeaser() {
               <li>HTTPS site on Cloudflare Pages</li>
               <li>yourusername.pages.dev included</li>
               <li>Email with your live link</li>
-              <li>Keep editing from your dashboard</li>
+              <li>Dashboard: edit, push live, download ZIP</li>
             </ul>
             <a href="#start" className="gk-btn gk-btn-primary gk-btn-block">
               Generate first — pay later
