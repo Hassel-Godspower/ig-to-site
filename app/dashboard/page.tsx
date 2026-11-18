@@ -141,6 +141,7 @@ export default function DashboardPage() {
   const [pushing, setPushing] = useState<string | null>(null);
   const [downloading, setDownloading] = useState<string | null>(null);
   const [authed, setAuthed] = useState(false);
+  const [resending, setResending] = useState<string | null>(null);
 
   const loadWithAccess = useCallback(async (token: string) => {
     setLoading(true);
