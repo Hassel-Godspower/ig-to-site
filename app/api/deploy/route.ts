@@ -6,17 +6,18 @@ import {
   assertPaymentForJob,
 } from "@/lib/paystack";
 import { assertAdminForce } from "@/lib/editAuth";
+import { verifyDashboardToken } from "@/lib/dashboardAuth";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
 
 /**
- * POST { jobId, reference?, username?, force? }
+ * POST { jobId, reference?, username?, force?, access? }
  *
- * Stage 1 rules:
- * - force=true only with header x-goke-admin: ADMIN_PASSWORD
- * - reference present → must verify Paystack + amount + currency + metadata.jobId
- * - no reference → only redeploy stuck/failed/done jobs (not pending_payment)
+ * - force=true: admin header OR dashboard access token that owns the job
+ * - reference: verify Paystack (amount + currency + metadata.jobId)
+ * - no reference / no force: only retry deploying | failed (not pending_payment)
+ * - done + no force: return current status (no silent free republish)
  */
 export async function POST(req: NextRequest) {
   try {
@@ -27,6 +28,7 @@ export async function POST(req: NextRequest) {
       ? String(body.username)
       : undefined;
     const force = Boolean(body.force);
+    const access = body.access ? String(body.access).trim() : "";
 
     if (!jobId) {
       return NextResponse.json({ error: "jobId required" }, { status: 400 });
@@ -38,11 +40,25 @@ export async function POST(req: NextRequest) {
     }
 
     if (force) {
-      if (!assertAdminForce(req)) {
+      const adminOk = assertAdminForce(req);
+      let ownerOk = false;
+
+      if (!adminOk && access) {
+        const verified = verifyDashboardToken(access);
+        if (
+          verified &&
+          job.email &&
+          verified.email === job.email.trim().toLowerCase()
+        ) {
+          ownerOk = true;
+        }
+      }
+
+      if (!adminOk && !ownerOk) {
         return NextResponse.json(
           {
             error:
-              "force=true requires x-goke-admin header matching ADMIN_PASSWORD",
+              "force=true requires x-goke-admin or a valid dashboard access token for this job.",
           },
           { status: 403 }
         );
@@ -67,9 +83,10 @@ export async function POST(req: NextRequest) {
         status: job.status,
         siteUrl: job.siteUrl,
         repoUrl: job.repoUrl,
+        error: job.error || null,
       });
     } else if (job.status === "deploying" || job.status === "failed") {
-      // Redeploy after a prior paid attempt (no free publish from pending_payment)
+      // Retry after a prior paid attempt — no free publish from pending_payment
     } else {
       return NextResponse.json(
         {
@@ -87,7 +104,12 @@ export async function POST(req: NextRequest) {
 
     if (updated.status === "failed") {
       return NextResponse.json(
-        { error: updated.error, status: "failed" },
+        {
+          error: updated.error || "Deploy failed",
+          status: "failed",
+          siteUrl: updated.siteUrl || null,
+          repoUrl: updated.repoUrl || null,
+        },
         { status: 500 }
       );
     }
@@ -96,6 +118,7 @@ export async function POST(req: NextRequest) {
       status: updated.status,
       siteUrl: updated.siteUrl,
       repoUrl: updated.repoUrl,
+      error: updated.error || null,
     });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);
