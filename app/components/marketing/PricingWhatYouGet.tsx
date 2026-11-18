@@ -161,9 +161,10 @@ export function PricingWhatYouGet() {
         </h3>
         <div className="gk-faq">
           {faqs.map((f) => (
-            **Summary:**
-{f.q}
-              <p>{f.a}</p>
+            <div key={f.q} className="gk-faq-item" style={{ marginBottom: "1rem" }}>
+              <h4 style={{ margin: "0 0 0.35rem", fontSize: "1rem" }}>{f.q}</h4>
+              <p style={{ margin: 0 }}>{f.a}</p>
+            </div>
           ))}
         </div>
 
