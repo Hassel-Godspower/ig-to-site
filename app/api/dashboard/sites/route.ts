@@ -62,7 +62,10 @@ export async function GET(req: NextRequest) {
         editorMode: j.editorMode || "full",
         editorUrl: editorPath + "?access=" + accessQ,
         canEdit: true,
-        canPushLive: j.status === "done" || j.status === "failed",
+        canPushLive:
+          j.status === "done" ||
+          j.status === "failed" ||
+          j.status === "deploying",
         isLive: live,
         canDownloadZip: true,
         canResendLive: live && Boolean(j.email),
