@@ -10,11 +10,13 @@ type SiteRow = {
   username: string | null;
   customerName: string | null;
   siteUrl: string | null;
+  error?: string | null;
   editorUrl: string;
   canEdit: boolean;
   canPushLive: boolean;
   isLive: boolean;
   canDownloadZip?: boolean;
+  canResendLive?: boolean;
   editorMode: string;
   commerceTier?: string;
   bookingTier?: string;
