@@ -2,9 +2,11 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 
 export const metadata: Metadata = {
-  title: "Hassel Godspower | SEO Specialist, Technical SEO & Web Growth",
+  title: {
+    absolute: "Hassel Godspower | SEO Specialist · Technical SEO & Web Growth",
+  },
   description:
-    "Hassel Godspower is an SEO specialist and website developer in Lagos, Nigeria. Technical SEO, WordPress, WooCommerce, local search and conversion-focused websites.",
+    "Hassel Godspower — SEO specialist and website developer in Lagos. Technical SEO, WordPress, local search, and conversion-focused sites. Founder of HighValue Solutions.",
   alternates: {
     canonical: "https://highvaluesolutions.net/hassel",
   },
@@ -15,8 +17,25 @@ export const metadata: Metadata = {
       "Technical SEO, web development and digital growth. Founder of HighValue Solutions.",
     url: "https://highvaluesolutions.net/hassel",
   },
+  twitter: {
+    card: "summary",
+    title: "Hassel Godspower | SEO Specialist",
+    description:
+      "Technical SEO, web development and digital growth. Founder of HighValue Solutions.",
+  },
+  robots: { index: true, follow: true },
 };
 
 export default function HasselLayout({ children }: { children: ReactNode }) {
-  return <>{children}</>;
+  return (
+    <>
+      {/* Hide gòke product tab bar on this personal route */}
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `body:has(.hg-root) .gk-app-tabbar{display:none!important}`,
+        }}
+      />
+      {children}
+    </>
+  );
 }
