@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getJob, updateJob } from "@/lib/jobStore";
 import { initializeTransaction } from "@/lib/paystack";
+import {
+  countryFromRequest,
+  chargeCurrencyForCountry,
+  amountForCurrency,
+  type PricingCurrency,
+} from "@/lib/pricing";
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
@@ -14,6 +20,11 @@ export async function POST(req: NextRequest) {
       ? String(body.name).trim().slice(0, 80)
       : "";
   const returnPath = String(body.returnPath || "preview");
+
+  // Optional client override: "NGN" | "USD" (only USD if enabled)
+  const forceCurrency = String(body.currency || "")
+    .toUpperCase()
+    .trim() as PricingCurrency | "";
 
   if (!jobId || !username) {
     return NextResponse.json(
@@ -50,25 +61,58 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const amount = Number(process.env.PAYSTACK_AMOUNT || 2000000);
+  const country = countryFromRequest(req);
+  let currency = chargeCurrencyForCountry(country);
+
+  if (forceCurrency === "NGN" || forceCurrency === "USD") {
+    if (forceCurrency === "USD") {
+      const usdOn =
+        String(process.env.PAYSTACK_USD_ENABLED || "").toLowerCase() ===
+        "true";
+      if (!usdOn) {
+        return NextResponse.json(
+          {
+            error:
+              "USD checkout is not enabled yet. Pay in NGN or contact support for an international invoice.",
+          },
+          { status: 400 }
+        );
+      }
+    }
+    currency = forceCurrency;
+  }
+
+  const amount = amountForCurrency(currency);
   const path =
     returnPath === "preview-simple"
-      ? `/preview-simple/${jobId}`
-      : `/preview/${jobId}`;
+      ? "/preview-simple/" + jobId
+      : "/preview/" + jobId;
 
-  const { authorizationUrl } = await initializeTransaction({
-    email,
-    amount,
-    callbackUrl: `${baseUrl}${path}?paid=1`,
-    metadata: {
-      jobId,
-      username: cleanUsername,
-      ...(phone ? { phone } : {}),
-      ...(customerName ? { customerName } : {}),
-    },
-  });
+  try {
+    const { authorizationUrl } = await initializeTransaction({
+      email,
+      amount,
+      currency,
+      callbackUrl: baseUrl + path + "?paid=1",
+      metadata: {
+        jobId,
+        username: cleanUsername,
+        currency,
+        amount: String(amount),
+        ...(phone ? { phone } : {}),
+        ...(customerName ? { customerName } : {}),
+      },
+    });
 
-  return NextResponse.json({ checkoutUrl: authorizationUrl });
+    return NextResponse.json({
+      checkoutUrl: authorizationUrl,
+      currency,
+      amount,
+    });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
 }
 
 function sanitizeUsername(name: string): string {
