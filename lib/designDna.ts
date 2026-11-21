@@ -319,3 +319,30 @@ export function dnaToShellTheme(d: DesignDna, brandPrimary?: string) {
     motion: d.motion,
   };
 }
+
+import type { HeroBlockId } from "./sitePlan";
+
+/** Map DNA hero language → assembler block id */
+export function heroBlockFromDna(
+  variant: HeroVariant | string | undefined
+): HeroBlockId {
+  switch (variant) {
+    case "collage_portrait":
+      return "hero_collage";
+    case "kinetic_type":
+      return "hero_kinetic";
+    case "tech_glow":
+      return "hero_tech";
+    case "split_soft":
+      return "hero_soft_split";
+    case "centered_metrics":
+      return "hero_asymmetric";
+    case "cinematic_fullbleed":
+    default:
+      return "hero_fullbleed";
+  }
+}
+
+export function heroBlockForNiche(nicheId: string): HeroBlockId {
+  return heroBlockFromDna(resolveDesignDna(nicheId).heroVariant);
+}
