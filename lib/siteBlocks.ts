@@ -83,6 +83,20 @@ function aboutLi(c: ShellContent): string {
 
 export function renderHero(hero: HeroBlockId, c: ShellContent): string {
   const heroImg = c.gallery[0]?.src || c.aboutImage || "";
+  const heroImg2 = c.gallery[1]?.src || heroImg;
+  const heroImg3 = c.gallery[2]?.src || heroImg2;
+  const actions = `
+    <div class="hero-actions">
+      <a href="contact.html" class="btn btn-primary" id="cta-button" data-goke="button">${E(c.primaryCta)}</a>
+      <a href="services.html" class="btn btn-outline" data-goke="button">${E(c.secondaryCta)}</a>
+    </div>`;
+  const metrics = c.metrics
+    .slice(0, 3)
+    .map(
+      (m) =>
+        `<div class="num-card" data-goke="container"><strong data-goke="text">${E(m.value)}</strong><span data-goke="text">${E(m.label)}</span></div>`
+    )
+    .join("");
 
   if (hero === "hero_fullbleed") {
     return `
@@ -92,9 +106,74 @@ export function renderHero(hero: HeroBlockId, c: ShellContent): string {
     <p class="eyebrow" data-goke="text">${E(c.kicker)}</p>
     <h1 id="hero-headline" data-goke="heading">${E(c.headlineLine1)}<br/>${E(c.headlineLine2)}</h1>
     <p class="hero-lead" data-goke="text">${E(c.lead)}</p>
-    <div class="hero-actions">
-      <a href="contact.html" class="btn btn-primary" id="cta-button" data-goke="button">${E(c.primaryCta)}</a>
-      <a href="services.html" class="btn btn-outline" data-goke="button">${E(c.secondaryCta)}</a>
+    ${actions}
+  </div>
+</section>`;
+  }
+
+  if (hero === "hero_collage") {
+    return `
+<section class="hero-collage site-section" data-goke="section" data-section-name="hero">
+  <div class="collage-word" aria-hidden="true">${E((c.brand || "STUDIO").slice(0, 12).toUpperCase())}</div>
+  <div class="collage-stage">
+    <figure class="collage-frame f1"><img src="${E(heroImg2)}" alt="" data-goke="image"/></figure>
+    <figure class="collage-frame f2"><img src="${E(heroImg)}" alt="${E(c.brand)}" data-goke="image"/></figure>
+    <figure class="collage-frame f3"><img src="${E(heroImg3)}" alt="" data-goke="image"/></figure>
+  </div>
+  <div class="collage-copy">
+    <p class="eyebrow" data-goke="text">${E(c.kicker)}</p>
+    <h1 id="hero-headline" data-goke="heading">${E(c.headlineLine1)} <em>${E(c.headlineLine2)}</em></h1>
+    <p class="hero-lead" data-goke="text">${E(c.lead)}</p>
+    ${actions}
+  </div>
+</section>`;
+  }
+
+  if (hero === "hero_kinetic") {
+    return `
+<section class="hero-kinetic site-section" data-goke="section" data-section-name="hero">
+  <p class="eyebrow" data-goke="text">${E(c.kicker)}</p>
+  <h1 id="hero-headline" class="kinetic-title" data-goke="heading">
+    <span class="k-line k-a">${E(c.headlineLine1)}</span>
+    <span class="k-line k-b">${E(c.headlineLine2)}</span>
+  </h1>
+  <p class="hero-lead" data-goke="text">${E(c.lead)}</p>
+  ${actions}
+</section>`;
+  }
+
+  if (hero === "hero_tech") {
+    return `
+<section class="hero-tech site-section" data-goke="section" data-section-name="hero">
+  <div class="tech-glow" aria-hidden="true"></div>
+  <div class="tech-grid">
+    <div class="tech-copy">
+      <p class="eyebrow" data-goke="text">${E(c.kicker)}</p>
+      <h1 id="hero-headline" data-goke="heading">${E(c.headlineLine1)} <span class="accent">${E(c.headlineLine2)}</span></h1>
+      <p class="hero-lead" data-goke="text">${E(c.lead)}</p>
+      ${actions}
+      <div class="hero-metrics tech-metrics" data-goke="container">${metrics}</div>
+    </div>
+    <div class="tech-visual">
+      <div class="tech-orb" aria-hidden="true"></div>
+      <img src="${E(heroImg)}" alt="${E(c.brand)}" data-goke="image"/>
+    </div>
+  </div>
+</section>`;
+  }
+
+  if (hero === "hero_soft_split") {
+    return `
+<section class="hero-soft site-section" data-goke="section" data-section-name="hero">
+  <div class="soft-grid">
+    <div class="soft-copy">
+      <p class="eyebrow" data-goke="text">${E(c.kicker)}</p>
+      <h1 id="hero-headline" data-goke="heading">${E(c.headlineLine1)} ${E(c.headlineLine2)}</h1>
+      <p class="hero-lead" data-goke="text">${E(c.lead)}</p>
+      ${actions}
+    </div>
+    <div class="soft-card" data-goke="container">
+      <img src="${E(heroImg)}" alt="${E(c.brand)}" data-goke="image"/>
     </div>
   </div>
 </section>`;
@@ -108,10 +187,7 @@ export function renderHero(hero: HeroBlockId, c: ShellContent): string {
       <p class="eyebrow" data-goke="text">${E(c.kicker)}</p>
       <h1 id="hero-headline" data-goke="heading">${E(c.headlineLine1)} <span style="color:var(--accent)">${E(c.headlineLine2)}</span></h1>
       <p class="hero-lead" data-goke="text">${E(c.lead)}</p>
-      <div class="hero-actions">
-        <a href="contact.html" class="btn btn-primary" id="cta-button" data-goke="button">${E(c.primaryCta)}</a>
-        <a href="services.html" class="btn btn-ghost" data-goke="button">${E(c.secondaryCta)}</a>
-      </div>
+      ${actions}
     </div>
     <div class="split-media"><img src="${E(heroImg)}" alt="${E(c.brand)}" data-goke="image"/></div>
   </div>
@@ -124,14 +200,11 @@ export function renderHero(hero: HeroBlockId, c: ShellContent): string {
   <p class="eyebrow" data-goke="text">${E(c.kicker)}</p>
   <h1 id="hero-headline" data-goke="heading" style="max-width:18ch;font-size:clamp(2.8rem,8vw,5rem)">${E(c.headlineLine1)} ${E(c.headlineLine2)}</h1>
   <p class="hero-lead" data-goke="text">${E(c.lead)}</p>
-  <div class="hero-actions">
-    <a href="contact.html" class="btn btn-primary" id="cta-button" data-goke="button">${E(c.primaryCta)}</a>
-    <a href="services.html" class="btn btn-ghost" data-goke="button">${E(c.secondaryCta)}</a>
-  </div>
+  ${actions}
 </section>`;
   }
 
-  // hero_asymmetric (default performance)
+  // hero_asymmetric
   return `
 <section class="hero site-section" data-goke="section" data-section-name="hero">
   <div class="hero-visual"><img src="${E(heroImg)}" alt="${E(c.brand)}" width="1800" height="1200" data-goke="image"/></div>
@@ -139,17 +212,8 @@ export function renderHero(hero: HeroBlockId, c: ShellContent): string {
     <p class="hero-kicker" data-goke="text">${E(c.kicker)}</p>
     <h1 id="hero-headline" data-goke="heading">${E(c.headlineLine1)} <span class="line2">${E(c.headlineLine2)}</span></h1>
     <p class="hero-lead" data-goke="text">${E(c.lead)}</p>
-    <div class="hero-actions">
-      <a href="contact.html" class="btn btn-primary" id="cta-button" data-goke="button">${E(c.primaryCta)}</a>
-      <a href="services.html" class="btn btn-ghost" data-goke="button">${E(c.secondaryCta)}</a>
-    </div>
-    <div class="hero-metrics" data-goke="container">${c.metrics
-      .slice(0, 3)
-      .map(
-        (m) =>
-          `<div><strong data-goke="text">${E(m.value)}</strong><span data-goke="text">${E(m.label)}</span></div>`
-      )
-      .join("")}</div>
+    ${actions}
+    <div class="hero-metrics" data-goke="container">${metrics}</div>
   </div>
 </section>`;
 }
