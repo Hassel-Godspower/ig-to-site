@@ -11,10 +11,10 @@ type PricingInfo = {
 };
 
 export function PricingTeaser() {
-  const [price, setPrice] = useState<PricingInfo>({
-    primary: "₦20,000",
-    secondary: "≈ $15 · one-time",
-    displayCurrency: "NGN",
+    const [price, setPrice] = useState<PricingInfo>({
+    primary: "$15",
+    secondary: "₦20,000 · one-time · Paystack",
+    displayCurrency: "USD",
     chargeCurrency: "NGN",
   });
 
@@ -103,7 +103,7 @@ export function PricingTeaser() {
               </li>
               <li>Email with your live link</li>
               <li>Dashboard: edit, push live, download ZIP</li>
-              <li>₦20,000 or $15 both unlock the same publish</li>
+              <li><strong>$15 once</strong> (₦20,000) — same publish, no subscription</li>
             </ul>
             <a href="#start" className="gk-btn gk-btn-primary gk-btn-block">
               Generate first — pay later
