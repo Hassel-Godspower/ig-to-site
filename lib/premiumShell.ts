@@ -54,27 +54,37 @@ export type ShellContent = {
 const E = (s: string) =>
   String(s || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
 
-export function themeForNiche(nicheId: string, brandPrimary?: string): ShellTheme {
-  const o = resolveOpulentDirection(nicheId || "general_business");
-  const accent =
-    brandPrimary && /^#[0-9a-fA-F]{6}$/.test(brandPrimary) ? brandPrimary : o.accent;
+import { resolveDesignDna, dnaToShellTheme } from "./designDna";
+// keep other imports; you can drop resolveOpulentDirection from this function
+// if it is only used here — still used by layoutForNiche / prompts elsewhere
+
+export function themeForNiche(
+  nicheId: string,
+  brandPrimary?: string
+): ShellTheme {
+  const dnaTheme = dnaToShellTheme(
+    resolveDesignDna(nicheId || "general_business"),
+    brandPrimary
+  );
+
+  // dnaToShellTheme may include heroVariant / motion — ShellTheme only needs shell tokens
   return {
-    ink: o.ink,
-    ink2: o.ink2,
-    surface: o.surface,
-    line: o.mode === "dark" ? "rgba(255,255,255,0.08)" : "rgba(40,30,20,0.12)",
-    text: o.text,
-    muted: o.muted,
-    accent,
-    accentDim: `${accent}26`,
-    accentGlow: `${accent}59`,
-    onAccent: o.onAccent,
-    mode: o.mode,
-    fontDisplay: o.fontDisplay,
-    fontBody: o.fontBody,
-    googleFontsHref: o.googleFontsHref,
-    radius: o.radius,
-    radiusLg: o.radiusLg,
+    ink: dnaTheme.ink,
+    ink2: dnaTheme.ink2,
+    surface: dnaTheme.surface,
+    line: dnaTheme.line,
+    text: dnaTheme.text,
+    muted: dnaTheme.muted,
+    accent: dnaTheme.accent,
+    accentDim: dnaTheme.accentDim,
+    accentGlow: dnaTheme.accentGlow,
+    onAccent: dnaTheme.onAccent,
+    mode: dnaTheme.mode,
+    fontDisplay: dnaTheme.fontDisplay,
+    fontBody: dnaTheme.fontBody,
+    googleFontsHref: dnaTheme.googleFontsHref,
+    radius: dnaTheme.radius,
+    radiusLg: dnaTheme.radiusLg,
   };
 }
 
