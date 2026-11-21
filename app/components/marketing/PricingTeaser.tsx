@@ -1,22 +1,67 @@
+"use client";
+
+import { useEffect, useState } from "react";
+
+type PricingInfo = {
+  primary: string;
+  secondary: string;
+  displayCurrency: "NGN" | "USD";
+  chargeCurrency: "NGN" | "USD";
+  usdEnabled?: boolean;
+};
+
 export function PricingTeaser() {
+  const [price, setPrice] = useState<PricingInfo>({
+    primary: "₦20,000",
+    secondary: "≈ $15 · one-time",
+    displayCurrency: "NGN",
+    chargeCurrency: "NGN",
+  });
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/pricing")
+      .then((r) => r.json())
+      .then((d) => {
+        if (cancelled || !d?.primary) return;
+        setPrice({
+          primary: d.primary,
+          secondary: d.secondary,
+          displayCurrency: d.displayCurrency === "USD" ? "USD" : "NGN",
+          chargeCurrency: d.chargeCurrency === "USD" ? "USD" : "NGN",
+          usdEnabled: !!d.usdEnabled,
+        });
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const goLiveNote =
+    price.displayCurrency === "USD"
+      ? price.chargeCurrency === "USD"
+        ? "Charged as $15 USD on Paystack · settles to your Paystack balance"
+        : "Shown in USD; checkout still in ₦ until USD is enabled on Paystack"
+      : "Charged as ₦20,000 NGN on Paystack · ≈ $15";
+
   return (
     <section className="gk-section gk-section-alt" id="pricing">
       <div className="gk-container">
         <div className="gk-section-head">
-          <h2>Preview free. Pay when you publish.</h2>
+          <h2>Preview free. Pay once when you publish.</h2>
           <p>
             Generate from Instagram or LinkedIn / CV and edit at no charge.
-            Checkout only when you want a live URL. Payments by{" "}
-            <strong>Paystack</strong>. If we cannot publish after a successful
-            payment, we fix it or refund — see{" "}
-            <a href="#what-you-get">what you get</a>.
+            Checkout only when you want a live URL.{" "}
+            <strong>No monthly subscription</strong> for Go live.
           </p>
         </div>
         <div className="gk-pricing">
           <article className="gk-price-card">
             <h3>Preview</h3>
             <p className="price">
-              ₦0 <span>/ start</span>
+              {price.displayCurrency === "USD" ? "$0" : "₦0"}{" "}
+              <span>/ start</span>
             </p>
             <ul>
               <li>Instagram handle, export, LinkedIn, or CV → site</li>
@@ -31,13 +76,34 @@ export function PricingTeaser() {
           <article className="gk-price-card featured">
             <h3>Go live</h3>
             <p className="price">
-              ₦20,000 <span>/ once</span>
+              {price.primary} <span>/ once</span>
+            </p>
+            <p
+              style={{
+                margin: "-0.5rem 0 1rem",
+                fontSize: 14,
+                color: "var(--gk-muted, #9ca3af)",
+              }}
+            >
+              {price.secondary}
+            </p>
+            <p
+              style={{
+                margin: "0 0 1rem",
+                fontSize: 12,
+                color: "var(--gk-muted, #9ca3af)",
+              }}
+            >
+              {goLiveNote}
             </p>
             <ul>
-              <li>HTTPS site on Cloudflare Pages</li>
-              <li>yourusername.pages.dev included</li>
+              <li>HTTPS on Cloudflare Pages</li>
+              <li>
+                <code>yourusername.pages.dev</code> included
+              </li>
               <li>Email with your live link</li>
               <li>Dashboard: edit, push live, download ZIP</li>
+              <li>₦20,000 or $15 both unlock the same publish</li>
             </ul>
             <a href="#start" className="gk-btn gk-btn-primary gk-btn-block">
               Generate first — pay later
