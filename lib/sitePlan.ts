@@ -7,11 +7,18 @@ import { resolveTemplateFamily, sitePlanFromFamily } from "./templateFamilies";
 import { resolveOpulentDirection, type LuxuryArchetype } from "./opulentDirection";
 
 /** Hero patterns available on the block menu */
+import { resolveTemplateFamily, sitePlanFromFamily } from "./templateFamilies";
+import { heroBlockForNiche } from "./designDna";
+
 export type HeroBlockId =
-  | "hero_fullbleed" // cinematic full viewport image + overlay (spa/dining)
-  | "hero_asymmetric" // split visual | copy + metrics (fitness)
-  | "hero_authority" // type-forward + side media (law/estate)
-  | "hero_minimal"; // large type, minimal chrome
+  | "hero_fullbleed"
+  | "hero_asymmetric"
+  | "hero_authority"
+  | "hero_minimal"
+  | "hero_collage"
+  | "hero_kinetic"
+  | "hero_tech"
+  | "hero_soft_split";
 
 /** Section blocks the assembler knows how to render */
 export type SectionBlockId =
@@ -66,7 +73,12 @@ const HERO_SET = new Set<string>([
   "hero_asymmetric",
   "hero_authority",
   "hero_minimal",
+  "hero_collage",
+  "hero_kinetic",
+  "hero_tech",
+  "hero_soft_split",
 ]);
+
 const SECTION_SET = new Set<string>([
   "marquee",
   "services_bento",
@@ -81,6 +93,15 @@ const SECTION_SET = new Set<string>([
   "offerings_editorial",
 ]);
 const CARD_SET = new Set<string>(["bento", "grid", "list", "editorial"]);
+
+export function defaultPlanForNiche(nicheId: string): SitePlan {
+  const family = resolveTemplateFamily(nicheId);
+  const plan = sitePlanFromFamily(family);
+  return {
+    ...plan,
+    hero: heroBlockForNiche(nicheId),
+  };
+}
 
 /** Merge AI plan with niche defaults; drop unknown block ids */
 export function normalizeSitePlan(
