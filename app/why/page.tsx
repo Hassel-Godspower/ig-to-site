@@ -6,7 +6,7 @@ import { SiteFooter } from "../components/marketing/SiteFooter";
 export const metadata: Metadata = {
   title: "Why gòke — Stop renting a profile. Own a website.",
   description:
-    "gòke turns an Instagram data export into a real multi-section website you can edit visually. Free to generate. ₦20,000 once to publish.",
+    "gòke turns an Instagram data export into a real multi-section website you can edit visually. Free to generate. $15 once to publish.",
 };
 
 const reasons = [
@@ -83,7 +83,7 @@ const features = [
   "Visual editor — structure, components, content, responsive views",
   "Business-ready templates — commerce, services, wellness, creative, and more",
   "Preview free — generate and edit with no card required",
-  "One-time publish — ₦20,000 to go live",
+  "One-time publish — $15 (₦20,000) to go live",
   "Explore network — posts from gòke sites in a discovery feed",
   "Installable web app — keep gòke handy on your device",
 ];
