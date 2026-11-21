@@ -1,4 +1,10 @@
 import crypto from "crypto";
+import {
+  NGN_AMOUNT_KOBO,
+  USD_AMOUNT_CENTS,
+  isAcceptedPublishPayment,
+  type PricingCurrency,
+} from "./pricing";
 
 const PAYSTACK_API = "https://api.paystack.co";
 
@@ -10,19 +16,22 @@ export interface InitializedTransaction {
 export async function initializeTransaction(params: {
   email: string;
   amount: number;
+  currency?: PricingCurrency | string;
   callbackUrl: string;
   metadata: Record<string, string>;
 }): Promise<InitializedTransaction> {
-  const res = await fetch(`${PAYSTACK_API}/transaction/initialize`, {
+  const currency = String(params.currency || "NGN").toUpperCase();
+
+  const res = await fetch(PAYSTACK_API + "/transaction/initialize", {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+      Authorization: "Bearer " + process.env.PAYSTACK_SECRET_KEY,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
       email: params.email,
       amount: params.amount,
-      currency: process.env.PAYSTACK_CURRENCY || "NGN",
+      currency,
       callback_url: params.callbackUrl,
       metadata: params.metadata,
     }),
@@ -30,7 +39,9 @@ export async function initializeTransaction(params: {
 
   const data = await res.json();
   if (!res.ok || !data.status) {
-    throw new Error(`Paystack initialize failed: ${data.message ?? res.status}`);
+    throw new Error(
+      "Paystack initialize failed: " + (data.message ?? res.status)
+    );
   }
 
   return {
@@ -62,7 +73,6 @@ export interface VerifiedTransaction {
   status: string;
   gatewayResponse?: string;
   metadata?: Record<string, any>;
-  /** Amount in smallest currency unit (kobo for NGN) */
   amount?: number;
   currency?: string;
   reference?: string;
@@ -73,16 +83,20 @@ export async function verifyTransaction(
   reference: string
 ): Promise<VerifiedTransaction> {
   const res = await fetch(
-    `\( {PAYSTACK_API}/transaction/verify/ \){encodeURIComponent(reference)}`,
+    PAYSTACK_API +
+      "/transaction/verify/" +
+      encodeURIComponent(reference),
     {
       headers: {
-        Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+        Authorization: "Bearer " + process.env.PAYSTACK_SECRET_KEY,
       },
     }
   );
   const data = await res.json();
   if (!res.ok || !data.status) {
-    throw new Error(`Paystack verify failed: ${data.message ?? res.status}`);
+    throw new Error(
+      "Paystack verify failed: " + (data.message ?? res.status)
+    );
   }
   const d = data.data || {};
   return {
@@ -96,10 +110,9 @@ export async function verifyTransaction(
   };
 }
 
-/** Expected publish fee from env (kobo). Default ₦20,000. */
+/** @deprecated prefer NGN_AMOUNT_KOBO / amountForCurrency */
 export function expectedPaystackAmount(): number {
-  const n = Number(process.env.PAYSTACK_AMOUNT || 2000000);
-  return Number.isFinite(n) && n > 0 ? n : 2000000;
+  return NGN_AMOUNT_KOBO;
 }
 
 export function expectedPaystackCurrency(): string {
@@ -107,7 +120,7 @@ export function expectedPaystackCurrency(): string {
 }
 
 /**
- * Ensure a successful Paystack transaction belongs to this job and amount.
+ * Successful payment for this jobId + either ₦20k NGN or $15 USD.
  */
 export function assertPaymentForJob(
   verified: VerifiedTransaction,
@@ -116,7 +129,10 @@ export function assertPaymentForJob(
   if (verified.status !== "success") {
     return {
       ok: false,
-      error: verified.gatewayResponse || verified.status || "Payment not successful",
+      error:
+        verified.gatewayResponse ||
+        verified.status ||
+        "Payment not successful",
     };
   }
 
@@ -135,25 +151,18 @@ export function assertPaymentForJob(
     };
   }
 
-  const expected = expectedPaystackAmount();
-  if (
-    typeof verified.amount === "number" &&
-    Number.isFinite(verified.amount) &&
-    verified.amount !== expected
-  ) {
+  if (!isAcceptedPublishPayment(verified.amount, verified.currency)) {
     return {
       ok: false,
-      error: `Payment amount mismatch (got ${verified.amount}, expected ${expected})`,
-    };
-  }
-
-  const cur = (verified.currency || expectedPaystackCurrency()).toUpperCase();
-  if (cur !== expectedPaystackCurrency()) {
-    return {
-      ok: false,
-      error: `Payment currency mismatch (got ${cur}, expected ${expectedPaystackCurrency()})`,
+      error:
+        "Payment amount/currency not accepted for Go live (need ₦20,000 NGN or $15 USD). Got " +
+        String(verified.amount) +
+        " " +
+        String(verified.currency || "?"),
     };
   }
 
   return { ok: true };
 }
+
+export { NGN_AMOUNT_KOBO, USD_AMOUNT_CENTS };
