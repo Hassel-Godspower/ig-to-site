@@ -3,12 +3,12 @@
  */
 const faqs = [
   {
-    q: "What does ₦20,000 include?",
+    q: "What does $15 include?",
     a: "Your generated multi-page website (Instagram business path or LinkedIn / CV professional path), HTTPS hosting on Cloudflare Pages, and a free subdomain such as yourusername.pages.dev. Preview and editing stay free until you choose to publish.",
   },
   {
     q: "Is a custom domain included?",
-    a: "No. yourusername.pages.dev is included with Go live. A custom domain such as yourname.com, yourname.org, or yourname.com.ng is an optional add-on at ₦30,000, renewed yearly.",
+    a: "No. yourusername.pages.dev is included with Go live. A custom domain such as yourname.com, yourname.org, or yourname.com.ng is an optional add-on, renewed yearly.",
   },
   {
     q: "What if publish fails after I pay?",
@@ -28,7 +28,7 @@ const faqs = [
   },
   {
     q: "Do I pay every month?",
-    a: "The core Go live fee is one-time (₦20,000). Custom domains renew yearly (₦30,000). Optional feature packs are charged only if you choose them.",
+    a: "The core Go live fee is one-time ($15). Custom domains renew yearly. Optional feature packs are charged only if you choose them.",
   },
   {
     q: "What happens to my Instagram export or CV?",
@@ -39,7 +39,7 @@ const faqs = [
 const addons = [
   {
     name: "Custom domain",
-    price: "₦30,000 / year",
+    price: "$25/year",
     body: "yourname.com, .org, .com.ng and similar — connected to your gòke site. Renewed yearly.",
   },
   {
@@ -73,10 +73,11 @@ export function PricingWhatYouGet() {
     >
       <div className="gk-container" style={{ maxWidth: 920 }}>
         <div className="gk-section-head">
-          <h2 id="what-you-get-title">What you get for ₦20,000</h2>
+          <h2 id="what-you-get-title">What you get for $15 · ₦20,000</h2>
           <p>
-            Clear limits: what is included, what is optional, and what gòke is
-            not.
+            One-time publish fee. About <strong>$15</strong> — billed as{" "}
+            <strong>₦20,000</strong> on Paystack in Nigeria. No monthly subscription
+            for the core package.
           </p>
         </div>
 
