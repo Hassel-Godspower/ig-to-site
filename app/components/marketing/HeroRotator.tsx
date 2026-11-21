@@ -21,7 +21,7 @@ const SLIDES: Slide[] = [
     points: [
       "Free to generate & edit",
       "Business niches · WhatsApp-ready CTAs",
-      "Pay only to publish · ₦20,000 once via Paystack",
+      "Publish from $15 once · ₦20,000 · Paystack",
     ],
   },
   {
@@ -61,15 +61,15 @@ const SLIDES: Slide[] = [
     ],
   },
   {
-    eyebrow: "Publish once",
+    eyebrow: "Publish once · $15",
     title: "Pay once.",
     titleAccent: "Own your presence.",
     description:
-      "When the site is right, pay ₦20,000 via Paystack. We deploy to Cloudflare Pages, email your live link, and you keep editing from your dashboard.",
+      "When the site is right, go live for $15 (₦20,000). Checkout runs on Paystack. We deploy to Cloudflare Pages, email your live link, and you keep editing from your dashboard.",
     points: [
+      "$15 once · ≈ ₦20,000 · no monthly fee",
       "Paystack checkout (cards, bank, USSD)",
       "Live URL on Cloudflare Pages + HTTPS",
-      "Dashboard access to manage your site",
     ],
   },
 ];
