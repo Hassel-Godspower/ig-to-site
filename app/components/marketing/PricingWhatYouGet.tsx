@@ -15,6 +15,18 @@ const faqs = [
     a: "If payment succeeds but we cannot get your site live after a reasonable attempt, contact us on WhatsApp (+234 706 534 1105) with your Paystack reference. We will either complete the publish or refund the Go live fee — we do not keep payment for a site that never went live.",
   },
   {
+    q: "How much is Go live?",
+    a: "One-time $15 (₦20,000). Preview and editing are free. Checkout uses Paystack. There is no monthly subscription for the core publish package.",
+  },
+  {
+    q: "Why do I see both $15 and ₦20,000?",
+    a: "$15 is the international price for the same package. Nigerian checkout is ₦20,000 on Paystack (cards, bank, USSD). Both unlock the same hosting, subdomain, email link, and dashboard.",
+  },
+  {
+    q: "Do I pay every month?",
+    a: "No. Go live is one-time ($15 / ₦20,000). Custom domains renew yearly (₦30,000). Optional add-ons only if you choose them.",
+  },
+  {
     q: "Is gòke a marketplace? Will it bring me customers?",
     a: "No. gòke is not a marketplace like Jumia or Jiji, and we do not promise traffic or leads. We help you build a website you own and control — so visitors you already have (or reach yourself) land somewhere credible.",
   },
