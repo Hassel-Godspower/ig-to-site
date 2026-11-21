@@ -21,7 +21,7 @@ const SLIDES: Slide[] = [
     points: [
       "Free to generate & edit",
       "Timeline, skills, projects, hire-me CTAs",
-      "Same publish path · ₦20,000 once via Paystack",
+      "Publish from $15 once · ₦20,000 · Paystack",
     ],
   },
   {
