@@ -1,6 +1,6 @@
 const metrics = [
   { value: "Free", label: "to generate & edit" },
-  { value: "₦20k", label: "once to publish" },
+  { value: "$15", label: "once to publish" },
   { value: "Multi-page", label: "not a link list" },
   { value: "Visual", label: "editor included" },
 ];
