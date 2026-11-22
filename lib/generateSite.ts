@@ -512,6 +512,7 @@ export async function generateSite(
       .join("\n---\n")}`,
     intel,
     opulentPromptBlock(nicheForDirection, brandName),
+    designDnaPromptBlock(nicheForDirection, brandName),
     sitePlanMenuForPrompt(),
     `Catalogue (from captions — use as products when shoppable; NEVER invent prices; use null/Ask on WhatsApp if unknown):\n${catalogSeed.items.map((it) => `- ${it.name} | ${it.priceLabel} | ${it.id}`).join("\n") || "(none)"}`,
     catalogSeed.mode === "commerce"
