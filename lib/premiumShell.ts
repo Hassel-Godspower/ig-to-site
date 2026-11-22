@@ -12,6 +12,7 @@ import {
 import type { CatalogItem, CatalogSeed } from "./extractCatalog";
 import { COMMERCE_BOOKING_RUNTIME, ensureCommerceRuntime } from "./staticCommerceRuntime";
 import { catalogFromTitles, isShoppableFamily, modeForFamily } from "./extractCatalog";
+import { resolveDesignDna, dnaToShellTheme } from "./designDna";
 /**
  * Deterministic premium shell (craft: ifitnessng.pages.dev).
  */
@@ -53,10 +54,6 @@ export type ShellContent = {
 };
 const E = (s: string) =>
   String(s || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
-
-import { resolveDesignDna, dnaToShellTheme } from "./designDna";
-// keep other imports; you can drop resolveOpulentDirection from this function
-// if it is only used here — still used by layoutForNiche / prompts elsewhere
 
 export function themeForNiche(
   nicheId: string,
