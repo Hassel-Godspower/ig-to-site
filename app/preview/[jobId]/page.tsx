@@ -119,13 +119,16 @@ export default function PreviewPage() {
   const [currentPage, setCurrentPage] = useState("index.html");
 
   // Unlock whole-page scroll on mobile (html/body otherwise often overflow:hidden from app layout)
+    // Phone-first once on mount — do NOT fight manual Desktop/Tablet toggles on resize
   useEffect(() => {
-    document.documentElement.classList.add("goke-editor-route");
-    document.body.classList.add("goke-editor-route");
-    return () => {
-      document.documentElement.classList.remove("goke-editor-route");
-      document.body.classList.remove("goke-editor-route");
-    };
+    if (typeof window === "undefined") return;
+    if (window.innerWidth <= 900) {
+      setDevice("mobile");
+      setFrameWidthPx(390);
+    } else {
+      setDevice("desktop");
+      setFrameWidthPx(1200);
+    }
   }, []);
 
   // Multipage manifest
