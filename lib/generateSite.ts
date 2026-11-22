@@ -20,6 +20,7 @@ import {
 import { sitePlanMenuForPrompt } from "./sitePlan";
 import { resolveTemplateFamily } from "./templateFamilies";
 import { extractCatalogFromPosts, mergeCatalogItems } from "./extractCatalog";
+import { designDnaPromptBlock } from "./designDna";
 
 /**
  * Multi-page niche-aware static site via Groq.
