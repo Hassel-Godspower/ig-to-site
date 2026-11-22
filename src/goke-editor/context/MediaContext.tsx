@@ -1,12 +1,12 @@
 /**
- * Provides job-scoped media upload to PropertyField / IconPicker etc.
- * Stage 1: sends x-goke-edit-token on upload.
+ * Job-scoped media upload for PropertyField / IconPicker.
+ * Always claims edit token before POST /upload.
  */
 
 "use client";
 
 import React, { createContext, useCallback, useContext } from "react";
-import { editAuthHeaders } from "@/lib/editTokenClient";
+import { editAuthHeaders, ensureEditToken } from "@/lib/editTokenClient";
 
 type MediaContextValue = {
   jobId: string | null;
@@ -29,18 +29,22 @@ export function MediaProvider({
 }) {
   const uploadFile = useCallback(
     async (file: File): Promise<string> => {
+      await ensureEditToken(jobId);
       const body = new FormData();
       body.append("file", file);
-      const res = await fetch(`/api/site/${jobId}/upload`, {
+      const res = await fetch("/api/site/" + jobId + "/upload", {
         method: "POST",
         headers: editAuthHeaders(jobId),
         body,
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        throw new Error(data?.error || `Upload failed (${res.status})`);
+        throw new Error(
+          (data as { error?: string })?.error ||
+            "Upload failed (" + res.status + ")"
+        );
       }
-      return data.url as string;
+      return (data as { url: string }).url;
     },
     [jobId]
   );
