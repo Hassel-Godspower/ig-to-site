@@ -18,7 +18,7 @@ export async function GET(
   return NextResponse.json({
     items: files.map((filename) => ({
       filename,
-      url: `/api/site/\( {jobId}/ \){filename}`,
+      url: "/api/site/" + jobId + "/" + filename,
     })),
   });
 }
