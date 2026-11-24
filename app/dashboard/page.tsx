@@ -248,23 +248,37 @@ export default function DashboardPage() {
     setInfo(null);
     try {
       const token = accessToken();
+      if (!token) {
+        setError("Sign in again from your email link, then retry Push live.");
+        return;
+      }
       const res = await fetch("/api/deploy", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           jobId,
           force: true,
-          access: token || undefined,
+          access: token,
         }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Deploy failed");
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(
+          (data as { error?: string }).error ||
+            "Deploy failed (" + res.status + ")"
+        );
+      }
+      if ((data as { status?: string }).status === "failed") {
+        throw new Error(
+          (data as { error?: string }).error || "Deploy failed"
+        );
+      }
       setInfo(
-        data.siteUrl
-          ? "Live updated: " + data.siteUrl
+        (data as { siteUrl?: string }).siteUrl
+          ? "Live updated: " + (data as { siteUrl: string }).siteUrl
           : "Deploy finished."
       );
-      if (token) await loadWithAccess(token);
+      await loadWithAccess(token);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Deploy failed");
     } finally {
