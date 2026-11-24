@@ -1380,7 +1380,7 @@ export default function PreviewPage() {
                   placeholder="yourname"
                   style={s.usernameInput}
                 />
-                <span style={s.usernameSuffix}>.vercel.app</span>
+                <span style={s.usernameSuffix}>.pages.dev</span>
               </div>
             </label>
             <label style={{ ...s.fieldLabel, marginTop: 12 }}>
