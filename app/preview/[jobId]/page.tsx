@@ -169,20 +169,6 @@ export default function PreviewPage() {
     void ensureEditToken(jobId);
   }, [jobId]);
 
-  // Phone-first on small viewports
-  useEffect(() => {
-    const apply = () => {
-      if (typeof window === "undefined") return;
-      if (window.innerWidth <= 900) {
-        setDevice("mobile");
-        setFrameWidthPx(390);
-      }
-    };
-    apply();
-    window.addEventListener("resize", apply);
-    return () => window.removeEventListener("resize", apply);
-  }, []);
-
   // Page min-width tracks canvas frame so the WHOLE page can scroll horizontally
   useEffect(() => {
     const w =
@@ -574,7 +560,16 @@ export default function PreviewPage() {
     const doc = iframeRef.current?.contentDocument;
     if (!doc || !jobId) return;
 
-    await ensureEditToken(jobId);
+    const tok = await ensureEditToken(jobId);
+    const headers = editAuthHeaders(jobId, {
+      "Content-Type": "text/html; charset=utf-8",
+    });
+    if (!tok && !headers["x-goke-edit-token"]) {
+      setError(
+        "Could not authorize edits. Refresh the page or open the editor from your dashboard link."
+      );
+      return;
+    }
 
     applyResponsiveStylesToDocument(doc);
     const html =
@@ -753,38 +748,6 @@ export default function PreviewPage() {
     setSelectedComponent(null);
   }
 
-  async function pushLiveUpdates() {
-    setError(null);
-    await saveEdits();
-    const access =
-      typeof window !== "undefined"
-        ? new URLSearchParams(window.location.search).get("access")
-        : null;
-    setPhase("polling");
-    const res = await fetch("/api/deploy", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        jobId,
-        force: true,
-        ...(access ? { access } : {}),
-      }),
-    });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      setError(
-        (data as { error?: string }).error ||
-          "Push live failed. Open Dashboard and use Push live updates (email link required)."
-      );
-      setPhase(siteUrl ? "live" : "failed");
-      return;
-    }
-    if ((data as { siteUrl?: string }).siteUrl) {
-      setSiteUrl((data as { siteUrl: string }).siteUrl);
-    }
-    setPhase("live");
-  }
-
 
   async function handleApplyGokeMain(
     template: GokeMainTemplate,
@@ -864,17 +827,72 @@ export default function PreviewPage() {
     window.location.href = data.checkoutUrl;
   }
 
-  async function retryDeploy() {
+    async function pushLiveUpdates() {
+    if (!jobId) return;
     setError(null);
+    try {
+      await saveEdits();
+    } catch {
+      /* saveEdits sets error */
+    }
+
+    const access =
+      typeof window !== "undefined"
+        ? new URLSearchParams(window.location.search).get("access")
+        : null;
+
     setPhase("polling");
     const res = await fetch("/api/deploy", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ jobId }),
+      body: JSON.stringify({
+        jobId,
+        force: true,
+        ...(access ? { access } : {}),
+      }),
+    });
+    const data = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+      setError(
+        (data as { error?: string }).error ||
+          "Push live failed. Open Dashboard (email link) and use Push live updates."
+      );
+      setPhase(siteUrl ? "live" : "failed");
+      return;
+    }
+
+    if ((data as { status?: string }).status === "failed") {
+      setError((data as { error?: string }).error || "Deploy failed");
+      setPhase("failed");
+      return;
+    }
+
+    if ((data as { siteUrl?: string }).siteUrl) {
+      setSiteUrl((data as { siteUrl: string }).siteUrl);
+    }
+    setPhase("live");
+  }
+
+  async function retryDeploy() {
+    setError(null);
+    setPhase("polling");
+    const access =
+      typeof window !== "undefined"
+        ? new URLSearchParams(window.location.search).get("access")
+        : null;
+    const res = await fetch("/api/deploy", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        jobId,
+        force: true,
+        ...(access ? { access } : {}),
+      }),
     });
     if (!res.ok) {
-      const data = await res.json();
-      setError(data.error);
+      const data = await res.json().catch(() => ({}));
+      setError((data as { error?: string }).error || "Retry failed");
       setPhase("failed");
     }
   }
@@ -957,15 +975,27 @@ export default function PreviewPage() {
         </div>
 
         <div className="goke-toolbar-right">
-          {phase === "live" && siteUrl ? (
-            <a
-              href={siteUrl}
-              target="_blank"
-              rel="noreferrer"
-              style={{ color: "#4ade80", fontSize: 13 }}
-            >
-              {siteUrl.replace(/^https?:\/\//, "")}
-            </a>
+                    {phase === "live" && siteUrl ? (
+            <>
+              <a
+                href={siteUrl}
+                target="_blank"
+                rel="noreferrer"
+                style={{ color: "#4ade80", fontSize: 13 }}
+              >
+                {siteUrl.replace(/^https?:\/\//, "")}
+              </a>
+              <button
+                type="button"
+                title="Save and republish to Cloudflare"
+                onClick={() => void pushLiveUpdates()}
+              >
+                Push live updates
+              </button>
+              <button type="button" onClick={() => void saveEdits()} disabled={saved}>
+                {saved ? "Saved" : "Save changes"}
+              </button>
+            </>
           ) : phase === "polling" || phase === "verifying" ? (
             <span style={{ color: "#a3a3a3", fontSize: 13 }}>
               Creating live website…
