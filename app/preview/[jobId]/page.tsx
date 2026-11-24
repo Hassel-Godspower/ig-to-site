@@ -753,6 +753,38 @@ export default function PreviewPage() {
     setSelectedComponent(null);
   }
 
+  async function pushLiveUpdates() {
+    setError(null);
+    await saveEdits();
+    const access =
+      typeof window !== "undefined"
+        ? new URLSearchParams(window.location.search).get("access")
+        : null;
+    setPhase("polling");
+    const res = await fetch("/api/deploy", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        jobId,
+        force: true,
+        ...(access ? { access } : {}),
+      }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      setError(
+        (data as { error?: string }).error ||
+          "Push live failed. Open Dashboard and use Push live updates (email link required)."
+      );
+      setPhase(siteUrl ? "live" : "failed");
+      return;
+    }
+    if ((data as { siteUrl?: string }).siteUrl) {
+      setSiteUrl((data as { siteUrl: string }).siteUrl);
+    }
+    setPhase("live");
+  }
+
 
   async function handleApplyGokeMain(
     template: GokeMainTemplate,
@@ -785,7 +817,6 @@ export default function PreviewPage() {
     setSelectedElement(null);
     setSelectedComponent(null);
   }
-
 
 
   function dismissHelp(kind: "regen" | "publish") {
