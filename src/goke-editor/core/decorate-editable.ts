@@ -65,6 +65,25 @@ export function decorateEditableDocument(doc: Document): void {
     mark(el, "link");
   });
 
+    // Stage 5 hero line fragments
+  doc
+    .querySelectorAll(
+      ".k-line, .kinetic-title .k-a, .kinetic-title .k-b, h1 em, h1 .accent, .hero-lead, .eyebrow, .collage-copy h1, .soft-copy h1"
+    )
+    .forEach((el) => {
+      if (el.tagName === "H1") mark(el, "heading");
+      else mark(el, "text");
+    });
+
+  // Never intercept clicks on pure decoration
+  doc
+    .querySelectorAll(
+      ".tech-glow, .tech-orb, .collage-word, [aria-hidden='true']"
+    )
+    .forEach((el) => {
+      (el as HTMLElement).style.pointerEvents = "none";
+    });
+
   doc.querySelectorAll("input, textarea, select").forEach((el) => {
     const type = (el.getAttribute("type") || "").toLowerCase();
     if (type === "checkbox" || type === "radio") mark(el, "input");
