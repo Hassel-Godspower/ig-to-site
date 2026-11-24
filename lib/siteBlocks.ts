@@ -122,7 +122,7 @@ export function renderHero(hero: HeroBlockId, c: ShellContent): string {
   </div>
   <div class="collage-copy">
     <p class="eyebrow" data-goke="text">${E(c.kicker)}</p>
-    <h1 id="hero-headline" data-goke="heading">${E(c.headlineLine1)} <em>${E(c.headlineLine2)}</em></h1>
+    <h1 id="hero-headline" data-goke="heading">${E(c.headlineLine1)} <em data-goke="text">${E(c.headlineLine2)}</em></h1>
     <p class="hero-lead" data-goke="text">${E(c.lead)}</p>
     ${actions}
   </div>
@@ -134,8 +134,8 @@ export function renderHero(hero: HeroBlockId, c: ShellContent): string {
 <section class="hero-kinetic site-section" data-goke="section" data-section-name="hero">
   <p class="eyebrow" data-goke="text">${E(c.kicker)}</p>
   <h1 id="hero-headline" class="kinetic-title" data-goke="heading">
-    <span class="k-line k-a">${E(c.headlineLine1)}</span>
-    <span class="k-line k-b">${E(c.headlineLine2)}</span>
+    <span class="k-line k-a" data-goke="text">${E(c.headlineLine1)}</span>
+    <span class="k-line k-b" data-goke="text">${E(c.headlineLine2)}</span>
   </h1>
   <p class="hero-lead" data-goke="text">${E(c.lead)}</p>
   ${actions}
@@ -149,7 +149,7 @@ export function renderHero(hero: HeroBlockId, c: ShellContent): string {
   <div class="tech-grid">
     <div class="tech-copy">
       <p class="eyebrow" data-goke="text">${E(c.kicker)}</p>
-      <h1 id="hero-headline" data-goke="heading">${E(c.headlineLine1)} <span class="accent">${E(c.headlineLine2)}</span></h1>
+      <h1 id="hero-headline" data-goke="heading">${E(c.headlineLine1)} <span class="accent" data-goke="text">${E(c.headlineLine2)}</span></h1>
       <p class="hero-lead" data-goke="text">${E(c.lead)}</p>
       ${actions}
       <div class="hero-metrics tech-metrics" data-goke="container">${metrics}</div>
@@ -186,6 +186,7 @@ export function renderHero(hero: HeroBlockId, c: ShellContent): string {
     <div>
       <p class="eyebrow" data-goke="text">${E(c.kicker)}</p>
       <h1 id="hero-headline" data-goke="heading">${E(c.headlineLine1)} <span style="color:var(--accent)">${E(c.headlineLine2)}</span></h1>
+      <span style="color:var(--accent)" data-goke="text">${E(c.headlineLine2)}</span>
       <p class="hero-lead" data-goke="text">${E(c.lead)}</p>
       ${actions}
     </div>
