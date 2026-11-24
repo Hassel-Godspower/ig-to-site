@@ -1033,16 +1033,35 @@ export default function PreviewPage() {
         </div>
       </header>
 
-      {(phase === "failed" || phase === "payment_failed") && error && (
+      {error && (
         <div
           style={{
             background: "#450a0a",
             color: "#fca5a5",
             padding: "8px 16px",
             fontSize: 13,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 12,
           }}
         >
-          {error}
+          <span>{error}</span>
+          <button
+            type="button"
+            onClick={() => setError(null)}
+            style={{
+              background: "transparent",
+              border: "1px solid #fca5a5",
+              color: "#fca5a5",
+              borderRadius: 6,
+              padding: "4px 10px",
+              cursor: "pointer",
+              flexShrink: 0,
+            }}
+          >
+            Dismiss
+          </button>
         </div>
       )}
 
