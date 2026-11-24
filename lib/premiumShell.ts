@@ -125,6 +125,7 @@ h1,h2,h3{font-family:var(--font-display);font-weight:600;line-height:1.12;letter
 .mobile-nav:not([hidden]){display:flex}.mobile-nav a{font-size:1rem;color:var(--muted)}.mobile-nav a.cta{color:var(--on-accent);background:var(--accent);padding:.85rem 1.2rem;border-radius:999px;text-align:center;font-weight:600}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:.4rem;padding:.9rem 1.5rem;border-radius:999px;font-weight:600;font-size:.82rem;letter-spacing:.04em;border:1px solid transparent;cursor:pointer;transition:transform .2s,background .2s,border-color .2s,color .2s}
 .btn-primary{background:var(--accent);color:var(--on-accent)}.btn-primary:hover{filter:brightness(1.06);transform:translateY(-1px)}
+.tech-orb,.tech-glow,.collage-word{pointer-events:none!important}
 .btn-ghost{background:transparent;color:var(--text);border-color:var(--line)}.btn-ghost:hover{border-color:var(--accent);color:var(--accent)}
 .btn-sm{padding:.55rem 1rem;font-size:.78rem}
 .btn-outline{background:transparent;border-color:var(--accent);color:var(--accent)}.btn-outline:hover{background:var(--accent);color:var(--on-accent)}
