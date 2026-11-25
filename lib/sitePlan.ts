@@ -83,12 +83,31 @@ const SECTION_SET = new Set<string>([
 const CARD_SET = new Set<string>(["bento", "grid", "list", "editorial"]);
 
 /** Deterministic default plan from niche — DNA chooses hero composition */
+import { resolveTemplateFamily, sitePlanFromFamily } from "./templateFamilies";
+import {
+  heroBlockForNiche,
+  resolveDesignDna,
+  sectionsForDna,
+  cardStyleForDna,
+} from "./designDna";
+
 export function defaultPlanForNiche(nicheId: string): SitePlan {
   const family = resolveTemplateFamily(nicheId);
-  const plan = sitePlanFromFamily(family);
+  const fromFamily = sitePlanFromFamily(family);
+  const dna = resolveDesignDna(nicheId);
+
   return {
-    ...plan,
+    ...fromFamily,
+    // DNA wins on visual composition; family keeps nav / pageTitles
     hero: heroBlockForNiche(nicheId),
+    sections: sectionsForDna(dna.id),
+    cardStyle: cardStyleForDna(dna.id),
+    density:
+      dna.spacingScale === "tight"
+        ? "rich"
+        : dna.spacingScale === "editorial"
+          ? "sparse"
+          : "balanced",
   };
 }
 
