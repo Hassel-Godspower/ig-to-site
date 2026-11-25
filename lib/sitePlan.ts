@@ -4,7 +4,12 @@
  */
 
 import { resolveTemplateFamily, sitePlanFromFamily } from "./templateFamilies";
-import { heroBlockForNiche } from "./designDna";
+import {
+  heroBlockForNiche,
+  resolveDesignDna,
+  sectionsForDna,
+  cardStyleForDna,
+} from "./designDna";
 
 /** Hero patterns available on the block menu */
 export type HeroBlockId =
@@ -82,32 +87,28 @@ const SECTION_SET = new Set<string>([
 
 const CARD_SET = new Set<string>(["bento", "grid", "list", "editorial"]);
 
-/** Deterministic default plan from niche — DNA chooses hero composition */
-import { resolveTemplateFamily, sitePlanFromFamily } from "./templateFamilies";
-import {
-  heroBlockForNiche,
-  resolveDesignDna,
-  sectionsForDna,
-  cardStyleForDna,
-} from "./designDna";
-
+/**
+ * Deterministic default plan from niche —
+ * family IA + DNA hero / sections / cardStyle.
+ */
 export function defaultPlanForNiche(nicheId: string): SitePlan {
   const family = resolveTemplateFamily(nicheId);
   const fromFamily = sitePlanFromFamily(family);
   const dna = resolveDesignDna(nicheId);
 
+  const density: SitePlan["density"] =
+    dna.spacingScale === "editorial"
+      ? "sparse"
+      : dna.spacingScale === "compact"
+        ? "rich"
+        : "balanced";
+
   return {
     ...fromFamily,
-    // DNA wins on visual composition; family keeps nav / pageTitles
     hero: heroBlockForNiche(nicheId),
     sections: sectionsForDna(dna.id),
     cardStyle: cardStyleForDna(dna.id),
-    density:
-      dna.spacingScale === "tight"
-        ? "rich"
-        : dna.spacingScale === "editorial"
-          ? "sparse"
-          : "balanced",
+    density,
   };
 }
 
