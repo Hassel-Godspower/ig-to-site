@@ -378,3 +378,53 @@ export function heroBlockFromDna(
 export function heroBlockForNiche(nicheId: string): HeroBlockId {
   return heroBlockFromDna(resolveDesignDna(nicheId).heroVariant);
 }
+
+import type { SectionBlockId, CardStyle } from "./sitePlan";
+
+/** Ordered home sections per DNA — studio composition, not random */
+export function sectionsForDna(dnaId: DesignDnaId): SectionBlockId[] {
+  switch (dnaId) {
+    case "sensorial_wellness":
+      return ["marquee", "services_bento", "about_split", "gallery_mosaic", "quotes", "cta_band"];
+    case "editorial_collage":
+      return ["offerings_editorial", "about_split", "gallery_mosaic", "quotes", "cta_panel"];
+    case "kinetic_agency":
+      return ["marquee", "services_grid", "metrics_row", "about_split", "cta_band"];
+    case "future_tech":
+      return ["metrics_row", "services_bento", "about_split", "gallery_mosaic", "cta_band"];
+    case "cinematic_luxury":
+      return ["marquee", "services_grid", "about_split", "gallery_mosaic", "quotes", "cta_panel"];
+    case "performance_edge":
+      return ["metrics_row", "services_bento", "about_split", "gallery_mosaic", "cta_band"];
+    case "quiet_authority":
+      return ["about_split", "services_list", "metrics_row", "quotes", "cta_panel"];
+    case "soft_product":
+    default:
+      return ["marquee", "services_grid", "about_split", "gallery_mosaic", "cta_band"];
+  }
+}
+
+export function cardStyleForDna(dnaId: DesignDnaId): CardStyle {
+  switch (dnaId) {
+    case "performance_edge":
+    case "future_tech":
+      return "bento";
+    case "quiet_authority":
+      return "list";
+    case "editorial_collage":
+    case "cinematic_luxury":
+    case "sensorial_wellness":
+      return "editorial";
+    default:
+      return "grid";
+  }
+}
+
+export function spacingPad(scale: DesignDna["spacingScale"]): {
+  section: string;
+  sectionY: string;
+} {
+  if (scale === "tight") return { section: "3.25rem", sectionY: "2.75rem" };
+  if (scale === "editorial") return { section: "5.5rem", sectionY: "4.75rem" };
+  return { section: "4.5rem", sectionY: "3.75rem" }; // studio
+}
