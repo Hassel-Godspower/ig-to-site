@@ -243,30 +243,62 @@ const DNA: Record<DesignDnaId, DesignDna> = {
 
 /** Niche id (from your classifier) → DNA */
 const NICHE_TO_DNA: Record<string, DesignDnaId> = {
+  // wellness / beauty
   spa: "sensorial_wellness",
   wellness: "sensorial_wellness",
+  massage: "sensorial_wellness",
   beauty: "editorial_collage",
   fashion: "editorial_collage",
   salon: "editorial_collage",
+  hair: "editorial_collage",
+  cosmetics: "editorial_collage",
+  fragrance: "editorial_collage",
+  // performance
   fitness: "performance_edge",
   gym: "performance_edge",
   coaching: "performance_edge",
+  sports: "performance_edge",
+  // luxury / hospitality
   restaurant: "cinematic_luxury",
   hotel: "cinematic_luxury",
   real_estate: "cinematic_luxury",
+  estate: "cinematic_luxury",
   auto: "cinematic_luxury",
+  events: "cinematic_luxury",
+  // tech
   tech: "future_tech",
   saas: "future_tech",
+  electronics: "future_tech",
+  gadgets: "future_tech",
+  // creative
   agency: "kinetic_agency",
   creative: "kinetic_agency",
+  design: "kinetic_agency",
+  photography: "kinetic_agency",
+  // retail / product
   ecommerce: "soft_product",
   retail: "soft_product",
-  cosmetics: "editorial_collage",
+  supermarket: "soft_product",
   pharmacy: "soft_product",
+  furniture: "soft_product",
+  building: "soft_product",
+  materials: "soft_product",
+  farm: "soft_product",
+  produce: "soft_product",
+  logistics: "soft_product",
+  delivery: "soft_product",
+  // professional
   professional: "quiet_authority",
   legal: "quiet_authority",
+  lawyer: "quiet_authority",
   consultant: "quiet_authority",
+  finance: "quiet_authority",
+  clinic: "quiet_authority",
+  healthcare: "quiet_authority",
+  education: "quiet_authority",
+  school: "quiet_authority",
   general_business: "soft_product",
+  general: "soft_product",
 };
 
 export function resolveDesignDna(nicheId: string): DesignDna {
