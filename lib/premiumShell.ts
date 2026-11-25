@@ -1,6 +1,7 @@
 import { resolveOpulentDirection } from "./opulentDirection";
 import { normalizeSitePlan, defaultPlanForNiche, type SitePlan } from "./sitePlan";
 import { resolveTemplateFamily, type FamilyPage, type TemplateFamily } from "./templateFamilies";
+import { resolveDesignDna, spacingPad, type DesignDna } from "./designDna";
 import { assembleHomeMain, assembleServicesBody, assembleListingBody } from "./siteBlocks";
 import { assembleCartPageBody, buildBookingCatalogJson, BOOKING_CART_CSS } from "./bookingPages";
 import {
