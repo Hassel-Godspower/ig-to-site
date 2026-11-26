@@ -99,7 +99,7 @@ export function defaultPlanForNiche(nicheId: string): SitePlan {
   const density: SitePlan["density"] =
     dna.spacingScale === "editorial"
       ? "sparse"
-      : dna.spacingScale === "compact"
+      : dna.spacingScale === "tight"
         ? "rich"
         : "balanced";
 
