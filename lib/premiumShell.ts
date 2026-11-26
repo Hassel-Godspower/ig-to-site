@@ -109,8 +109,6 @@ export function layoutForNiche(nicheId: string): ShellLayout {
   return "opulent";
 }
 
-import { spacingPad, type DesignDna } from "./designDna";
-
 export function shellCss(theme: ShellTheme, dna?: DesignDna): string {
   const t = theme;
   const d = t.mode === "dark";
