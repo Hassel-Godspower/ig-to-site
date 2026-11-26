@@ -438,6 +438,15 @@ export function sectionsForDna(dnaId: DesignDnaId): SectionBlockId[] {
       return ["metrics_row", "services_bento", "about_split", "gallery_mosaic", "cta_band"];
     case "quiet_authority":
       return ["about_split", "services_list", "metrics_row", "quotes", "cta_panel"];
+    case "portrait_studio":
+      return [
+        "metrics_row",       // Lagos · 8+ years · People & stories
+        "about_split",       // Hi, I'm …
+        "services_list",     // What we shoot
+        "gallery_mosaic",    // Visual journal
+        "quotes",
+        "cta_panel",
+      ];
     case "soft_product":
     default:
       return ["marquee", "services_grid", "about_split", "gallery_mosaic", "cta_band"];
