@@ -457,18 +457,14 @@ export function cardStyleForDna(dnaId: DesignDnaId): CardStyle {
     case "future_tech":
       return "bento";
     case "quiet_authority":
-      return "list";
-    case "editorial_collage":
     case "portrait_studio":
       return "list";
-    case "cinematic_luxury":
-    case "sensorial_wellness":
+    case "editorial_collage":
       return "editorial";
     default:
       return "grid";
   }
 }
-
 export function spacingPad(scale: DesignDna["spacingScale"]): {
   section: string;
   sectionY: string;
