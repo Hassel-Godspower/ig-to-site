@@ -457,8 +457,6 @@ export function cardStyleForDna(dnaId: DesignDnaId): CardStyle {
     case "future_tech":
       return "bento";
     case "quiet_authority":
-    case "portrait_studio":
-      return "list";
     case "editorial_collage":
       return "editorial";
     default:
