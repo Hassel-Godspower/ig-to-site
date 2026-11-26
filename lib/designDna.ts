@@ -12,8 +12,8 @@ export type DesignDnaId =
   | "cinematic_luxury"
   | "performance_edge"
   | "quiet_authority"
-  | "portrait_studio"
-  | "sensorial_wellness";
+  | "sensorial_wellness"
+  | "portrait_studio";
 
 export type HeroVariant =
   | "split_soft"
