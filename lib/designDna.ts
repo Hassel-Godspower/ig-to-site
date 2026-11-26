@@ -300,11 +300,21 @@ const NICHE_TO_DNA: Record<string, DesignDnaId> = {
   saas: "future_tech",
   electronics: "future_tech",
   gadgets: "future_tech",
-  // creative
+  // creative / portrait (SABIEGAL-class)
+  photography: "portrait_studio",
+  photographer: "portrait_studio",
+  photo: "portrait_studio",
+  portfolio: "portrait_studio",
+  videography: "portrait_studio",
+  videographer: "portrait_studio",
+  content_creator: "portrait_studio",
+  creator: "portrait_studio",
+  // agencies stay kinetic
   agency: "kinetic_agency",
-  creative: "kinetic_agency",
-  design: "kinetic_agency",
-  photography: "kinetic_agency",
+  creative_agency: "kinetic_agency",
+  design_agency: "kinetic_agency",
+  design: "editorial_collage", // product/fashion design ≠ mint kinetic
+  creative: "portrait_studio",
   // retail / product
   ecommerce: "soft_product",
   retail: "soft_product",
