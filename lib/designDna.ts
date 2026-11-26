@@ -426,6 +426,8 @@ export function sectionsForDna(dnaId: DesignDnaId): SectionBlockId[] {
   switch (dnaId) {
     case "sensorial_wellness":
       return ["marquee", "services_bento", "about_split", "gallery_mosaic", "quotes", "cta_band"];
+    case "portrait_studio":
+      return "list";
     case "editorial_collage":
       return ["offerings_editorial", "about_split", "gallery_mosaic", "quotes", "cta_panel"];
     case "kinetic_agency":
