@@ -1,7 +1,12 @@
 import { resolveOpulentDirection } from "./opulentDirection";
 import { normalizeSitePlan, defaultPlanForNiche, type SitePlan } from "./sitePlan";
 import { resolveTemplateFamily, type FamilyPage, type TemplateFamily } from "./templateFamilies";
-import { resolveDesignDna, spacingPad, type DesignDna } from "./designDna";
+import {
+  resolveDesignDna,
+  dnaToShellTheme,
+  spacingPad,
+  type DesignDna,
+} from "./designDna";
 import { assembleHomeMain, assembleServicesBody, assembleListingBody } from "./siteBlocks";
 import { assembleCartPageBody, buildBookingCatalogJson, BOOKING_CART_CSS } from "./bookingPages";
 import {
@@ -13,7 +18,6 @@ import {
 import type { CatalogItem, CatalogSeed } from "./extractCatalog";
 import { COMMERCE_BOOKING_RUNTIME, ensureCommerceRuntime } from "./staticCommerceRuntime";
 import { catalogFromTitles, isShoppableFamily, modeForFamily } from "./extractCatalog";
-import { resolveDesignDna, dnaToShellTheme } from "./designDna";
 /**
  * Deterministic premium shell (craft: ifitnessng.pages.dev).
  */
