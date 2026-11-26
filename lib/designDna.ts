@@ -456,6 +456,8 @@ export function cardStyleForDna(dnaId: DesignDnaId): CardStyle {
     case "quiet_authority":
       return "list";
     case "editorial_collage":
+    case "portrait_studio":
+      return "list";
     case "cinematic_luxury":
     case "sensorial_wellness":
       return "editorial";
