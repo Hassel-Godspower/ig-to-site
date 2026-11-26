@@ -85,10 +85,14 @@ export function renderHero(hero: HeroBlockId, c: ShellContent): string {
   const heroImg = c.gallery[0]?.src || c.aboutImage || "";
   const heroImg2 = c.gallery[1]?.src || heroImg;
   const heroImg3 = c.gallery[2]?.src || heroImg2;
+  const secondaryHref =
+    c.nav?.some((n) => n.href === "gallery.html") ? "gallery.html" : "services.html";
+  const secondaryLabel =
+    secondaryHref === "gallery.html" ? "View gallery" : E(c.secondaryCta || "Learn more");
   const actions = `
     <div class="hero-actions">
       <a href="contact.html" class="btn btn-primary" id="cta-button" data-goke="button">${E(c.primaryCta)}</a>
-      <a href="services.html" class="btn btn-outline" data-goke="button">${E(c.secondaryCta)}</a>
+      <a href="\( {secondaryHref}" class="btn btn-outline" data-goke="button"> \){secondaryLabel}</a>
     </div>`;
   const metrics = c.metrics
     .slice(0, 3)
