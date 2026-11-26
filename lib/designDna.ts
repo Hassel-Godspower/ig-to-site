@@ -216,7 +216,6 @@ const DNA: Record<DesignDnaId, DesignDna> = {
     headlineStyle: "Credibility over hype",
     avoid: "Salesy exclamation, neon",
   },
-
   portrait_studio: {
     id: "portrait_studio",
     label: "Portrait studio",
@@ -244,7 +243,6 @@ const DNA: Record<DesignDnaId, DesignDna> = {
     avoid:
       "Neon mint, white SaaS grids, kinetic agency type, purple tech glow, dense card walls",
   },
-  
   sensorial_wellness: {
     id: "sensorial_wellness",
     label: "Sensorial wellness",
@@ -427,7 +425,14 @@ export function sectionsForDna(dnaId: DesignDnaId): SectionBlockId[] {
     case "sensorial_wellness":
       return ["marquee", "services_bento", "about_split", "gallery_mosaic", "quotes", "cta_band"];
     case "portrait_studio":
-      return "list";
+      return [
+        "metrics_row",
+        "about_split",
+        "services_list",
+        "gallery_mosaic",
+        "quotes",
+        "cta_panel",
+      ];
     case "editorial_collage":
       return ["offerings_editorial", "about_split", "gallery_mosaic", "quotes", "cta_panel"];
     case "kinetic_agency":
@@ -440,8 +445,6 @@ export function sectionsForDna(dnaId: DesignDnaId): SectionBlockId[] {
       return ["metrics_row", "services_bento", "about_split", "gallery_mosaic", "cta_band"];
     case "quiet_authority":
       return ["about_split", "services_list", "metrics_row", "quotes", "cta_panel"];
-    case "portrait_studio":
-      return ["metrics_row", "about_split", "services_list", "gallery_mosaic","quotes", "cta_panel"];
     case "soft_product":
     default:
       return ["marquee", "services_grid", "about_split", "gallery_mosaic", "cta_band"];
