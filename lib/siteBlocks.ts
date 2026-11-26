@@ -246,7 +246,7 @@ export function renderSection(id: SectionBlockId, c: ShellContent): string {
     case "metrics_row":
       return `<section class="section site-section reveal" data-goke="section" data-section-name="metrics" style="background:var(--ink-2);border-block:1px solid var(--line)"><div class="section-inner"><div class="numbers">${metricsHtml(c)}</div></div></section>`;
     case "gallery_mosaic":
-      return `<section class="section site-section reveal" data-goke="section" data-section-name="gallery"><div class="section-inner"><p class="section-label" data-goke="text">Atmosphere</p><h2 class="section-title" data-goke="heading">A visual journal</h2><div class="mosaic">${mosaicHtml(c)}</div><p style="margin-top:1.5rem;text-align:center"><a href="gallery.html" class="btn btn-ghost" data-goke="button">Full gallery</a></p></div></section>`;
+      return `<section class="section site-section reveal" data-goke="section" data-section-name="gallery"><div class="section-inner"><p class="section-label" data-goke="text">Selected work</p><h2 class="section-title" data-goke="heading">People · stories · timeless images</h2><div class="mosaic">${mosaicHtml(c)}</div><p style="margin-top:1.5rem;text-align:center"><a href="gallery.html" class="btn btn-ghost" data-goke="button">Full gallery</a></p></div></section>`;  
     case "quotes": {
       const q = quotesHtml(c);
       if (!q) return "";
