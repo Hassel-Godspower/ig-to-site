@@ -242,16 +242,27 @@ export function renderSection(id: SectionBlockId, c: ShellContent): string {
       return `<section class="section site-section reveal" data-goke="section" data-section-name="services"><div class="section-inner"><p class="section-label" data-goke="text">Paths</p><h2 class="section-title" data-goke="heading">Choose how you work with us</h2><p class="section-copy" data-goke="text">${E(c.lead)}</p><div class="bento">${servicesBento(c)}</div></div></section>`;
     case "services_grid":
       return `<section class="section site-section reveal" data-goke="section" data-section-name="services"><div class="section-inner"><p class="section-label" data-goke="text">Offerings</p><h2 class="section-title" data-goke="heading">What we offer</h2><div class="svc-grid">${servicesGrid(c)}</div></div></section>`;
-    case "services_list":
-      return `<section class="section site-section reveal" data-goke="section" data-section-name="services" style="background:var(--ink-2);border-block:1px solid var(--line)"><div class="section-inner"><p class="section-label" data-goke="text">Sessions</p><h2 class="section-title" data-goke="heading">What we shoot</h2><p class="section-copy" data-goke="text">\( {E(c.lead)}</p><div class="svc-list"> \){servicesList(c)}</div></div></section>`;
+    case "services_list": {
+      const isPortrait =
+        /shoot|session|portrait|studio|gallery/i.test(
+          `${c.primaryCta} ${c.secondaryCta} ${c.kicker} ${c.brand}`
+        ) || c.nav?.some((n) => /shoot/i.test(n.label));
+      const label = isPortrait ? "Studio" : "Practice";
+      const title = isPortrait ? "What we shoot" : "How we work with you";
+      return `<section class="section site-section reveal" data-goke="section" data-section-name="services" style="background:var(--ink-2);border-block:1px solid var(--line)"><div class="section-inner"><p class="section-label" data-goke="text">\( {label}</p><h2 class="section-title" data-goke="heading"> \){title}</h2><div class="svc-list">${servicesList(c)}</div></div></section>`;
+    }
     case "offerings_editorial":
       return `<section class="section site-section reveal" data-goke="section" data-section-name="services"><div class="section-inner"><p class="section-label" data-goke="text">Offerings</p><h2 class="section-title" data-goke="heading">Signature experiences</h2><p class="section-copy" data-goke="text">${E(c.lead)}</p><div class="svc-grid">${servicesGrid(c)}</div><p style="margin-top:2rem;text-align:center"><a href="services.html" class="btn btn-ghost" data-goke="button">View all</a></p></div></section>`;
     case "about_split":
       return `<section class="section site-section reveal" data-goke="section" data-section-name="about"><div class="section-inner split"><div class="split-media"><img src="${E(c.aboutImage || heroImg2)}" alt="" data-goke="image"/></div><div class="split-copy"><p class="section-label" data-goke="text">Our story</p><h2 class="section-title" data-goke="heading">${E(c.aboutTitle)}</h2>${aboutPs(c)}<ul class="list-check">${aboutLi(c)}</ul><a href="about.html" class="btn btn-primary" style="margin-top:1rem" data-goke="button">About ${E(c.brand)}</a></div></div></section>`;
     case "metrics_row":
       return `<section class="section site-section reveal" data-goke="section" data-section-name="metrics" style="background:var(--ink-2);border-block:1px solid var(--line)"><div class="section-inner"><div class="numbers">${metricsHtml(c)}</div></div></section>`;
-    case "gallery_mosaic":
-      return `<section class="section site-section reveal" data-goke="section" data-section-name="gallery"><div class="section-inner"><p class="section-label" data-goke="text">Selected work</p><h2 class="section-title" data-goke="heading">People · stories · timeless images</h2><div class="mosaic">${mosaicHtml(c)}</div><p style="margin-top:1.5rem;text-align:center"><a href="gallery.html" class="btn btn-ghost" data-goke="button">Full gallery</a></p></div></section>`;  
+    case "gallery_mosaic": {
+      const isPortrait = c.nav?.some((n) => /shoot|gallery/i.test(n.label));
+      const label = isPortrait ? "Selected work" : "Atmosphere";
+      const title = isPortrait ? "From the studio" : "A visual journal";
+      return `<section class="section site-section reveal" data-goke="section" data-section-name="gallery"><div class="section-inner"><p class="section-label" data-goke="text">\( {label}</p><h2 class="section-title" data-goke="heading"> \){title}</h2><div class="mosaic">${mosaicHtml(c)}</div><p style="margin-top:1.5rem;text-align:center"><a href="gallery.html" class="btn btn-ghost" data-goke="button">Full gallery</a></p></div></section>`;
+    }
     case "quotes": {
       const q = quotesHtml(c);
       if (!q) return "";
