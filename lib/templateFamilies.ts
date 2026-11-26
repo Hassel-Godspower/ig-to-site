@@ -289,13 +289,13 @@ export const TEMPLATE_FAMILIES: Record<TemplateFamilyId, TemplateFamily> = {
   portfolio: {
     id: "portfolio",
     gokeTemplateId: "goke-portfolio",
-    label: "Creative portfolio",
+    label: "Portrait & creative studio",
     categories: [
       "portfolio",
       "photo",
       "photography",
       "photographer",
-      "videography",
+      "video",
       "creative",
       "design",
     ],
