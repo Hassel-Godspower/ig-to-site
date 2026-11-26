@@ -216,6 +216,35 @@ const DNA: Record<DesignDnaId, DesignDna> = {
     headlineStyle: "Credibility over hype",
     avoid: "Salesy exclamation, neon",
   },
+
+  portrait_studio: {
+    id: "portrait_studio",
+    label: "Portrait studio",
+    mode: "dark",
+    ink: "#1a1816",
+    ink2: "#24201c",
+    surface: "#2a2622",
+    text: "#f4f0e8",
+    muted: "#b5a99a",
+    accent: "#c4a574",
+    onAccent: "#1a1816",
+    fontDisplay: '"Cormorant Garamond", Georgia, serif',
+    fontBody: "system-ui, -apple-system, sans-serif",
+    googleFontsHref:
+      "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&display=swap",
+    radius: "4px",
+    radiusLg: "10px",
+    heroVariant: "split_soft", // portrait right, copy left — SABIEGAL frame 1–2
+    motion: "cinematic",
+    spacingScale: "editorial",
+    imageMood:
+      "warm studio key light, rich skin tones, director chair / camera props, editorial portrait",
+    headlineStyle:
+      "Short gold serif lines: reintroduce / name / what we shoot — never hype startup speak",
+    avoid:
+      "Neon mint, white SaaS grids, kinetic agency type, purple tech glow, dense card walls",
+  },
+  
   sensorial_wellness: {
     id: "sensorial_wellness",
     label: "Sensorial wellness",
